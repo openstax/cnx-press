@@ -17,11 +17,11 @@ with open('README.rst', 'r') as readme:
     long_description = readme.read()
 
 setup(
-    name='press',
+    name='cnx-press',
     version='0.0.0',
     author='Connexions team',
     author_email='info@cnx.org',
-    url="https://github.com/connexions/press",
+    url="https://github.com/connexions/cnx-press",
     license='AGPL, See also LICENSE.txt',
     description=description,
     long_description=long_description,
