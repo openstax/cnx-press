@@ -36,6 +36,8 @@ setup(
         'press.tests': ['data/**/*.*'],
         },
     entry_points="""\
+    [paste.app_factory]
+    main = press.main:paste_app_factory
     [console_scripts]
     """,
     )
