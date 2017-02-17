@@ -8,6 +8,7 @@ install_requires = (
     )
 tests_require = [
     'pytest',
+    'WebTest >= 1.3.1',
     ]
 extras_require = {
     'test': tests_require,

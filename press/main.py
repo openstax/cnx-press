@@ -11,6 +11,7 @@ def make_config():
 def declare_routes(config):
     """Declaration of routing"""
     add_route = config.add_route
+    add_route('ping', '/ping')
 
 
 def configure(config):
