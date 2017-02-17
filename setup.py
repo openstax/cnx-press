@@ -5,6 +5,7 @@ setup_requires = (
     'pytest-runner',
     )
 install_requires = (
+    'pyramid',
     )
 tests_require = [
     'pytest',
