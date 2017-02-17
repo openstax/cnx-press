@@ -30,7 +30,7 @@ before_install:
   - pip install pytest pytest-cov
   - pip install codecov
 install:
-  - pip install .
+  - pip install ".[test]"
 before_script:
   # Set up postgres roles
   - sudo -u postgres psql -d postgres -c "CREATE USER tester WITH SUPERUSER PASSWORD 'tester';"
