@@ -6,7 +6,7 @@ addons:
   postgresql: "9.4"
 before_install:
   - pip install pycodestyle
-  - pycodestyle --exclude=tests *.py press
+  - pycodestyle --exclude=tests press
   - pycodestyle --max-line-length=200 press/tests
 
   - sudo apt-get update
@@ -30,7 +30,7 @@ before_install:
   - pip install pytest pytest-cov
   - pip install codecov
 install:
-  - pip install ".[test]"
+  - pip install -r requirements/main.txt -r requirements/tests.txt
 before_script:
   # Set up postgres roles
   - sudo -u postgres psql -d postgres -c "CREATE USER tester WITH SUPERUSER PASSWORD 'tester';"
