@@ -12,7 +12,9 @@ default : help
 #  Helpers
 # ###
 
-.state/env/pyvenv.cfg : requirements/docs.txt requirements/tests.txt
+_REQUIREMENTS_FILES = requirements/main.txt requirements/docs.txt requirements/tests.txt
+
+.state/env/pyvenv.cfg : $(_REQUIREMENTS_FILES)
 	# Create our Python 3 virtual environment
 	rm -rf .state/env
 	python3 -m venv .state/env
@@ -21,9 +23,7 @@ default : help
 	$(BINDIR)/python -m pip install --upgrade pip setuptools wheel
 
 	# Install requirements
-	$(BINDIR)/python -m pip install -r requirements/main.txt
-	$(BINDIR)/python -m pip install -r requirements/tests.txt
-	$(BINDIR)/python -m pip install -r requirements/docs.txt
+	$(BINDIR)/python -m pip install $(foreach req,$(_REQUIREMENTS_FILES),-r $(req))
 
 # /Helpers
 
