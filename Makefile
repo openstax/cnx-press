@@ -17,9 +17,11 @@ help :
 	@echo "  * help -- this info"
 	@echo "  * help-<cmd> -- for more info"
 	@echo "  * test -- ${_SHORT_DESC_TEST}"
+	@echo "  * version -- prints the version"
 	@echo ""
 	@echo "Where <VAR> can be:"  # alphbetical please
 	@echo ""
+
 
 help-test :
 	@echo "${_SHORT_DESC_TEST}"
@@ -30,3 +32,17 @@ help-test :
 
 test :
 	pytest $(TEST_PATH)
+
+
+curr_tag := $(shell git describe --tags $$(git rev-list --tags --max-count=1))
+curr_tag_rev := $(shell git rev-parse "$(curr_tag)^0")
+head_rev := $(shell git rev-parse HEAD)
+head_short_rev := $(shell git rev-parse --short HEAD)
+ifeq ($(curr_tag_rev),$(head_rev))
+	version := $(curr_tag)
+else
+	version := $(curr_tag)-dev$(head_short_rev)
+endif
+
+version version-help : .git
+	@echo $(version)
