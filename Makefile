@@ -44,5 +44,5 @@ else
 	version := $(curr_tag)-dev$(head_short_rev)
 endif
 
-version version-help : .git
+version help-version : .git
 	@echo $(version)
