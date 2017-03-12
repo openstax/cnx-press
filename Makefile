@@ -1,8 +1,9 @@
 BINDIR = $(PWD)/.state/env/bin
 
 # Short descriptions for commands (var format _SHORT_DESC_<cmd>)
-_SHORT_DESC_TESTS := "Run the tests"
 _SHORT_DESC_DOCS := "Build docs"
+_SHORT_DESC_PYENV := "Set up the python environment"
+_SHORT_DESC_TESTS := "Run the tests"
 
 default : help
 	@echo "You must specify a command"
@@ -13,11 +14,12 @@ default : help
 # ###
 
 _REQUIREMENTS_FILES = requirements/main.txt requirements/docs.txt requirements/tests.txt
+VENV_EXTRA_ARGS =
 
 .state/env/pyvenv.cfg : $(_REQUIREMENTS_FILES)
 	# Create our Python 3 virtual environment
 	rm -rf .state/env
-	python3 -m venv .state/env
+	python3 -m venv $(VENV_EXTRA_ARGS) .state/env
 
 	# Upgrade tooling requirements
 	$(BINDIR)/python -m pip install --upgrade pip setuptools wheel
@@ -39,6 +41,7 @@ help :
 	@echo "  * docs -- ${_SHORT_DESC_DOCS}"
 	@echo "  * help -- this info"
 	@echo "  * help-<cmd> -- for more info"
+	@echo "  * pyenv -- ${_SHORT_DESC_PYENV}"
 	@echo "  * tests -- ${_SHORT_DESC_TESTS}"
 	@echo "  * version -- Print the version"
 	@echo ""
@@ -48,10 +51,26 @@ help :
 # /Help
 
 # ###
+#  Pyenv
+# ###
+
+help-pyenv :
+	@echo "${_SHORT_DESC_PYENV}"
+	@echo "Usage: make pyenv"
+	@echo ""
+	@echo "Where <VAR> could be:"  # alphbetical please
+	@echo "  * VENV_EXTRA_ARGS -- extra arguments to give venv (default: '$(VENV_EXTRA_ARGS)')"
+
+pyenv : .state/env/pyvenv.cfg
+
+# /Pyenv
+
+# ###
 #  Tests
 # ###
 
 TESTS =
+TESTS_EXTRA_ARGS =
 
 help-tests :
 	@echo "${_SHORT_DESC_TESTS}"
@@ -59,9 +78,10 @@ help-tests :
 	@echo ""
 	@echo "Where <VAR> could be:"  # alphbetical please
 	@echo "  * TESTS -- specify the test to run (default: '$(TESTS)')"
+	@echo "  * TESTS_EXTRA_ARGS -- extra arguments to give pytest (default: '$(TESTS_EXTRA_ARGS)')"
 
 tests : .state/env/pyvenv.cfg
-	$(BINDIR)/pytest $(TESTS)
+	$(BINDIR)/pytest $(TESTS_EXTRA_ARGS) $(TESTS)
 
 # /Tests
 
