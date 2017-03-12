@@ -1,13 +1,14 @@
-TEST_PATH = ./
-
 
 # Short descriptions for commands (var format _SHORT_DESC_<cmd>)
-_SHORT_DESC_TEST := "Run the tests"
-
+_SHORT_DESC_TESTS := "Run the tests"
 
 default : help
 	@echo "You must specify a command"
 	@exit 1
+
+# ###
+#  Help
+# ###
 
 help :
 	@echo ""
@@ -16,22 +17,35 @@ help :
 	@echo "Where <cmd> can be:"  # alphbetical please
 	@echo "  * help -- this info"
 	@echo "  * help-<cmd> -- for more info"
-	@echo "  * test -- ${_SHORT_DESC_TEST}"
+	@echo "  * tests -- ${_SHORT_DESC_TESTS}"
 	@echo "  * version -- prints the version"
 	@echo ""
 	@echo "Where <VAR> can be:"  # alphbetical please
 	@echo ""
 
+# /Help
 
-help-test :
-	@echo "${_SHORT_DESC_TEST}"
-	@echo "Usage: make test [<VAR>=<val>, ...]"
+# ###
+#  Tests
+# ###
+
+TESTS =
+
+help-tests :
+	@echo "${_SHORT_DESC_TESTS}"
+	@echo "Usage: make tests [<VAR>=<val>, ...]"
 	@echo ""
-	@echo "Where <VAR> could be:"
-	@echo "  * TEST_PATH -- specify the test to run (default: './')"
+	@echo "Where <VAR> could be:"  # alphbetical please
+	@echo "  * TESTS -- specify the test to run (default: '$(TESTS)')"
 
-test :
-	pytest $(TEST_PATH)
+tests :
+	pytest $(TESTS)
+
+# /Tests
+
+# ###
+#  Version
+# ###
 
 
 curr_tag := $(shell git describe --tags $$(git rev-list --tags --max-count=1))
@@ -46,3 +60,5 @@ endif
 
 version help-version : .git
 	@echo $(version)
+
+# /Version
