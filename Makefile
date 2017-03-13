@@ -2,6 +2,7 @@ BINDIR = $(PWD)/.state/env/bin
 
 # Short descriptions for commands (var format _SHORT_DESC_<cmd>)
 _SHORT_DESC_DOCS := "Build docs"
+_SHORT_DESC_LINT := "Run linting tools on the codebase"
 _SHORT_DESC_PYENV := "Set up the python environment"
 _SHORT_DESC_TESTS := "Run the tests"
 
@@ -13,7 +14,7 @@ default : help
 #  Helpers
 # ###
 
-_REQUIREMENTS_FILES = requirements/main.txt requirements/docs.txt requirements/tests.txt
+_REQUIREMENTS_FILES = requirements/main.txt requirements/docs.txt requirements/tests.txt requirements/lint.txt
 VENV_EXTRA_ARGS =
 
 .state/env/pyvenv.cfg : $(_REQUIREMENTS_FILES)
@@ -41,6 +42,7 @@ help :
 	@echo "  * docs -- ${_SHORT_DESC_DOCS}"
 	@echo "  * help -- this info"
 	@echo "  * help-<cmd> -- for more info"
+	@echo "  * lint -- ${_SHORT_DESC_LINT}"
 	@echo "  * pyenv -- ${_SHORT_DESC_PYENV}"
 	@echo "  * tests -- ${_SHORT_DESC_TESTS}"
 	@echo "  * version -- Print the version"
@@ -118,3 +120,16 @@ docs : .state/env/pyvenv.cfg
 	$(MAKE) -C docs/ html SPHINXOPTS="-W" SPHINXBUILD="$(BINDIR)/sphinx-build"
 
 # /Docs
+
+# ###
+#  Lint
+# ###
+
+help-lint :
+	@echo "${_SHORT_DESC_LINT}"
+	@echo "Usage: make lint"
+
+lint : .state/env/pyvenv.cfg setup.cfg
+	$(BINDIR)/python -m flake8 .
+
+# /Lint
