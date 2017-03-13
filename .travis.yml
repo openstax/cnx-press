@@ -5,9 +5,11 @@ python:
 addons:
   postgresql: "9.4"
 before_install:
-  - pip install pycodestyle
-  - pycodestyle --exclude=tests press
-  - pycodestyle --max-line-length=200 press/tests
+  # Create the virtual env and lint the codebase
+  - make lint VENV_EXTRA_ARGS="--system-site-packages"
+  # Install the coverage utility and codecov reporting utility
+  - .state/env/bin/python -m pip install pytest pytest-cov
+  - .state/env/bin/python -m pip install codecov
 
   - sudo apt-get update
   # remove zope.interface installed from aptitude
@@ -25,11 +27,6 @@ before_install:
   # * Install rhaptos.cnxmlutils
   # - git clone https://github.com/Connexions/rhaptos.cnxmlutils.git
   # - cd rhaptos.cnxmlutils && python setup.py install && cd ..
-
-  # Install the coverage utility and codecov reporting utility
-  - make pyenv VENV_EXTRA_ARGS="--system-site-packages"
-  - .state/env/bin/python -m pip install pytest pytest-cov
-  - .state/env/bin/python -m pip install codecov
 before_script:
   # Set up postgres roles
   - sudo -u postgres psql -d postgres -c "CREATE USER tester WITH SUPERUSER PASSWORD 'tester';"
