@@ -10,7 +10,12 @@ CNX Content Manager Press
 .. image:: https://badge.fury.io/py/cnx-press.svg
    :target: http://badge.fury.io/py/cnx-press
 
-This application is an amendment to the Connexions application suite that enables legacy/zope-style publications. This application was created in an effort to decommission the legacy/zope application and connected applications.
+This application is an amendment
+to the Connexions application suite
+that enables legacy/zope-style publications.
+This application was created
+in an effort to decommission
+the legacy/zope application and connected applications.
 
 Usage::
 
