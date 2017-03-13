@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import pytest
-from pyramid import testing
 from webtest import TestApp
 
 
