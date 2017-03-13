@@ -27,10 +27,9 @@ before_install:
   # - cd rhaptos.cnxmlutils && python setup.py install && cd ..
 
   # Install the coverage utility and codecov reporting utility
-  - pip install pytest pytest-cov
-  - pip install codecov
-install:
-  - pip install -r requirements/main.txt -r requirements/tests.txt
+  - make pyenv VENV_EXTRA_ARGS="--system-site-packages"
+  - .state/env/bin/python -m pip install pytest pytest-cov
+  - .state/env/bin/python -m pip install codecov
 before_script:
   # Set up postgres roles
   - sudo -u postgres psql -d postgres -c "CREATE USER tester WITH SUPERUSER PASSWORD 'tester';"
@@ -38,7 +37,7 @@ before_script:
   - sudo -u postgres createdb -O tester testing
 script:
   # This is the same as `python setup.py test` with a coverage wrapper.
-  - py.test --cov-config .coveragerc --cov=press
+  - make tests TESTS_EXTRA_ARGS="--cov-config .coveragerc --cov=press"
 after_success:
   # Report test coverage to codecov.io
   - codecov

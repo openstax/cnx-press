@@ -81,7 +81,7 @@ help-tests :
 	@echo "  * TESTS_EXTRA_ARGS -- extra arguments to give pytest (default: '$(TESTS_EXTRA_ARGS)')"
 
 tests : .state/env/pyvenv.cfg
-	$(BINDIR)/pytest $(TESTS_EXTRA_ARGS) $(TESTS)
+	$(BINDIR)/python -m pytest $(TESTS_EXTRA_ARGS) $(TESTS)
 
 # /Tests
 
