@@ -1,0 +1,10 @@
+version: '2'
+services:
+  app:
+    build: .
+  web:
+    extends:
+      service: app
+    command: gunicorn -b 0.0.0.0:6543 -n press --reload press.wsgi:app
+    ports:
+      - "80:6543"

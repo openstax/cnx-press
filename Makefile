@@ -1,9 +1,11 @@
 BINDIR = $(PWD)/.state/env/bin
 
 # Short descriptions for commands (var format _SHORT_DESC_<cmd>)
+_SHORT_DESC_BUILD := "Build the app for dev and/or deployment"
 _SHORT_DESC_DOCS := "Build docs"
 _SHORT_DESC_LINT := "Run linting tools on the codebase"
 _SHORT_DESC_PYENV := "Set up the python environment"
+_SHORT_DESC_SERVE := "Serve the app"
 _SHORT_DESC_TESTS := "Run the tests"
 
 default : help
@@ -28,6 +30,14 @@ VENV_EXTRA_ARGS =
 	# Install requirements
 	$(BINDIR)/python -m pip install $(foreach req,$(_REQUIREMENTS_FILES),-r $(req))
 
+.state/docker-build: Dockerfile requirements/main.txt requirements/deploy.txt
+	# Build our docker container(s) for this project.
+	docker-compose build
+
+	# Mark the state so we don't rebuild this needlessly.
+	mkdir -p .state
+	touch .state/docker-build
+
 # /Helpers
 
 # ###
@@ -39,12 +49,14 @@ help :
 	@echo "Usage: make <cmd> [<VAR>=<val>, ...]"
 	@echo ""
 	@echo "Where <cmd> can be:"  # alphbetical please
+	@echo "  * build -- ${_SHORT_DESC_BUILD}"
 	@echo "  * docs -- ${_SHORT_DESC_DOCS}"
 	@echo "  * help -- this info"
 	@echo "  * help-<cmd> -- for more info"
 	@echo "  * lint -- ${_SHORT_DESC_LINT}"
 	@echo "  * pyenv -- ${_SHORT_DESC_PYENV}"
 	@echo "  * tests -- ${_SHORT_DESC_TESTS}"
+	@echo "  * serve -- ${_SHORT_DESC_SERVE}"
 	@echo "  * version -- Print the version"
 	@echo ""
 	@echo "Where <VAR> can be:"  # alphbetical please
@@ -135,3 +147,37 @@ lint : .state/env/pyvenv.cfg setup.cfg
 	$(BINDIR)/python -m doc8.main README.rst docs/
 
 # /Lint
+
+# ###
+#  Build
+# ###
+
+help-build :
+	@echo "${_SHORT_DESC_BUILD}"
+	@echo "Usage: make build"
+
+build:
+	# This is duplicate of .state/docker-build to force the build.
+
+	# Build our docker container(s) for this project.
+	docker-compose build
+
+	# Mark the state so we don't rebuild this needlessly.
+	mkdir -p .state
+	touch .state/docker-build
+
+# /Build
+
+
+# ###
+#  Serve
+# ###
+
+help-serve :
+	@echo "${_SHORT_DESC_SERVE}"
+	@echo "Usage: make serve"
+
+serve: .state/docker-build
+	docker-compose up
+
+# /Serve
