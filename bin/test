@@ -1,0 +1,8 @@
+#!/bin/bash
+set -e
+set -x
+
+# Run the unittests
+#   - Let nothing go unnoticed by using `--strict`
+#   - The pytest coverage and verbosity options are configured in setup.cfg
+python -m pytest --strict $@

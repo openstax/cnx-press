@@ -10,12 +10,6 @@ __pycache__
 .cache
 .state
 
-# Virtualenv #
-##############
-bin
-lib
-include
-
 # Build file #
 ##############
 build/

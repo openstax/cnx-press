@@ -95,8 +95,8 @@ help-tests :
 	@echo "  * TESTS_EXTRA_ARGS -- extra arguments to give pytest (default: '$(TESTS_EXTRA_ARGS)')"
 	@echo "    (see also setup.cfg's pytest configuration)"
 
-tests : .state/env/pyvenv.cfg
-	$(BINDIR)/python -m pytest $(TESTS_EXTRA_ARGS) $(TESTS)
+tests :
+	docker-compose run web bin/test $(TESTS_EXTRA_ARGS) $(TESTS)
 
 # /Tests
 

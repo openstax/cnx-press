@@ -1,41 +1,19 @@
-language: python
-python:
-  - "3.5"
-  - "3.6"
-addons:
-  postgresql: "9.4"
+sudo: required
+
+services:
+  - docker
+
 before_install:
   # Create the virtual env and lint the codebase
   - make lint VENV_EXTRA_ARGS="--system-site-packages"
-  # Install the coverage utility and codecov reporting utility
-  - python -m pip install codecov
-
-  - sudo apt-get update
-  # remove zope.interface installed from aptitude
-  - sudo apt-get purge python-zope.interface
-
-  # * Install the 'plpython' extension language
-  - sudo apt-get install postgresql-plpython-9.4
-  # * Install the 'plxslt' extension language
-  - sudo apt-get install libxml2-dev libxslt-dev postgresql-server-dev-9.4
-  - git clone https://github.com/petere/plxslt.git
-  - cd plxslt && sudo make && sudo make install && cd ..
-  # * Install session_exec
-  - git clone https://github.com/okbob/session_exec
-  - cd session_exec && make USE_PGXS=1 -e && sudo make USE_PGXS=1 -e install && cd ..
-  # * Install rhaptos.cnxmlutils
-  # - git clone https://github.com/Connexions/rhaptos.cnxmlutils.git
-  # - cd rhaptos.cnxmlutils && python setup.py install && cd ..
-before_script:
-  # Set up postgres roles
-  - sudo -u postgres psql -d postgres -c "CREATE USER tester WITH SUPERUSER PASSWORD 'tester';"
-  # Set up the database
-  - sudo -u postgres createdb -O tester testing
+  # # Install the coverage utility and codecov reporting utility
+  # - python -m pip install codecov
 script:
   # This is the same as `python setup.py test` with a coverage wrapper.
   - make tests
-after_success:
-  # Report test coverage to codecov.io
-  - codecov
+# XXX We'll bring this back later...
+# after_success:
+#   # Report test coverage to codecov.io
+#   - codecov
 notifications:
   email: false
