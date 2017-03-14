@@ -93,6 +93,7 @@ help-tests :
 	@echo "Where <VAR> could be:"  # alphbetical please
 	@echo "  * TESTS -- specify the test to run (default: '$(TESTS)')"
 	@echo "  * TESTS_EXTRA_ARGS -- extra arguments to give pytest (default: '$(TESTS_EXTRA_ARGS)')"
+	@echo "    (see also setup.cfg's pytest configuration)"
 
 tests : .state/env/pyvenv.cfg
 	$(BINDIR)/python -m pytest $(TESTS_EXTRA_ARGS) $(TESTS)
