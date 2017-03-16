@@ -6,3 +6,4 @@ set -x
 #   - Let nothing go unnoticed by using `--strict`
 #   - The pytest coverage and verbosity options are configured in setup.cfg
 python -m pytest --strict $@
+python -m coverage html
