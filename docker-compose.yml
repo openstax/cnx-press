@@ -2,6 +2,10 @@ version: '2'
 services:
   app:
     build: .
+    volumes:
+      - ./docs:/app/docs:z
+      - ./press:/app/press:z
+      - ./htmlcov:/app/htmlcov:z
   web:
     extends:
       service: app
