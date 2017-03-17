@@ -1,4 +1,5 @@
-BINDIR = $(PWD)/.state/env/bin
+STATEDIR = $(PWD)/.state
+BINDIR = $(STATEDIR)/env/bin
 
 # Short descriptions for commands (var format _SHORT_DESC_<cmd>)
 _SHORT_DESC_BUILD := "Build the app for dev and/or deployment"
@@ -19,10 +20,10 @@ default : help
 _REQUIREMENTS_FILES = requirements/main.txt requirements/docs.txt requirements/tests.txt requirements/lint.txt
 VENV_EXTRA_ARGS =
 
-.state/env/pyvenv.cfg : $(_REQUIREMENTS_FILES)
+$(STATEDIR)/env/pyvenv.cfg : $(_REQUIREMENTS_FILES)
 	# Create our Python 3 virtual environment
-	rm -rf .state/env
-	python3 -m venv $(VENV_EXTRA_ARGS) .state/env
+	rm -rf $(STATEDIR)/env
+	python3 -m venv $(VENV_EXTRA_ARGS) $(STATEDIR)/env
 
 	# Upgrade tooling requirements
 	$(BINDIR)/python -m pip install --upgrade pip setuptools wheel
@@ -30,13 +31,13 @@ VENV_EXTRA_ARGS =
 	# Install requirements
 	$(BINDIR)/python -m pip install $(foreach req,$(_REQUIREMENTS_FILES),-r $(req))
 
-.state/docker-build: Dockerfile requirements/main.txt requirements/deploy.txt
+$(STATEDIR)/docker-build: Dockerfile requirements/main.txt requirements/deploy.txt
 	# Build our docker container(s) for this project.
 	docker-compose build
 
 	# Mark the state so we don't rebuild this needlessly.
-	mkdir -p .state
-	touch .state/docker-build
+	mkdir -p $(STATEDIR)
+	touch $(STATEDIR)/docker-build
 
 # /Helpers
 
@@ -75,7 +76,7 @@ help-pyenv :
 	@echo "Where <VAR> could be:"  # alphbetical please
 	@echo "  * VENV_EXTRA_ARGS -- extra arguments to give venv (default: '$(VENV_EXTRA_ARGS)')"
 
-pyenv : .state/env/pyvenv.cfg
+pyenv : $(STATEDIR)/env/pyvenv.cfg
 
 # /Pyenv
 
@@ -128,7 +129,7 @@ help-docs :
 	@echo "${_SHORT_DESC_DOCS}"
 	@echo "Usage: make docs"
 
-docs : .state/env/pyvenv.cfg
+docs : $(STATEDIR)/env/pyvenv.cfg
 	$(MAKE) -C docs/ doctest SPHINXOPTS="-W" SPHINXBUILD="$(BINDIR)/sphinx-build"
 	$(MAKE) -C docs/ html SPHINXOPTS="-W" SPHINXBUILD="$(BINDIR)/sphinx-build"
 
@@ -142,7 +143,7 @@ help-lint :
 	@echo "${_SHORT_DESC_LINT}"
 	@echo "Usage: make lint"
 
-lint : .state/env/pyvenv.cfg setup.cfg
+lint : $(STATEDIR)/env/pyvenv.cfg setup.cfg
 	$(BINDIR)/python -m flake8 .
 	@echo '====  ====  ====  ====  ====  ====  ====  ====  ====  ===='
 	$(BINDIR)/python -m doc8.main README.rst docs/
@@ -158,14 +159,14 @@ help-build :
 	@echo "Usage: make build"
 
 build:
-	# This is duplicate of .state/docker-build to force the build.
+	# This is duplicate of $(STATEDIR)/docker-build to force the build.
 
 	# Build our docker container(s) for this project.
 	docker-compose build
 
 	# Mark the state so we don't rebuild this needlessly.
-	mkdir -p .state
-	touch .state/docker-build
+	mkdir -p $(STATEDIR)
+	touch $(STATEDIR)/docker-build
 
 # /Build
 
@@ -178,7 +179,7 @@ help-serve :
 	@echo "${_SHORT_DESC_SERVE}"
 	@echo "Usage: make serve"
 
-serve: .state/docker-build
+serve: $(STATEDIR)/docker-build
 	docker-compose up
 
 # /Serve
