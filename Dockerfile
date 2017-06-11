@@ -21,7 +21,7 @@ COPY requirements /tmp/requirements
 # Install Python Dependencies
 RUN set -x \
     && pip install -U pip setuptools wheel \
-    && pip install -r /tmp/requirements/tests.txt \
+    && pip install -r /tmp/requirements/test.txt \
     && pip install -r /tmp/requirements/deploy.txt \
                    -r /tmp/requirements/main.txt \
     && find /usr/local -type f -name '*.pyc' -name '*.pyo' -delete \

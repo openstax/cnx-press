@@ -10,7 +10,7 @@ before_install:
   # - python -m pip install codecov
 script:
   # This is the same as `python setup.py test` with a coverage wrapper.
-  - make tests
+  - make test
 # XXX We'll bring this back later...
 # after_success:
 #   # Report test coverage to codecov.io

@@ -7,7 +7,7 @@ _SHORT_DESC_DOCS := "Build docs"
 _SHORT_DESC_LINT := "Run linting tools on the codebase"
 _SHORT_DESC_PYENV := "Set up the python environment"
 _SHORT_DESC_SERVE := "Serve the app"
-_SHORT_DESC_TESTS := "Run the tests"
+_SHORT_DESC_TEST := "Run the tests"
 
 default : help
 	@echo "You must specify a command"
@@ -17,7 +17,7 @@ default : help
 #  Helpers
 # ###
 
-_REQUIREMENTS_FILES = requirements/main.txt requirements/docs.txt requirements/tests.txt requirements/lint.txt
+_REQUIREMENTS_FILES = requirements/main.txt requirements/docs.txt requirements/test.txt requirements/lint.txt
 VENV_EXTRA_ARGS =
 
 $(STATEDIR)/env/pyvenv.cfg : $(_REQUIREMENTS_FILES)
@@ -56,7 +56,7 @@ help :
 	@echo "  * help-<cmd> -- for more info"
 	@echo "  * lint -- ${_SHORT_DESC_LINT}"
 	@echo "  * pyenv -- ${_SHORT_DESC_PYENV}"
-	@echo "  * tests -- ${_SHORT_DESC_TESTS}"
+	@echo "  * test -- ${_SHORT_DESC_TEST}"
 	@echo "  * serve -- ${_SHORT_DESC_SERVE}"
 	@echo "  * version -- Print the version"
 	@echo ""
@@ -81,25 +81,25 @@ pyenv : $(STATEDIR)/env/pyvenv.cfg
 # /Pyenv
 
 # ###
-#  Tests
+#  Test
 # ###
 
-TESTS =
-TESTS_EXTRA_ARGS =
+TEST =
+TEST_EXTRA_ARGS =
 
-help-tests :
-	@echo "${_SHORT_DESC_TESTS}"
-	@echo "Usage: make tests [<VAR>=<val>, ...]"
+help-test :
+	@echo "${_SHORT_DESC_TEST}"
+	@echo "Usage: make test [<VAR>=<val>, ...]"
 	@echo ""
 	@echo "Where <VAR> could be:"  # alphbetical please
-	@echo "  * TESTS -- specify the test to run (default: '$(TESTS)')"
-	@echo "  * TESTS_EXTRA_ARGS -- extra arguments to give pytest (default: '$(TESTS_EXTRA_ARGS)')"
+	@echo "  * TEST -- specify the test to run (default: '$(TEST)')"
+	@echo "  * TEST_EXTRA_ARGS -- extra arguments to give pytest (default: '$(TEST_EXTRA_ARGS)')"
 	@echo "    (see also setup.cfg's pytest configuration)"
 
-tests :
-	docker-compose run web bin/test $(TESTS_EXTRA_ARGS) $(TESTS)
+test :
+	docker-compose run web bin/test $(TEST_EXTRA_ARGS) $(TEST)
 
-# /Tests
+# /Test
 
 # ###
 #  Version
