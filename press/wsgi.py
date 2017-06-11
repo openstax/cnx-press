@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
-from .main import make_app
+from .main import make_wsgi_app
 
-app = make_app()
+app = make_wsgi_app()
