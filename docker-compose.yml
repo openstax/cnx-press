@@ -5,6 +5,7 @@ services:
     volumes:
       - ./docs:/app/docs:z
       - ./press:/app/press:z
+      - ./tests:/app/tests:z
       - ./htmlcov:/app/htmlcov:z
   web:
     extends:
