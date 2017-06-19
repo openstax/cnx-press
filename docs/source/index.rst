@@ -36,6 +36,7 @@ However the HTTP API will change to adapt to changes and the feature timeline.
    :maxdepth: 2
    :caption: Contents:
 
+   config.rst
 
 
 Indices and tables
