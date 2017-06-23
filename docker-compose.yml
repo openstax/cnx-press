@@ -1,5 +1,6 @@
 version: '2'
 services:
+  # Our services:
   app:
     build: .
     volumes:
@@ -7,6 +8,9 @@ services:
       - ./press:/app/press:z
       - ./tests:/app/tests:z
       - ./htmlcov:/app/htmlcov:z
+      - ./var:/app/var:z
+    environment:
+      - SHARED_DIR=/app/var
   web:
     extends:
       service: app
