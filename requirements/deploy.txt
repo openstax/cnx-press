@@ -1,2 +1,2 @@
 # The project's deployment dependencies...
-gunicorn
+gunicorn==19.7.1
