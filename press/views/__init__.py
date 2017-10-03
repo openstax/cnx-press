@@ -9,6 +9,13 @@ def includeme(config):
     add_route = config.add_route
     add_route('ping', '/ping')
 
+    add_route('api.v1.versioned_content', '/content/{id}/{ver}')
+
+    add_route('api.v2.contents', '/contents/{ident_hash}')
+    add_route('api.v2.resources', '/resources/{hash}')
+
+    add_route('api.v3.publications', '/api/v3/publish')
+
     s = config.registry.settings
     s['pyramid_swagger.exclude_paths'] = [
         '^/api-docs/?',
