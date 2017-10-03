@@ -1,0 +1,54 @@
+import logging
+import zipfile
+
+from litezip import parse_litezip
+from pyramid.view import view_config
+
+from ..legacy_publishing import publish_litezip
+from ..publishing import (
+    expand_zip,
+    persist_file_to_filesystem,
+)
+
+
+@view_config(route_name='api.v3.publications', request_method=['POST'],
+             renderer='json')
+def publish(request):
+    uploaded_file = request.swagger_data['file']
+    # TODO Check if the 'publisher' is an authenticated user.
+    #      But not that they have rights to publish,
+    #      that would be done in the processing of the publication request.
+    # FIXME The publisher info should be coming out of the Session info.
+    publisher = request.swagger_data['publisher']
+    message = request.swagger_data['message']
+
+    # TODO Check upload size... HTTP 413
+
+    # Check if it's a valid zipfile.
+    if not zipfile._check_zipfile(uploaded_file):
+        request.response.status = 400
+        return {'messages': [
+            {'id': 1,
+             'message': 'The given file is not a valid zip formatted file.'},
+        ]}
+    # Reset the file to the start.
+    uploaded_file.seek(0)
+
+    upload_filepath = persist_file_to_filesystem(uploaded_file)
+    logging.debug('write upload to: {}'.format(upload_filepath))
+    litezip_dir = expand_zip(upload_filepath)
+
+    litezip_struct = parse_litezip(litezip_dir)
+    id_mapping = publish_litezip(litezip_struct, (publisher, message),
+                                 request.registry)
+
+    resp_data = []
+    for src_id, (id, ver) in id_mapping.items():
+        resp_data.append({
+            'source_id': src_id,
+            'id': id,
+            'version': ver,
+            'url': request.route_url('api.v1.versioned_content',
+                                     id=id, ver=ver),
+        })
+    return resp_data
