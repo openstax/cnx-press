@@ -1,0 +1,830 @@
+swagger: '2.0'
+info:
+  description: >-
+    This server contains educational resources that can be accessed freely by
+    anyone.  You can find out more about OpenStax Connexions (CNX) at
+    [https://openstax.org](https://openstax.org).
+  version: 3.0.0
+  title: CNX API
+  termsOfService: 'http://cnx.org/api-docs/terms/'
+  contact:
+    email: api@cnx.org
+  license:
+    name: GNU AGPL
+    url: 'https://www.gnu.org/licenses/agpl.html'
+host: archive.cnx.org
+schemes:
+  - https
+tags:
+  # area tags
+  - name: content
+    description: >-
+      These provide access to content.
+  - name: resource
+    description: >-
+      These provide access to content resources.
+  - name: export
+    description: >-
+      These provide access to content exports.
+  - name: search
+    description: >-
+      These allow one to search for content.
+  - name: system
+    description: >-
+      These provide information about the system or application as a whole
+  # purpose tags
+  - name: redirect
+    description: >-
+      These are routes that only produce redirection
+  - name: convenience
+    description: >-
+      These are routes that are convenient for developer usage
+      from within the browser. As such, they do not have an operationId
+      because they are meant only for use within the browser
+      rather than as actual API usage.
+paths:
+  '/contents/{id}':
+    get:
+      summary: Retrieves content from the repository
+      description: ''
+      operationId: getContentById
+      produces:
+        - text/html
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: ID of content to return
+          required: true
+          type: string
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            $ref: "#/definitions/ContentResponse"
+        '404':
+          description: Content not found
+      tags:
+        - content
+  '/contents/{id}.html':
+    get:
+      summary: Retrieves content from the repository as HTML
+      description: ''
+      produces:
+        - text/html
+      parameters:
+        - name: id
+          in: path
+          description: ID of content to return
+          required: true
+          type: string
+      responses:
+        '200':
+          description: successful operation
+        '404':
+          description: Content not found
+      tags:
+        - convenience
+        - content
+  '/contents/{id}/{filename}.html':
+    get:
+      summary: Retrieves content from the repository as HTML
+      description: ''
+      produces:
+        - text/html
+      parameters:
+        - name: id
+          in: path
+          description: ID of content to return
+          required: true
+          type: string
+        - name: filename
+          in: path
+          description: Optional filename for the content
+          required: true
+          type: string
+      responses:
+        '200':
+          description: successful operation
+        '404':
+          description: Content not found
+      tags:
+        - convenience
+        - content
+  '/contents/{id}.json':
+    get:
+      summary: Retrieves content from the repository
+      description: ''
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: ID of content to return
+          required: true
+          type: string
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            $ref: "#/definitions/ContentResponse"
+        '404':
+          description: Content not found
+      tags:
+        - convenience
+        - content
+  '/contents/{id}/{filename}.json':
+    get:
+      summary: Retrieves content from the repository
+      description: ''
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: ID of content to return
+          required: true
+          type: string
+        - name: filename
+          in: path
+          description: Optional filename for the content
+          required: true
+          type: string
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            $ref: "#/definitions/ContentResponse"
+        '404':
+          description: Content not found
+      tags:
+        - convenience
+        - content
+  '/resources/{id}':
+    get:
+      summary: Retrieves file resources
+      description: ''
+      produces:
+        - application/octet-stream
+      parameters:
+        - name: id
+          in: path
+          description: ID of the resource (aka SHA)
+          required: true
+          type: string
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Resource not found
+      tags:
+        - resource
+  '/resources/{id}/{filename}':
+    get:
+      summary: Retrieves file resources
+      description: ''
+      produces:
+        - application/octet-stream
+      parameters:
+        - name: id
+          in: path
+          description: ID of the resource (aka SHA)
+          required: true
+          type: string
+        - name: filename
+          in: path
+          description: optional filename of the resource
+          required: true
+          type: string
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Resource not found
+      tags:
+        - convenience
+        - resource
+  '/exports/{id}.{type}':
+    get:
+      summary: Retrieves a content export file for the requested type
+      description: ''
+      operationId: getExportByIdAndType
+      produces:
+        - application/octet-stream
+      parameters:
+        - name: id
+          in: path
+          description: ID of content to return
+          required: true
+          type: string
+        - name: type
+          in: path
+          description: The export file type
+          required: true
+          type: string
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            type: file
+        '404':
+          description: Resource not found
+      tags:
+        - export
+  '/exports/{id}.{type}/{filename}':
+    get:
+      summary: Retrieves a content export file for the requested type
+      description: ''
+      produces:
+        - application/octet-stream
+      parameters:
+        - name: id
+          in: path
+          description: ID of content to return
+          required: true
+          type: string
+        - name: type
+          in: path
+          description: The export file type
+          required: true
+          type: string
+        - name: filename
+          in: path
+          description: Optional filename for the content
+          required: true
+          type: string
+      responses:
+        '200':
+          description: successful operation
+        '404':
+          description: Resource not found
+      tags:
+        - convenience
+        - export
+  '/extras/{id}':
+    get:
+      summary: Retrieves extra information asociated with the content
+      description: ''
+      operationId: getExtraInfoById
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: ID of content to return
+          required: true
+          type: string
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              isLatest:
+                type: boolean
+              downloads:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    created:
+                      type: string
+                      x-nullable: true
+                      example: "2014-07-16T09:36:37-05:00"
+                    format:
+                      type: string
+                      example: "PDF"
+                    filename:
+                      type: string
+                      example: "preface-fast-fourier-transforms-10.pdf"
+                    state:
+                      type: string
+                      enum:
+                        - "good"
+                        - "missing"
+                    details:
+                      type: string
+                    path:
+                      type: string
+                      description: URL path to the export file
+                      example: "/exports/fb55ec78-f907-4422-aa37-0d6b501b03b6@10.pdf/preface-fast-fourier-transforms-10.pdf"
+                    size:
+                      type: integer
+              state:
+                type: string
+              canPublish:
+                type: array
+                items:
+                  type: string
+              books:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    authors:
+                      type: array
+                      items:
+                        type: string
+                    ident_hash:
+                      type: string
+                    title:
+                      type: string
+        '404':
+          description: Content not found
+      tags:
+        - content
+  /search:
+    get:
+      summary: Search the repository for content
+      description: ''
+      operationId: search
+      produces:
+        - application/json
+      parameters:
+        - name: q
+          in: query
+          description: A space separated string of search terms
+          type: string
+        - name: t
+          in: query
+          description: The type of search operator to use between terms
+          type: string
+          enum:
+            - "OR"
+            - "AND"
+            - "weakAND"
+        - name: per_page
+          in: query
+          type: string
+          description: The number of results per page
+          type: string
+        - name: page
+          in: query
+          description: The page number for a sequence of results
+          type: string
+        - name: nocache
+          in: query
+          type: string
+          # FIXME Why does this check for the string 'true'?
+          enum:
+            - "true"
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              query:
+                type: object
+                properties:
+                  sort:
+                    type: array
+                    items:
+                      type: string
+                      enum:
+                        - "popularity"
+                        - "pubDate"
+                        - "version"
+                  per_page:
+                    type: integer
+                  page:
+                    type: integer
+                  limits:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        tag:
+                          type: string
+                        value:
+                          type: string
+                        index:
+                          type: integer
+              results:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        bodySnippet:
+                          type: string
+                          x-nullable: true
+                        summarySnippet:
+                          type: string
+                          x-nullable: true
+                        pubDate:
+                          type: string
+                          example: "2017-05-31T16:01:51Z"
+                        title:
+                          type: string
+                        keywords:
+                          type: array
+                          items:
+                            type: string
+                        authors:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                                description: "The author's ID"
+                              index:
+                                type: integer
+                                description: "The index of where to find the author's full details in the root object's 'auxiliary' value."
+                        id:
+                          type: string
+                        mediaType:
+                          $ref: "#/definitions/MediaType"
+                  total:
+                    type: integer
+                  auxiliary:
+                    type: object
+                    properties:
+                      types:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: "media-type for this type"
+                            name:
+                              type: string
+                              description: "human readable name for this type"
+                      authors:
+                        $ref: "#/definitions/PersonList"
+                  limits:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        tag:
+                          type: string
+                        values:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              count:
+                                type: integer
+                              index:
+                                type: integer
+                                description: "Only present when the value is an author ID"
+                              value:
+                                type: string
+      tags:
+        - search
+  '/search/{id}':
+    get:
+      summary: Search the repository for content
+      description: ''
+      operationId: searchInBook
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: ID of content to search within
+          required: true
+          type: string
+      responses:
+        '200':
+          description: successful operation
+      tags:
+        - content
+        - search
+  /extras:
+    get:
+      summary: Retrieves extra information about the repository of content
+      description: ''
+      operationId: getExtras
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            type: object
+            properties:
+              featuredLinks:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    version:
+                      type: string
+                    legacy_id:
+                      type: string
+                    legacy_version:
+                      type: string
+                    title:
+                      type: string
+                    abstract:
+                      type: string
+                      x-nullable: true
+                    resourcePath:
+                      type: string
+                    type:
+                      type: string
+                      enum:
+                        - "CNX Featured"
+                        - "OpenStax Featured"
+              messages:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      x-nullable: true
+                    priority:
+                      type: integer
+                    message:
+                      type: string
+                    starts:
+                      type: string
+                    ends:
+                      type: string
+              licenses:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    url:
+                      type: string
+                    code:
+                      type: string
+                    name:
+                      type: string
+                    version:
+                      type: string
+                    isValidForPublication:
+                      type: boolean
+              subjects:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+                    count:
+                      type: object
+                      properties:
+                        # allow these to be null for dev apps
+                        collection:
+                          type: integer
+                          x-nullable: true
+                        module:
+                          type: integer
+                          x-nullable: true
+              # FIXME I'm not sure one can represent an array of array that is of mixed types.
+              # languages_and_count:
+              #   type: array
+      tags:
+        - system
+  '/content/{id}':
+    get:
+      summary: Retrieves content from the repository
+      deprecated: true
+      description: ''
+      parameters:
+        - name: id
+          in: path
+          description: legacy ID for content
+          required: true
+          type: string
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            $ref: "#/definitions/ContentResponse"
+        '404':
+          description: Not found
+      tags:
+        - content
+  '/content/{id}/{ver}':
+    get:
+      summary: Retrieves content from the repository
+      deprecated: true
+      description: ''
+      parameters:
+        - name: id
+          in: path
+          description: legacy ID for content
+          required: true
+          type: string
+        - name: ver
+          in: path
+          description: legacy version for content
+          required: true
+          type: string
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            $ref: "#/definitions/ContentResponse"
+        '404':
+          description: Not found
+      tags:
+        - content
+  '/content/{id}/{ver}/{filename}':
+    get:
+      summary: Retrieves a file from the repository
+      deprecated: true
+      description: ''
+      parameters:
+        - name: id
+          in: path
+          description: legacy ID for content
+          required: true
+          type: string
+        - name: ver
+          in: path
+          description: legacy version for content
+          required: true
+          type: string
+        - name: filename
+          in: path
+          description: Optional filename for the content
+          required: true
+          type: string
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            type: file
+        '404':
+          description: Not found
+      tags:
+        - content
+definitions:
+  MediaType:
+    type: string
+    enum:
+      - "application/vnd.org.cnx.module"
+      - "application/vnd.org.cnx.composite-module"
+      - "application/vnd.org.cnx.collection"
+      - "application/vnd.org.cnx.subcollection"
+      - "application/vnd.org.cnx.folder"
+  Person:
+    type: object
+    properties:
+      surname:
+        type: string
+      suffix:
+        type: string
+        x-nullable: true
+      firstname:
+        type: string
+      title:
+        type: string
+        x-nullable: true
+      fullname:
+        type: string
+      id:
+        type: string
+  PersonList:
+    type: array
+    items:
+      $ref: "#/definitions/Person"
+  ContentResponse:
+    type: object
+    properties:
+      googleAnalytics:
+        type: string
+        example: "UA-10730853-18"
+      version:
+        type: string
+      submitlog:
+        type: string
+      abstract:
+        type: string
+      revised:
+        type: string
+      printStyle:
+        type: string
+        x-nullable: true
+      # FIXME What is roles?
+      ##roles: null
+      keywords:
+        type: array
+        items:
+          type: string
+      id:
+        type: string
+        example: "fb55ec78-f907-4422-aa37-0d6b501b03b6"
+      title:
+        type: string
+        example: "Preface: Fast Fourier Transforms"
+      mediaType:
+        $ref: "#/definitions/MediaType"
+      content:
+        type: string
+      tree:
+        type: object
+      subjects:
+        type: array
+        items:
+          type: string
+          enum:
+            - "Arts"
+            - "Business"
+            - "Humanities"
+            - "Mathematics and Statistics"
+            - "Science and Technology"
+            - "Social Sciences"
+      legacy_id:
+        type: string
+      legacy_version:
+        type: string
+      resources:
+        type: array
+        items:
+          type: object
+          properties:
+            media_type:
+              type: string
+            id:
+              type: string
+            filename:
+              type: string
+      publishers:
+        $ref: "#/definitions/PersonList"
+      authors:
+        $ref: "#/definitions/PersonList"
+      licensors:
+        $ref: "#/definitions/PersonList"
+      submitter:
+        $ref: "#/definitions/Person"
+      parent:
+        type: object
+        # TODO This is kind of a strange object
+        # description: ???
+      parentTitle:
+        type: string
+        # description: ???
+        x-nullable: true
+      parentVersion:
+        type: string
+        # description: ???
+        x-nullable: true
+      parentId:
+        type: string
+        # description: ???
+        x-nullable: true
+      parentAuthors:
+        $ref: "#/definitions/PersonList"
+      stateid:
+        type: integer
+      shortId:
+        type: string
+      language:
+        type: string
+      license:
+        type: object
+        properties:
+          url:
+            type: string
+          code:
+            type: string
+          name:
+            type: string
+          version:
+            type: string
+      created:
+        type: string
+        example: "2008-05-22T20:33:13Z"
+      docType:
+        type: string
+        # description: ???
+        x-nullable: true
+      buyLink:
+        type: string
+        x-nullable: true
+      history:
+        type: array
+        items:
+          type: object
+          properties:
+            changes:
+              type: string
+              description: submit log for this revision
+            version:
+              type: string
+              description: version of this revision
+            revised:
+              type: string
+              description: datetime of the revision
+            publisher:
+              $ref: "#/definitions/Person"

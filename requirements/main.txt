@@ -7,3 +7,5 @@ cnx-db==1.4.0
 cnx-litezip==1.3.0
 
 pyramid==1.9.1
+
+pyramid_swagger==2.6.0
