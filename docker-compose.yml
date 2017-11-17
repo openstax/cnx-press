@@ -14,6 +14,6 @@ services:
   web:
     extends:
       service: app
-    command: gunicorn -b 0.0.0.0:6543 -n press --reload press.wsgi:app
+    command: gunicorn -b 0.0.0.0:6543 -n press --reload wsgi:app
     ports:
       - "80:6543"
