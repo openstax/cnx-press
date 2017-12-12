@@ -1,9 +1,12 @@
+dist: trusty
 sudo: required
 
 services:
   - docker
 
 before_install:
+  # Install python3 venv to enable the linting venv
+  - sudo apt-get install python3.4-venv
   # Create the virtual env and lint the codebase
   - make lint VENV_EXTRA_ARGS="--system-site-packages"
   # # Install the coverage utility and codecov reporting utility
