@@ -97,7 +97,7 @@ help-test :
 	@echo "    (see also setup.cfg's pytest configuration)"
 
 test :
-	docker-compose run web bin/test $(TEST_EXTRA_ARGS) $(TEST)
+	docker-compose run --rm web bin/test $(TEST_EXTRA_ARGS) $(TEST)
 
 # /Test
 
