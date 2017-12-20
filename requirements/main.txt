@@ -1,2 +1,5 @@
 # The project's dependencies...
+
+cnx-litezip==1.3.0
+
 pyramid==1.9.1
