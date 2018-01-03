@@ -5,7 +5,6 @@ import tempfile
 
 import pytest
 from pyramid.settings import asbool
-from webtest import TestApp
 
 
 def _maybe_set(env_var, value):
@@ -45,11 +44,3 @@ def env_vars(keep_shared_directory):
             else:
                 f.unlink()
     shutil.rmtree(temp_shared_directory)
-
-
-@pytest.fixture
-def webapp(env_vars):
-    """Creates a WebTest application for functional testing."""
-    from press.main import make_wsgi_app
-    app = make_wsgi_app()
-    return TestApp(app)
