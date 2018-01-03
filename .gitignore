@@ -9,6 +9,7 @@ __pycache__
 /*.log
 .cache
 .state
+docker-compose.override.yml
 
 # Build file #
 ##############

@@ -1,4 +1,6 @@
 version: '2'
+# If you have modifications, put those in docker-compose.override.yml
+# See also, https://docs.docker.com/compose/extends/#multiple-compose-files
 services:
   # Our services:
   app:
