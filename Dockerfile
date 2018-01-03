@@ -16,6 +16,11 @@ RUN set -x \
     && apt-get update \
     && apt-get install inotify-tools build-essential --no-install-recommends -y
 
+# Needed for testing
+RUN set -x \
+    && apt-get update \
+    && apt-get install wamerican --no-install-recommends -y
+
 COPY requirements /tmp/requirements
 
 # Install Python Dependencies

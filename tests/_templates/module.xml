@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<document xmlns="http://cnx.rice.edu/cnxml" xmlns:md="http://cnx.rice.edu/mdml" xmlns:bib="http://bibtexml.sf.net/" xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:q="http://cnx.rice.edu/qml/1.0" id="new" cnxml-version="0.7" module-id="new">
+
+<title>{{ metadata.title }}</title>
+<metadata xmlns:md="http://cnx.rice.edu/mdml"
+          mdml-version="0.5">
+  <md:repository>http://cnx.org/content</md:repository>
+  <md:content-url>http://cnx.org/content/m_____/latest</md:content-url>
+  <md:content-id>{{ metadata.id and metadata.id or '' }}</md:content-id>
+  <md:title>{{ metadata.title }}</md:title>
+  <md:version>{{ metadata.version }}</md:version>
+  <md:created>{{ metadata.created }}</md:created>
+  <md:revised>{{ metadata.revised }}</md:revised>
+  <md:actors>
+    {# Currently these values are ignored #}
+  </md:actors>
+  <md:roles>
+    <md:role type="author">{% for r in metadata.authors -%}{{ r }}{{ ' ' }}{%- endfor %}</md:role>
+    <md:role type="maintainer">{% for r in metadata.maintainers -%}{{ r }}{{ ' ' }}{%- endfor %}</md:role>
+    <md:role type="licensor">{% for r in metadata.licensors -%}{{ r }}{{ ' ' }}{%- endfor %}</md:role>
+  </md:roles>
+  <md:license url="{{ metadata.license_url }}" />
+  <md:keywordlist>
+    {%- for keyword in metadata.keywords %}
+    <md:keyword>{{ keyword }}</md:keyword>
+    {%- endfor %}
+  </md:keywordlist>
+  <md:subjectlist>
+    {%- for subject in metadata.subjects %}
+    <md:subject>{{ subject }}</md:subject>
+    {%- endfor %}
+  </md:subjectlist>
+  <md:abstract>{{ metadata.abstract }}</md:abstract>
+  <md:language>en</md:language>
+</metadata>
+
+<content>
+
+{# TODO Update this resource stanza when resources are actually being used #}
+{#      In the mean time this is just a place holder #}
+{% for resource in resources -%}
+<figure id="">
+  <title>...</title>
+  <media id="eip-id#####" alt="...">
+    <image mime-type="image/png" src="filename-here.png"/>
+  </media>
+</figure>
+{%- endfor %}
+
+<para id="eip-254">This is a test document created for passing tests.</para>
+
+{% if terms %}
+<para id="eip-128">{{ terms }}</para>
+{% endif %}
+
+</content>
+</document>
