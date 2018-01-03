@@ -13,9 +13,22 @@ services:
       - ./var:/app/var:z
     environment:
       - SHARED_DIR=/app/var
+  db:
+    image: openstax/cnx-db:1.4.0
+    ports:
+      - "5432:5432"
+    environment:
+      - DB_URL=postgresql://rhaptos@/repository
+      - DB_SUPER_URL=postgresql://rhaptos_admin@/repository
   web:
     extends:
       service: app
     command: gunicorn -b 0.0.0.0:6543 -n press --reload wsgi:app
     ports:
       - "80:6543"
+    links:
+      - db
+    environment:
+      - SHARED_DIR=/app/var
+      - DB_URL=postgresql://rhaptos@db/repository
+      - DB_SUPER_URL=postgresql://rhaptos_admin@db/repository

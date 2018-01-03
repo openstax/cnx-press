@@ -1,5 +1,9 @@
 # The project's dependencies...
 
+# If this pinning changes, remember to also change the pinning of the
+# cnx-db docker container image.
+cnx-db==1.4.0
+
 cnx-litezip==1.3.0
 
 pyramid==1.9.1

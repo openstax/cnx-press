@@ -29,6 +29,7 @@ def configure(settings=None):
     config = Configurator(settings=settings)
     config.include('.views')
 
+    config.include('cnxdb.contrib.pyramid')
     config.scan()
     return config
 
