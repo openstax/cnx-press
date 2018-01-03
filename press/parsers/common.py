@@ -11,6 +11,14 @@ __all__ = (
 )
 
 
+def _maybe(l):
+    """Grab the first value if it exists."""
+    try:
+        return l[0]
+    except IndexError:
+        return None
+
+
 def make_elm_tree(model):
     """Makes an ElementTree from a litezip model (Collection or Module)."""
     with model.file.open() as fb:
@@ -29,7 +37,7 @@ def parse_common_properties(elm_tree):
     role_xpath = lambda xp: tuple(xpath(xp)[0].split())  # noqa: E731
 
     props = {
-        'id': xpath('//md:content-id/text()')[0],
+        'id': _maybe(xpath('//md:content-id/text()')),
         'version': xpath('//md:version/text()')[0],
         'created': xpath('//md:created/text()')[0],
         'revised': xpath('//md:revised/text()')[0],
