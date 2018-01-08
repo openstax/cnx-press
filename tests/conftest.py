@@ -7,7 +7,10 @@ import tempfile
 import jinja2
 import pytest
 from litezip import Module
+from litezip.main import COLLECTION_NSMAP
+from lxml import etree
 from pyramid.settings import asbool
+from sqlalchemy.sql import text
 
 
 TEMPLATE_DIR = pathlib.Path(__file__).parent / '_templates'
@@ -168,6 +171,9 @@ class _ContentUtil:
     def _rand_id_num(self):
         return random.randint(10000, 99999)
 
+    def randid(self, prefix='m'):
+        return '{}{}'.format(prefix, self._rand_id_num())
+
     def randword(self):
         return random.choice(self.word_catalog)
 
@@ -221,4 +227,110 @@ class _ContentUtil:
 def content_util(request):
     util = _ContentUtil()
     request.addfinalizer(util._clean_up)
+    return util
+
+
+class _PersistUtil:
+
+    def __init__(self, db_engines, db_tables, content_util):
+        self.db_engines = db_engines
+        self.db_tables = db_tables
+        self.content_util = content_util
+
+    def insert_module(self, model):
+        # This is validly used here because the tests associated with
+        # this parser functions are outside the scope of persistent
+        # actions dealing with the database.
+        from press.parsers import parse_module_metadata
+        metadata = parse_module_metadata(model)
+
+        engine = self.db_engines['common']
+        t = self.db_tables
+
+        if metadata.id is None:
+            moduleid = self.content_util.randid()
+        else:
+            moduleid = metadata.id
+
+        with engine.begin() as trans:
+            # Insert module metadata
+            result = trans.execute(t.abstracts.insert()
+                                   .values(abstract=metadata.abstract))
+            abstractid = result.inserted_primary_key[0]
+            result = trans.execute(
+                t.licenses.select()
+                .where(t.licenses.c.url == metadata.license_url))
+            licenseid = result.fetchone().licenseid
+            result = trans.execute(t.modules.insert().values(
+                moduleid=moduleid,
+                version=metadata.version,
+                portal_type='Module',
+                name=metadata.title,
+                created=metadata.created,
+                revised=metadata.revised,
+                abstractid=abstractid,
+                licenseid=licenseid,
+                doctype='',
+                submitter='user1',
+                submitlog='util inserted',
+                language=metadata.language,
+                authors=metadata.authors,
+                maintainers=metadata.maintainers,
+                licensors=metadata.licensors,
+                parent=None,
+                parentauthors=None,
+            ).returning(t.modules.c.module_ident, t.modules.c.moduleid))
+            ident, id = result.fetchone()
+
+            # Insert subjects metadata
+            stmt = (text('INSERT INTO moduletags '
+                         'SELECT :module_ident AS module_ident, tagid '
+                         'FROM tags WHERE tag = any(:subjects)')
+                    .bindparams(module_ident=ident,
+                                subjects=list(metadata.subjects)))
+            result = trans.execute(stmt)
+
+            # Insert keywords metadata
+            stmt = (text('INSERT INTO keywords (word) '
+                         'SELECT iword AS word '
+                         'FROM unnest(:keywords ::text[]) AS iword '
+                         '     LEFT JOIN keywords AS kw ON (kw.word = iword) '
+                         'WHERE kw.keywordid IS NULL')
+                    .bindparams(keywords=list(metadata.keywords)))
+            trans.execute(stmt)
+            stmt = (text('INSERT INTO modulekeywords '
+                         'SELECT :module_ident AS module_ident, keywordid '
+                         'FROM keywords WHERE word = any(:keywords)')
+                    .bindparams(module_ident=ident,
+                                keywords=list(metadata.keywords)))
+            trans.execute(stmt)
+
+            # Rewrite the content with the id
+            with model.file.open('rb') as fb:
+                xml = etree.parse(fb)
+            elm = xml.xpath('//md:content-id', namespaces=COLLECTION_NSMAP)[0]
+            elm.text = id
+            with model.file.open('wb') as fb:
+                fb.write(etree.tostring(xml))
+
+            # Insert module files (content and resources)
+            with model.file.open('rb') as fb:
+                result = trans.execute(t.files.insert().values(
+                    file=fb.read(),
+                    media_type='text/xml',
+                ))
+            fileid = result.inserted_primary_key[0]
+            result = trans.execute(t.module_files.insert().values(
+                module_ident=ident,
+                fileid=fileid,
+                filename='index.cnxml',
+            ))
+            # TODO Insert resource files (images, pdfs, etc.)
+
+        return Module(id, model.file, model.resources)
+
+
+@pytest.fixture(scope='session')
+def persist_util(request, db_engines, db_tables_session_scope, content_util):
+    util = _PersistUtil(db_engines, db_tables_session_scope, content_util)
     return util
