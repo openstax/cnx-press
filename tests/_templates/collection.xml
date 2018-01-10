@@ -1,0 +1,96 @@
+<?xml version="1.0"?>
+<col:collection xmlns="http://cnx.rice.edu/collxml"
+                xmlns:cnx="http://cnx.rice.edu/cnxml"
+                xmlns:cnxorg="http://cnx.rice.edu/system-info"
+                xmlns:md="http://cnx.rice.edu/mdml"
+                xmlns:col="http://cnx.rice.edu/collxml"
+                xmlns:cnxml="http://cnx.rice.edu/cnxml"
+                xmlns:m="http://www.w3.org/1998/Math/MathML"
+                xmlns:q="http://cnx.rice.edu/qml/1.0"
+                xmlns:xhtml="http://www.w3.org/1999/xhtml"
+                xmlns:bib="http://bibtexml.sf.net/"
+                xmlns:cc="http://web.resource.org/cc/"
+                xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+                xml:lang="en">
+  <metadata xmlns:md="http://cnx.rice.edu/mdml"
+            mdml-version="0.5">
+    <md:repository>http://cnx.org/content</md:repository>
+    <md:content-url>http://cnx.org/content/m_____/latest</md:content-url>
+    <md:content-id>{{ metadata.id and metadata.id or '' }}</md:content-id>
+    <md:title>{{ metadata.title }}</md:title>
+    <md:version>{{ metadata.version }}</md:version>
+    <md:created>{{ metadata.created }}</md:created>
+    <md:revised>{{ metadata.revised }}</md:revised>
+    <md:actors>
+      {# Currently these values are ignored #}
+    </md:actors>
+    <md:roles>
+      <md:role type="author">{% for r in metadata.authors -%}{{ r }}{{ ' ' }}{%- endfor %}</md:role>
+      <md:role type="maintainer">{% for r in metadata.maintainers -%}{{ r }}{{ ' ' }}{%- endfor %}</md:role>
+      <md:role type="licensor">{% for r in metadata.licensors -%}{{ r }}{{ ' ' }}{%- endfor %}</md:role>
+    </md:roles>
+    <md:license url="{{ metadata.license_url }}" />
+    <md:keywordlist>
+      {%- for keyword in metadata.keywords %}
+      <md:keyword>{{ keyword }}</md:keyword>
+      {%- endfor %}
+    </md:keywordlist>
+    <md:subjectlist>
+      {%- for subject in metadata.subjects %}
+      <md:subject>{{ subject }}</md:subject>
+      {%- endfor %}
+    </md:subjectlist>
+    <md:abstract>{{ metadata.abstract }}</md:abstract>
+    <md:language>en</md:language>
+  </metadata>
+
+  <col:parameters>
+    <col:param name="real-imaginary-notation" value="font"/>
+    <col:param name="and-or-notation"
+               value="propositional-logic"/>
+    <col:param name="gradient-notation" value="text"/>
+    <col:param name="mean-notation" value="bar"/>
+    <col:param name="remainder-notation" value="text"/>
+    <col:param name="conjugate-notation" value="bar"/>
+    <col:param name="imaginary-i-notation" value="i"/>
+    <col:param name="scalar-product-notation"
+               value="angle-bracket"/>
+    <col:param name="print-font-size" value="10pt"/>
+    <col:param name="curl-notation" value="text"/>
+    <col:param name="for-all-equation-layout"
+               value="symbolic"/>
+    <col:param name="vector-notation" value="bold"/>
+    <col:param name="print-paper-size" value="8.5x11"/>
+    <col:param name="print-font" value="computer-modern"/>
+    <col:param name="print-style" value="{{ metadata.print_style|default('') }}"/>
+    <col:param name="print-paragraph-spacing"
+               value="compact"/>
+  </col:parameters>
+
+  <col:content>
+    {# This assumes a single subcollection depth, because otherwise this template would need some type of 'block' setup, which would require a full jinja2 environment setup. Only take that approach if you absolutely must. #}
+
+    {% for item in tree %}
+      {% if item.contents %}
+        <col:subcollection>
+          <md:title>{{ item.title }}</md:title>
+          <col:content>
+            {% for sub_item in item.contents %}
+              <col:module document="{{ sub_item.id }}" version="{{ sub_item.version }}"
+                          repository="http://cnx.org/content"
+                          cnxorg:version-at-this-collection-version="{{ sub_item.version_at }}">
+                <md:title>{{ sub_item.title }}</md:title>
+              </col:module>
+            {% endfor %}
+          </col:content>
+        </col:subcollection>
+      {% else %}
+        <col:module document="{{ item.id }}" version="{{ item.version }}"
+                    repository="http://cnx.org/content"
+                    cnxorg:version-at-this-collection-version="{{ item.version_at }}">
+          <md:title>{{ item.title }}</md:title>
+        </col:module>
+      {% endif %}
+    {% endfor %}    
+  </col:content>
+</col:collection>

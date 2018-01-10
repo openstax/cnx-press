@@ -6,16 +6,19 @@ import tempfile
 
 import jinja2
 import pytest
-from litezip import Module
+from litezip import Collection, Module
 from litezip.main import COLLECTION_NSMAP
 from lxml import etree
 from pyramid.settings import asbool
+from recordclass import recordclass
 from sqlalchemy.sql import text
 
 
 TEMPLATE_DIR = pathlib.Path(__file__).parent / '_templates'
 with (TEMPLATE_DIR / 'module.xml').open('r') as fb:
     MODULE_DOC = fb.read()
+with (TEMPLATE_DIR / 'collection.xml').open('r') as fb:
+    COLLECTION_DOC = fb.read()
 
 
 def _maybe_set(env_var, value):
@@ -146,6 +149,18 @@ def testing(db_engines, db_tables_session_scope):
         [dict(zip(column_names, x)) for x in PERSONS])
 
 
+# ###
+#  Collection Tree models
+# ###
+SubCollection = recordclass('SubCollection',  # aka Tree Container
+                            'title contents')
+ModuleNode = recordclass('ModuleNode',  # aka Tree Node
+                         'title id version version_at module')
+
+
+# ###
+#  Content Utility
+# ###
 class _ContentUtil:
 
     _word_catalog_filepath = '/usr/share/dict/words'
@@ -177,6 +192,11 @@ class _ContentUtil:
     def randword(self):
         return random.choice(self.word_catalog)
 
+    def randtitle(self):
+        return ' '.join([self.randword(),
+                         self.randword(),
+                         self.randword()])
+
     def randperson(self):
         return random.choice(self._persons)
 
@@ -192,9 +212,7 @@ class _ContentUtil:
             'version': '1.1',
             'created': '2010/12/15 10:58:00 -0600',
             'revised': '2011/08/16 13:55:25 -0500',
-            'title': ' '.join([self.randword(),
-                               self.randword(),
-                               self.randword()]),
+            'title': self.randtitle(),
             'license_url': 'http://creativecommons.org/licenses/by-nc-sa/4.0/',
             'language': 'en',
             'authors': set([self.randperson()[0],
@@ -213,6 +231,10 @@ class _ContentUtil:
         return template.render(metadata=metadata, resources=resources,
                                terms=' '.join(terms))
 
+    def gen_colxml(self, metadata, tree):
+        template = jinja2.Template(COLLECTION_DOC)
+        return template.render(metadata=metadata, tree=tree)
+
     def gen_module(self, resources=[]):
         id = None
         module_dir = self._mkdir()
@@ -222,6 +244,89 @@ class _ContentUtil:
             fb.write(self.gen_cnxml(metadata, resources))
         return Module(id, pathlib.Path(module_filepath), resources)
 
+    def gen_collection(self, resources=[]):
+        id = None
+        dir = self._mkdir()
+        filepath = dir / 'collection.xml'
+        metadata = self.gen_module_metadata(id=id)
+        tree, modules = self.gen_collection_tree()
+        with filepath.open('w') as fb:
+            fb.write(self.gen_colxml(metadata, tree))
+        collection = Collection(id, pathlib.Path(filepath), resources)
+        return collection, tree, modules
+
+    def gen_collection_tree(self, max_depth=1, depth=0):
+        """Returns a sequence containing a dict of title and contents
+        and/or Module objects.
+
+        """
+        tree = []
+        modules = []
+        for x in range(2, 6):
+            if random.randint(1, 40) % 2 == 0 or depth == max_depth:
+                module = self.gen_module()
+                modules.append(module)
+                from press.parsers import parse_module_metadata
+                metadata = parse_module_metadata(module)
+                # The 'id' can be `None` for tests, because we don't have
+                # a way to specify something as "new" yet.
+                node = ModuleNode(id=metadata.id,
+                                  version='latest',
+                                  version_at=metadata.version,
+                                  title=metadata.title,
+                                  module=module)
+                tree.append(node)
+            else:
+                contents, additional_modules = self.gen_collection_tree(
+                    max_depth=max_depth,
+                    depth=depth + 1)
+                modules.extend(additional_modules)
+                sub_col = SubCollection(title=self.randtitle(),
+                                        contents=contents)
+                tree.append(sub_col)
+        return tree, modules
+
+    def make_tree_node_from(self, module):
+        from press.parsers import parse_module_metadata
+        metadata = parse_module_metadata(module)
+        node = ModuleNode(id=metadata.id,
+                          version='latest',
+                          version_at=metadata.version,
+                          title=metadata.title,
+                          module=module)
+        return node
+
+    def _update_collection(self, collection, tree):
+        from press.parsers import parse_collection_metadata
+        metadata = parse_collection_metadata(collection)
+        self._update_tree_contents(tree)
+        with collection.file.open('w') as fb:
+            fb.write(self.gen_colxml(metadata, tree))
+
+    def _update_tree_contents(self, tree):
+        from press.parsers import parse_module_metadata
+        for node in tree:
+            if isinstance(node, SubCollection):
+                self._update_tree_contents(node.contents)
+            else:
+                metadata = parse_module_metadata(node.module)
+                node.title = metadata.title
+                node.id = metadata.id
+                node.version_at = metadata.version
+
+    def _flatten_collection_tree_to_modules(self, tree):
+        for node in tree:
+            if isinstance(node, SubCollection):
+                contents = node.contents
+                yield from self._flatten_collection_tree_to_modules(contents)
+            else:
+                yield node.module
+
+    def rebuild_collection(self, collection, tree):
+        modules = list(self._flatten_collection_tree_to_modules(tree))
+        self._update_collection(collection, tree)
+        return collection, tree, modules
+
 
 @pytest.fixture(scope='session')
 def content_util(request):
@@ -230,6 +335,9 @@ def content_util(request):
     return util
 
 
+# ###
+#  Persistence Utility
+# ###
 class _PersistUtil:
 
     def __init__(self, db_engines, db_tables, content_util):
@@ -313,7 +421,7 @@ class _PersistUtil:
             with model.file.open('wb') as fb:
                 fb.write(etree.tostring(xml))
 
-            # Insert module files (content and resources)
+            # Insert content files
             with model.file.open('rb') as fb:
                 result = trans.execute(t.files.insert().values(
                     file=fb.read(),
@@ -328,6 +436,104 @@ class _PersistUtil:
             # TODO Insert resource files (images, pdfs, etc.)
 
         return Module(id, model.file, model.resources)
+
+    def insert_collection(self, model):
+        # This is validly used here because the tests associated with
+        # this parser functions are outside the scope of persistent
+        # actions dealing with the database.
+        from press.parsers import parse_collection_metadata
+        metadata = parse_collection_metadata(model)
+
+        engine = self.db_engines['common']
+        t = self.db_tables
+
+        if metadata.id is None:
+            moduleid = self.content_util.randid(prefix='col')
+        else:
+            moduleid = metadata.id
+
+        with engine.begin() as trans:
+            # Insert metadata
+            result = trans.execute(t.abstracts.insert()
+                                   .values(abstract=metadata.abstract))
+            abstractid = result.inserted_primary_key[0]
+            result = trans.execute(
+                t.licenses.select()
+                .where(t.licenses.c.url == metadata.license_url))
+            licenseid = result.fetchone().licenseid
+            result = trans.execute(t.modules.insert().values(
+                moduleid=moduleid,
+                version=metadata.version,
+                portal_type='Collection',
+                name=metadata.title,
+                created=metadata.created,
+                revised=metadata.revised,
+                abstractid=abstractid,
+                licenseid=licenseid,
+                doctype='',
+                submitter='user1',
+                submitlog='util inserted',
+                language=metadata.language,
+                authors=metadata.authors,
+                maintainers=metadata.maintainers,
+                licensors=metadata.licensors,
+                parent=None,
+                parentauthors=None,
+            ).returning(t.modules.c.module_ident, t.modules.c.moduleid))
+            ident, id = result.fetchone()
+            # Force this into a 'current' state. It's necessary to do this
+            # as an update, because a trigger paves over an inserted value.
+            trans.execute(
+                t.modules.update()
+                .where(t.modules.c.module_ident == ident)
+                .values(stateid=1))
+
+            # Insert subjects metadata
+            stmt = (text('INSERT INTO moduletags '
+                         'SELECT :module_ident AS module_ident, tagid '
+                         'FROM tags WHERE tag = any(:subjects)')
+                    .bindparams(module_ident=ident,
+                                subjects=list(metadata.subjects)))
+            result = trans.execute(stmt)
+
+            # Insert keywords metadata
+            stmt = (text('INSERT INTO keywords (word) '
+                         'SELECT iword AS word '
+                         'FROM unnest(:keywords ::text[]) AS iword '
+                         '     LEFT JOIN keywords AS kw ON (kw.word = iword) '
+                         'WHERE kw.keywordid IS NULL')
+                    .bindparams(keywords=list(metadata.keywords)))
+            trans.execute(stmt)
+            stmt = (text('INSERT INTO modulekeywords '
+                         'SELECT :module_ident AS module_ident, keywordid '
+                         'FROM keywords WHERE word = any(:keywords)')
+                    .bindparams(module_ident=ident,
+                                keywords=list(metadata.keywords)))
+            trans.execute(stmt)
+
+            # Rewrite the content with the id
+            with model.file.open('rb') as fb:
+                xml = etree.parse(fb)
+            elm = xml.xpath('//md:content-id', namespaces=COLLECTION_NSMAP)[0]
+            elm.text = id
+            with model.file.open('wb') as fb:
+                fb.write(etree.tostring(xml))
+
+            # Insert content files
+            with model.file.open('rb') as fb:
+                result = trans.execute(t.files.insert().values(
+                    file=fb.read(),
+                    media_type='text/xml',
+                ))
+            fileid = result.inserted_primary_key[0]
+            result = trans.execute(t.module_files.insert().values(
+                module_ident=ident,
+                fileid=fileid,
+                filename='collection.xml',
+            ))
+            # TODO Insert resource files (recipes, cover image, etc.)
+
+        return Collection(id, model.file, model.resources)
 
 
 @pytest.fixture(scope='session')
