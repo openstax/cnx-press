@@ -175,13 +175,34 @@ class _ContentUtil:
         self._created_dirs = []
 
     def _clean_up(self):
-        for dir in self._created_dirs:
+        for dir in self._created_dirs[::-1]:
             shutil.rmtree(str(dir))
 
-    def _mkdir(self):
-        dir = pathlib.Path(tempfile.mkdtemp())
+    def _mkdir(self, start_at=None):
+        if start_at is None:
+            dir = pathlib.Path(tempfile.mkdtemp())
+        else:
+            dirnames = tempfile._get_candidate_names()
+            while True:
+                dir = start_at / next(dirnames)
+                try:
+                    dir.mkdir()
+                except FileExistsError:
+                    continue
+                break
         self._created_dirs.append(dir)
         return dir
+
+    def _gen_dir(self, relative_to=None):
+        dir = None
+        if isinstance(relative_to, pathlib.Path):
+            path = relative_to
+            dir = path.is_file() and path.parent or path
+        elif isinstance(relative_to, Module):
+            dir = relative_to.file.parent.parent
+        elif isinstance(relative_to, Collection):
+            dir = relative_to.file.parent
+        return self._mkdir(start_at=dir)
 
     def _rand_id_num(self):
         return random.randint(10000, 99999)
@@ -235,27 +256,27 @@ class _ContentUtil:
         template = jinja2.Template(COLLECTION_DOC)
         return template.render(metadata=metadata, tree=tree)
 
-    def gen_module(self, resources=[]):
+    def gen_module(self, resources=[], relative_to=None):
         id = None
-        module_dir = self._mkdir()
-        module_filepath = module_dir / 'm_____.cnxml'
+        module_dir = self._gen_dir(relative_to=relative_to)
+        module_filepath = module_dir / 'index.cnxml'
         metadata = self.gen_module_metadata(id=id)
         with module_filepath.open('w') as fb:
             fb.write(self.gen_cnxml(metadata, resources))
         return Module(id, pathlib.Path(module_filepath), resources)
 
-    def gen_collection(self, resources=[]):
+    def gen_collection(self, resources=[], relative_to=None):
         id = None
-        dir = self._mkdir()
+        relative_to = dir = self._gen_dir(relative_to=relative_to)
         filepath = dir / 'collection.xml'
         metadata = self.gen_module_metadata(id=id)
-        tree, modules = self.gen_collection_tree()
+        tree, modules = self.gen_collection_tree(relative_to=relative_to)
         with filepath.open('w') as fb:
             fb.write(self.gen_colxml(metadata, tree))
         collection = Collection(id, pathlib.Path(filepath), resources)
         return collection, tree, modules
 
-    def gen_collection_tree(self, max_depth=1, depth=0):
+    def gen_collection_tree(self, max_depth=1, depth=0, relative_to=None):
         """Returns a sequence containing a dict of title and contents
         and/or Module objects.
 
@@ -264,7 +285,7 @@ class _ContentUtil:
         modules = []
         for x in range(2, 6):
             if random.randint(1, 40) % 2 == 0 or depth == max_depth:
-                module = self.gen_module()
+                module = self.gen_module(relative_to=relative_to)
                 modules.append(module)
                 from press.parsers import parse_module_metadata
                 metadata = parse_module_metadata(module)
@@ -279,7 +300,8 @@ class _ContentUtil:
             else:
                 contents, additional_modules = self.gen_collection_tree(
                     max_depth=max_depth,
-                    depth=depth + 1)
+                    depth=depth + 1,
+                    relative_to=relative_to)
                 modules.extend(additional_modules)
                 sub_col = SubCollection(title=self.randtitle(),
                                         contents=contents)
