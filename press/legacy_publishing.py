@@ -2,13 +2,68 @@ from litezip.main import COLLECTION_NSMAP
 from lxml import etree
 from sqlalchemy.sql import text
 
+from litezip import Collection, Module
 
-def publish_litezip(struct, registry):
+from press.parsers import parse_collection_metadata, parse_module_metadata
+
+
+__all__ = (
+    'publish_legacy_book',
+    'publish_legacy_page',
+    'publish_litezip',
+)
+
+
+# FIXME Update litezip namespaces to include 'cnxorg' namespace.
+COLLECTION_NSMAP['cnxorg'] = 'http://cnx.rice.edu/system-info'
+
+
+def publish_litezip(struct, submission, registry):
     """\
     ``struct`` is a litezip struct from ``parse_litezip``
+    ``submission`` is a two value tuple containing a userid and submit message
     ``registry`` is a pyramid component architecture registry
 
     """
+    # Dissect objects from litezip struct.
+    try:
+        collection = [x for x in struct if isinstance(x, Collection)][0]
+    except IndexError:  # pragma: no cover
+        raise NotImplementedError('litezip without collection')
+    id_map = {}
+
+    # Parse Collection tree to update the newly published Modules.
+    with collection.file.open('rb') as fb:
+        xml = etree.parse(fb)
+
+    # Publish the Modules.
+    for module in [x for x in struct if isinstance(x, Module)]:
+        metadata = parse_module_metadata(module)
+        old_id = module.id
+        (id, version), ident = publish_legacy_page(module, metadata,
+                                                   submission, registry)
+        id_map[old_id] = (id, version)
+        # Update the Collection tree
+        xpath = '//col:module[@document="{}"]'.format(old_id)
+        for elm in xml.xpath(xpath, namespaces=COLLECTION_NSMAP):
+            elm.attrib['document'] = id
+            version_attrib_name = (
+                '{{{}}}version-at-this-collection-version'
+                .format(COLLECTION_NSMAP['cnxorg']))
+            elm.attrib[version_attrib_name] = version
+
+    # Rebuild the Collection tree from the newly published Modules.
+    with collection.file.open('wb') as fb:
+        fb.write(etree.tostring(xml))
+
+    # Publish the Collection.
+    metadata = parse_collection_metadata(collection)
+    old_id = collection.id
+    (id, version), ident = publish_legacy_book(collection, metadata,
+                                               submission, registry)
+    id_map[old_id] = (id, version)
+
+    return id_map
 
 
 def publish_legacy_page(model, metadata, submission, registry):
@@ -61,8 +116,12 @@ def publish_legacy_page(model, metadata, submission, registry):
             # TODO metadata does not currently capture parentage
             parent=None,
             parentauthors=None,
-        ).returning(t.modules.c.module_ident, t.modules.c.moduleid))
-        ident, id = result.fetchone()
+        ).returning(
+            t.modules.c.module_ident,
+            t.modules.c.moduleid,
+            t.modules.c.version,
+        ))
+        ident, id, version = result.fetchone()
 
         # Insert subjects metadata
         stmt = (text('INSERT INTO moduletags '
@@ -112,7 +171,7 @@ def publish_legacy_page(model, metadata, submission, registry):
 
         # TODO Insert resource files (images, pdfs, etc.)
 
-    return ident
+    return (id, version), ident
 
 
 def publish_legacy_book(model, metadata, submission, registry):
@@ -167,8 +226,12 @@ def publish_legacy_book(model, metadata, submission, registry):
             # TODO metadata does not currently capture parentage
             parent=None,
             parentauthors=None,
-        ).returning(t.modules.c.module_ident, t.modules.c.moduleid))
-        ident, id = result.fetchone()
+        ).returning(
+            t.modules.c.module_ident,
+            t.modules.c.moduleid,
+            t.modules.c.version,
+        ))
+        ident, id, version = result.fetchone()
 
         # Insert subjects metadata
         stmt = (text('INSERT INTO moduletags '
@@ -218,4 +281,4 @@ def publish_legacy_book(model, metadata, submission, registry):
 
         # TODO Insert resource files (cover image, recipe, etc.)
 
-    return ident
+    return (id, version), ident
