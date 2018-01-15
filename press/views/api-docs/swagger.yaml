@@ -668,6 +668,40 @@ paths:
           description: Not found
       tags:
         - content
+  '/api/v3/publish':
+    post:
+      summary: Add a peice of content to the repository
+      description: ''
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/Publication'
+        '400':
+          description: error during publication
+          schema:
+            $ref: '#/definitions/PublicationError'
+      consumes:
+        - application/x-www-form-urlencoded
+        - multipart/form-data
+      produces:
+        - application/json
+      parameters:
+        - in: formData
+          name: publisher
+          type: string
+          description: The user id of the publisher
+          required: true
+        - in: formData
+          name: message
+          type: string
+          description: The publication message for this revision
+          required: true
+        - in: formData
+          name: file
+          type: file
+          description: The litezip file containing the content
+          required: true
 definitions:
   MediaType:
     type: string
@@ -828,3 +862,39 @@ definitions:
               description: datetime of the revision
             publisher:
               $ref: "#/definitions/Person"
+  Publication:
+    type: array
+    items:
+      type: object
+      required:
+        - source_id
+        - id
+        - version
+        - url
+    properties:
+      source_id:
+        type: string
+        description: id of the content item from the submitted litezip
+      id:
+        type: string
+      version:
+        type: string
+      url:
+        type: string
+  PublicationError:
+    type: object
+    required:
+      - messages
+    properties:
+      messages:
+        type: array
+        items:
+          type: object
+          required:
+            - id
+            - message
+          properties:
+            id:
+              type: integer
+            message:
+              type: string
