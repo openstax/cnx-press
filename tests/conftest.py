@@ -3,6 +3,7 @@ import pathlib
 import random
 import shutil
 import tempfile
+import zipfile
 
 import jinja2
 import pytest
@@ -348,6 +349,23 @@ class _ContentUtil:
         modules = list(self._flatten_collection_tree_to_modules(tree))
         self._update_collection(collection, tree)
         return collection, tree, modules
+
+    def mk_zipfile_from_litezip_struct(self, struct):
+        zip_file = self._mkdir() / 'contents.zip'
+        with zipfile.ZipFile(str(zip_file), 'w') as zb:
+            for model in struct:
+                if isinstance(model, Collection):
+                    file = model.file
+                    rel_file_path = model.file.name
+                else:  # Module
+                    file = model.file
+                    # FIXME Workaround for the lack of actual m##### named
+                    #       directories. This is because the 'new' content
+                    #       story has not been implemented yet.
+                    rel_file_path = pathlib.Path(model.id) / model.file.name
+                zb.write(str(file), str(rel_file_path))
+                # TODO Write resources into this zipfile
+        return zip_file
 
 
 @pytest.fixture(scope='session')
