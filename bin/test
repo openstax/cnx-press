@@ -7,3 +7,11 @@ set -x
 #   - The pytest coverage and verbosity options are configured in setup.cfg
 python -m pytest --strict $@
 python -m coverage html
+
+# Report test coverage to codecov.io
+# See also: https://docs.codecov.io/docs/testing-with-docker
+if [ "$TRAVIS" = "true" ];
+then
+    # Report coverage to codecov
+    bash <(curl -s https://codecov.io/bash)
+fi

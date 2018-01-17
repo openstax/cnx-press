@@ -19,7 +19,7 @@ RUN set -x \
 # Needed for testing
 RUN set -x \
     && apt-get update \
-    && apt-get install wamerican --no-install-recommends -y
+    && apt-get install wamerican curl --no-install-recommends -y
 
 COPY requirements /tmp/requirements
 

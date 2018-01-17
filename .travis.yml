@@ -11,14 +11,10 @@ before_install:
   - sudo apt-get install python3.4-venv
   # Create the virtual env and lint the codebase
   - make lint VENV_EXTRA_ARGS="--system-site-packages"
-  # # Install the coverage utility and codecov reporting utility
-  # - python -m pip install codecov
 script:
-  # This is the same as `python setup.py test` with a coverage wrapper.
-  - make test
-# XXX We'll bring this back later...
-# after_success:
-#   # Report test coverage to codecov.io
-#   - codecov
+  # Report test coverage to codecov.io
+  # See also: https://docs.codecov.io/docs/testing-with-docker
+  - ci_env=`bash <(curl -s https://codecov.io/env)`
+  - docker-compose run $ci_env web bin/test
 notifications:
   email: false
