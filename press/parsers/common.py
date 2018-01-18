@@ -49,7 +49,7 @@ def parse_common_properties(elm_tree):
         'licensors': role_xpath('//md:role[@type="licensor"]/text()'),
         'keywords': tuple(xpath('//md:keywordlist/md:keyword/text()')),
         'subjects': tuple(xpath('//md:subjectlist/md:subject/text()')),
-        'abstract': xpath('//md:abstract/text()')[0],
+        'abstract': _maybe(xpath('//md:abstract/text()')),
     }
 
     # Note, Press does not parse or update user (aka "actor" in the xml)
