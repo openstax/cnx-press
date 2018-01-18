@@ -1,0 +1,24 @@
+version: '2'
+# See also, https://docs.docker.com/compose/extends/#multiple-compose-files
+services:
+  # Our test services:
+  test_db:
+    extends:
+      file: docker-compose.yml
+      service: base_db
+    ports:
+      - "65432:5432"
+    environment:
+      - DB_URL=postgresql://rhaptos@/repository
+      - DB_SUPER_URL=postgresql://rhaptos_admin@/repository
+  test:
+    extends:
+      file: docker-compose.yml
+      service: app
+    command: bin/test
+    links:
+      - test_db
+    environment:
+      - SHARED_DIR=/app/var
+      - DB_URL=postgresql://rhaptos@test_db/repository
+      - DB_SUPER_URL=postgresql://rhaptos_admin@test_db/repository

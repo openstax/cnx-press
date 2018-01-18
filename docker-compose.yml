@@ -13,13 +13,18 @@ services:
       - ./var:/app/var:z
     environment:
       - SHARED_DIR=/app/var
-  db:
+      - DB_URL=postgresql://rhaptos@db/repository
+      - DB_SUPER_URL=postgresql://rhaptos_admin@db/repository
+  base_db:
     image: openstax/cnx-db:1.5.1
-    ports:
-      - "5432:5432"
     environment:
       - DB_URL=postgresql://rhaptos@/repository
       - DB_SUPER_URL=postgresql://rhaptos_admin@/repository
+  db:
+    extends:
+      service: base_db
+    ports:
+      - "5432:5432"
   web:
     extends:
       service: app
@@ -30,5 +35,3 @@ services:
       - db
     environment:
       - SHARED_DIR=/app/var
-      - DB_URL=postgresql://rhaptos@db/repository
-      - DB_SUPER_URL=postgresql://rhaptos_admin@db/repository

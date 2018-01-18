@@ -34,6 +34,7 @@ $(STATEDIR)/env/pyvenv.cfg : $(_REQUIREMENTS_FILES)
 $(STATEDIR)/docker-build: Dockerfile requirements/main.txt requirements/deploy.txt
 	# Build our docker container(s) for this project.
 	docker-compose build
+	docker-compose -f docker-compose.testing.yml build
 
 	# Mark the state so we don't rebuild this needlessly.
 	mkdir -p $(STATEDIR)
@@ -97,7 +98,7 @@ help-test :
 	@echo "    (see also setup.cfg's pytest configuration)"
 
 test :
-	docker-compose run --rm web bin/test $(TEST_EXTRA_ARGS) $(TEST)
+	docker-compose -f docker-compose.testing.yml run --rm test bin/test $(TEST_EXTRA_ARGS) $(TEST)
 
 # /Test
 
@@ -163,6 +164,7 @@ build:
 
 	# Build our docker container(s) for this project.
 	docker-compose build
+	docker-compose -f docker-compose.testing.yml build
 
 	# Mark the state so we don't rebuild this needlessly.
 	mkdir -p $(STATEDIR)
