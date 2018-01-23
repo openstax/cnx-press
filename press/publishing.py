@@ -25,7 +25,13 @@ def persist_file_to_filesystem(file):
     return filepath
 
 
-def expand_zip(filepath):
+def expand_zip(file):
+    """Expand a zip file into a temporary directory and return the path
+    to the expanded directory location (a ``pathlib.Path``).
+    ``file`` can be a path to a file (a string), a file-like object
+    or a path-like object.
+
+    """
     settings = get_current_registry().settings
     shared_directory = Path(settings['shared_directory'])
     _names = tempfile._get_candidate_names()
@@ -38,6 +44,6 @@ def expand_zip(filepath):
         break
     expand_path = dir
 
-    with filepath.open('rb') as fb, zipfile.ZipFile(fb) as z:
+    with zipfile.ZipFile(file) as z:
         z.extractall(path=str(expand_path))
     return expand_path
