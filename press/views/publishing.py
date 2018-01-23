@@ -6,6 +6,7 @@ from pyramid.view import view_config
 
 from ..legacy_publishing import publish_litezip
 from ..publishing import (
+    discover_content_dir,
     expand_zip,
     persist_file_to_filesystem,
 )
@@ -37,6 +38,7 @@ def publish(request):
     upload_filepath = persist_file_to_filesystem(uploaded_file)
     logging.debug('write upload to: {}'.format(upload_filepath))
     litezip_dir = expand_zip(upload_filepath)
+    litezip_dir = discover_content_dir(litezip_dir)
 
     litezip_struct = parse_litezip(litezip_dir)
     id_mapping = publish_litezip(litezip_struct, (publisher, message),

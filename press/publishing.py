@@ -6,6 +6,7 @@ from pyramid.threadlocal import get_current_registry
 
 
 __all__ = (
+    'discover_content_dir',
     'expand_zip',
     'persist_file_to_filesystem',
 )
@@ -47,3 +48,14 @@ def expand_zip(file):
     with zipfile.ZipFile(file) as z:
         z.extractall(path=str(expand_path))
     return expand_path
+
+
+def discover_content_dir(dir):
+    """Given an expanded litezip directory path (a ``pathlib.Path``),
+    discover the name of the contents directory within it.
+
+    """
+    for path in dir.iterdir():
+        if path.is_dir():
+            return path
+    return None

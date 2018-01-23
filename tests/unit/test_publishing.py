@@ -5,6 +5,7 @@ from zipfile import ZipFile
 from pyramid import testing as pyramid_testing
 
 from press.publishing import (
+    discover_content_dir,
     expand_zip,
     persist_file_to_filesystem,
 )
@@ -52,3 +53,33 @@ def test_expand_zip(app, tmpdir):
     expanded_files = list([str(x)
                            for x in deflate_path(expand_path, expand_path)])
     assert sorted(expanded_files) == sorted(files)
+
+
+def test_discover_content_dir(tmpdir):
+    root = Path(str(tmpdir.mkdir('root')))
+    dir = root / 'foo'
+    dir.mkdir()
+
+    found_dir = discover_content_dir(root)
+    assert found_dir == dir
+
+
+def test_discover_content_dir_with_multiple_dirs(tmpdir):
+    root = Path(str(tmpdir.mkdir('root')))
+    (root / 'foo').mkdir()
+    (root / 'bar').mkdir()
+    dir = root / 'alp'
+    dir.mkdir()
+
+    found_dir = discover_content_dir(root)
+    assert found_dir == dir
+
+
+def test_discover_content_dir_with_no_dirs(tmpdir):
+    root = Path(str(tmpdir.mkdir('root')))
+    for filename in ('foo', 'bar', 'baz'):
+        with (root / filename).open('w') as fb:
+            fb.write('smoo')
+
+    found_dir = discover_content_dir(root)
+    assert found_dir is None

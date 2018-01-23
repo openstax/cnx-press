@@ -352,17 +352,18 @@ class _ContentUtil:
 
     def mk_zipfile_from_litezip_struct(self, struct):
         zip_file = self._mkdir() / 'contents.zip'
+        base_dir = pathlib.Path(struct[0].id)
         with zipfile.ZipFile(str(zip_file), 'w') as zb:
             for model in struct:
                 if isinstance(model, Collection):
                     file = model.file
-                    rel_file_path = model.file.name
+                    rel_file_path = base_dir / model.file.name
                 else:  # Module
                     file = model.file
                     # FIXME Workaround for the lack of actual m##### named
                     #       directories. This is because the 'new' content
                     #       story has not been implemented yet.
-                    rel_file_path = pathlib.Path(model.id) / model.file.name
+                    rel_file_path = base_dir / model.id / model.file.name
                 zb.write(str(file), str(rel_file_path))
                 # TODO Write resources into this zipfile
         return zip_file
