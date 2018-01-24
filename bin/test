@@ -2,6 +2,13 @@
 set -e
 set -x
 
+# Wait for the database to start up. The first time takes a little longer.
+until python -c "import os, psycopg2 as p; p.connect(os.environ['DB_URL'])"; do
+  >&2 echo "Postgres is unavailable - sleeping"
+  sleep 1
+done
+>&2 echo "Postgres is up - continuing execution"
+
 # Run the unittests
 #   - Let nothing go unnoticed by using `--strict`
 #   - The pytest coverage and verbosity options are configured in setup.cfg
