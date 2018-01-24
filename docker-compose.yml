@@ -14,7 +14,7 @@ services:
     environment:
       - SHARED_DIR=/app/var
   db:
-    image: openstax/cnx-db:1.4.0
+    image: openstax/cnx-db:1.5.0
     ports:
       - "5432:5432"
     environment:
