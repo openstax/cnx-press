@@ -1,5 +1,5 @@
 # The project's documentation dependencies...
--r ./test.txt
+-r ./main.txt
 
 Sphinx==1.6.7
 

@@ -21,6 +21,12 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
+# -- Python path configuration --------------------------------------------
+
+import os
+import sys
+# Include the `press` package for 'autodoc' import resolution.
+sys.path.insert(0, os.path.abspath('../../'))
 
 # -- General configuration ------------------------------------------------
 
