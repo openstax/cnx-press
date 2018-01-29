@@ -37,7 +37,9 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.viewcode',
-    'sphinx.ext.githubpages']
+    'sphinx.ext.githubpages',
+    'sphinxcontrib.swaggerdoc',
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -53,7 +55,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'CNX Press'
-copyright = '2017, Michael Mulich'
+copyright = '2017-2018, Rice University'
 author = 'Michael Mulich'
 
 # The version info for the project you're documenting, acts as replacement for

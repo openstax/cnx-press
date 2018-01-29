@@ -37,7 +37,7 @@ However the HTTP API will change to adapt to changes and the feature timeline.
    :caption: Contents:
 
    config.rst
-
+   web_api.rst
 
 Indices and tables
 ==================

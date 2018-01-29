@@ -1,3 +1,11 @@
 # The project's documentation dependencies...
 -r ./test.txt
+
 Sphinx==1.6.6
+
+# FIXME Pointing at a personal branch with specific changes.
+#       These changes have been submitted upstream (unaguil/sphinx-swaggerdoc).
+##sphinx-swaggerdoc[yaml]
+-e git+https://github.com/pumazi/sphinx-swaggerdoc.git@for-use#egg=sphinx-swaggerdoc
+PyYAML
+# /FIXME
