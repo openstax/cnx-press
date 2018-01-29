@@ -20,19 +20,40 @@ def _maybe(l):
 
 
 def make_elm_tree(model):
-    """Makes an ElementTree from a litezip model (Collection or Module)."""
+    """Makes an element-like object (:mod:`lxml.etree`) from a litezip model
+    (:class:`litezip.Collection` or :class:`litezip.Module`).
+
+    """
     with model.file.open() as fb:
         elm_tree = etree.parse(fb)
     return elm_tree
 
 
 def make_cnx_xpath(elm_tree):
-    """Makes an xpath function that includes the CNX namespaces."""
+    """Makes an xpath function that includes the CNX namespaces.
+
+    :param elm_tree: the xml element to begin the xpath from
+    :type elm_tree: an element-like object from :mod:`lxml.etree`
+
+    """
     return partial(elm_tree.xpath, namespaces=COLLECTION_NSMAP)
 
 
 def parse_common_properties(elm_tree):
-    """Given an ElementTree lookup the common and return the properties."""
+    """Given an element-like object (:mod:`lxml.etree`)
+    lookup the common and return the properties.
+
+    :param elm_tree: the root xml element
+    :type elm_tree: an element-like object from :mod:`lxml.etree`
+    :returns: common metadata properties
+    :rtype: dict
+
+    .. note::
+       Press does not parse or update user information (aka "actor" in
+       the xml). User modifications should be done using the "legacy"
+       software.
+
+    """
     xpath = make_cnx_xpath(elm_tree)
     role_xpath = lambda xp: tuple(xpath(xp)[0].split())  # noqa: E731
 
@@ -51,7 +72,4 @@ def parse_common_properties(elm_tree):
         'subjects': tuple(xpath('//md:subjectlist/md:subject/text()')),
         'abstract': _maybe(xpath('//md:abstract/text()')),
     }
-
-    # Note, Press does not parse or update user (aka "actor" in the xml)
-    # information. This should be done directly using the "legacy" software.
     return props

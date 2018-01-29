@@ -3,8 +3,12 @@ from .common import make_cnx_xpath, make_elm_tree, parse_common_properties
 
 
 def parse_collection_metadata(model):
-    """Given a Collection (``litezip.Collection``), parse out the metadata.
-    Return a CollectionMetadata object (``press.models.CollectionMetadata``).
+    """Parse the metadata from the given object.
+
+    :param model: the object to parse
+    :type model: :class:`litezip.Collection`
+    :returns: a metadata object
+    :rtype: :class:`press.models.CollectionMetadata`
 
     """
     elm_tree = make_elm_tree(model)

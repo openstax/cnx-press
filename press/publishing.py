@@ -14,7 +14,12 @@ __all__ = (
 
 def persist_file_to_filesystem(file):
     """Persist the given ``file`` to the filesystem within
-    the shared directory space. Returns a filepath (a ``pathlib.Path``).
+    the shared directory space.
+
+    :param file: file to persist
+    :type file: file-like object
+    :return: path to written file
+    :rtype: :class:`pathlib.Path`
 
     """
     shared_directory = get_current_registry().settings['shared_directory']
@@ -28,9 +33,13 @@ def persist_file_to_filesystem(file):
 
 def expand_zip(file):
     """Expand a zip file into a temporary directory and return the path
-    to the expanded directory location (a ``pathlib.Path``).
-    ``file`` can be a path to a file (a string), a file-like object
-    or a path-like object.
+    to the expanded directory location.
+
+    :param file: zip file to expand
+    :type file: can be a path to a file (a string), a file-like object
+                or a path-like object
+    :return: path to expanded zip
+    :rtype: :class:`pathlib.Path`
 
     """
     settings = get_current_registry().settings
@@ -51,8 +60,13 @@ def expand_zip(file):
 
 
 def discover_content_dir(dir):
-    """Given an expanded litezip directory path (a ``pathlib.Path``),
+    """Given an expanded litezip directory path,
     discover the name of the contents directory within it.
+
+    :param dir: directory to look in for a unknown directory name
+    :type dir: :class:`pathlib.Path`
+    :return: the found directory
+    :rtype: :class:`pathlib.Path`
 
     """
     for path in dir.iterdir():

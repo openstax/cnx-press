@@ -19,10 +19,15 @@ COLLECTION_NSMAP['cnxorg'] = 'http://cnx.rice.edu/system-info'
 
 
 def publish_litezip(struct, submission, registry):
-    """\
-    ``struct`` is a litezip struct from ``parse_litezip``
-    ``submission`` is a two value tuple containing a userid and submit message
-    ``registry`` is a pyramid component architecture registry
+    """Publish the contents of a litezip structured set of data.
+
+    :param struct: a litezip struct from (probably from
+                   :func:`litezip.parse_litezip`)
+    :param submission: a two value tuple containing a userid
+                       and submit message
+    :type submission: tuple
+    :param registry: the pyramid component architecture registry
+    :type registry: :class:`pyramid.registry.Registry`
 
     """
     # Dissect objects from litezip struct.
@@ -67,11 +72,18 @@ def publish_litezip(struct, submission, registry):
 
 
 def publish_legacy_page(model, metadata, submission, registry):
-    """\
-    ``model`` is a ``litezip.Module``
-    ``metadata`` is a ``ModuleMetadata``
-    ``submission`` is a two value tuple containing a userid and submit message
-    ``registry`` is a pyramid component architecture registry
+    """Publish a Page (aka Module) as the legacy (zope-based) system
+    would. This should trigger the same (in-database) logic used when
+    the legacy system publishes a module.
+
+    :param model: module
+    :type model: :class:`litezip.Module`
+    :type metadata: :class:`press.models.ModuleMetadata`
+    :param submission: a two value tuple containing a userid
+                       and submit message
+    :type submission: tuple
+    :param registry: the pyramid component architecture registry
+    :type registry: :class:`pyramid.registry.Registry`
 
     """
     engine = registry.engines['common']
@@ -175,11 +187,18 @@ def publish_legacy_page(model, metadata, submission, registry):
 
 
 def publish_legacy_book(model, metadata, submission, registry):
-    """\
-    ``model`` is a ``litezip.Collection``
-    ``metadata`` is a ``CollectionMetadata``
-    ``submission`` is a two value tuple containing a userid and submit message
-    ``registry`` is a pyramid component architecture registry
+    """Publish a Book (aka Collection) as the legacy (zope-based) system
+    would. This should trigger the same (in-database) logic used when
+    the legacy system publishes a collection.
+
+    :param model: module
+    :type model: :class:`litezip.Collection`
+    :type metadata: :class:`press.models.CollectionMetadata`
+    :param submission: a two value tuple containing a userid
+                       and submit message
+    :type submission: tuple
+    :param registry: the pyramid component architecture registry
+    :type registry: :class:`pyramid.registry.Registry`
 
     """
     engine = registry.engines['common']
