@@ -133,6 +133,9 @@ docs : $(STATEDIR)/env/pyvenv.cfg
 	$(MAKE) -C docs/ doctest SPHINXOPTS="-W" SPHINXBUILD="$(BINDIR)/sphinx-build"
 	$(MAKE) -C docs/ html SPHINXOPTS="-W" SPHINXBUILD="$(BINDIR)/sphinx-build"
 
+clean-docs :
+	rm -rf docs/build/*
+
 # /Docs
 
 # ###
