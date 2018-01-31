@@ -1,6 +1,6 @@
 # The project's testing dependencies...
 jinja2==2.10
-pytest==3.3.2
+pytest==3.4.0
 pytest-cov==2.5.1
 python-dateutil==2.6.1
 recordclass==0.5
