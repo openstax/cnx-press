@@ -1,6 +1,8 @@
 import os.path
+import warnings
 
 from pyramid.config import Configurator
+from sqlalchemy.exc import SAWarning
 
 
 def discover_set(settings, setting_name, env_var, default=None):
@@ -39,7 +41,10 @@ def configure(settings=None):
     config = Configurator(settings=settings)
     config.include('.views')
 
-    config.include('cnxdb.contrib.pyramid')
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=SAWarning)
+        config.include('cnxdb.contrib.pyramid')
+
     config.scan()
     return config
 

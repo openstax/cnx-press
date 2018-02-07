@@ -4,6 +4,7 @@ import random
 import shutil
 import tempfile
 import zipfile
+import warnings
 
 import jinja2
 import pytest
@@ -83,7 +84,11 @@ SUBJECTS = (
 @pytest.fixture(scope='session')
 def db_tables_session_scope(db_engines):
     from cnxdb.contrib.pytest import db_tables
-    return db_tables(db_engines)
+    with warnings.catch_warnings():
+        # Ignore SQLAlchemy SAWarning about unsupported reflection elements.
+        warnings.simplefilter('ignore')
+        tables = db_tables(db_engines)
+    return tables
 
 
 @pytest.fixture
