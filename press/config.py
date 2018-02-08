@@ -39,6 +39,7 @@ def configure(settings=None):
 
     # Create the configuration object
     config = Configurator(settings=settings)
+    config.include('.logging')
     config.include('.views')
 
     with warnings.catch_warnings():
