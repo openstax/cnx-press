@@ -69,3 +69,18 @@ def test_discover_set_with_env_var_and_existing():
     assert s[s_name] == val
 
     del os.environ[var]
+
+
+def test_discover_set_with_env_var_and_modifier():
+    s = {}
+    s_name = 'baz'
+    var = 'FOO'
+    val = 'bar'
+    os.environ[var] = val
+
+    discover_set(s, s_name, var, modifier=str.upper)
+
+    assert s_name in s
+    assert s[s_name] == val.upper()
+
+    del os.environ[var]
