@@ -23,7 +23,7 @@ services:
   web:
     extends:
       service: app
-    command: gunicorn -b 0.0.0.0:6543 -n press --reload wsgi:app
+    command: gunicorn -b 0.0.0.0:6543 --access-logfile - --error-logfile - -n press --reload wsgi:app
     ports:
       - "80:6543"
     links:
