@@ -1,7 +1,12 @@
+import logging.config
+from unittest import mock
+
+import pretend
 import pytest
 import structlog
 from pyramid import testing as pyramid_testing
 
+from press import logging as press_logging
 from press.logging import includeme
 
 
@@ -90,3 +95,98 @@ def test_init_with_debug(capsys, mock_timestamper):
     )
     assert captured.out == expected
     assert captured.err == ''
+
+
+def test_includeme(monkeypatch):
+    dict_config = pretend.call_recorder(lambda c: None)
+    monkeypatch.setattr(logging.config, 'dictConfig', dict_config)
+
+    structlog_configure = pretend.call_recorder(lambda **kw: None)
+    monkeypatch.setattr(structlog, 'configure', structlog_configure)
+
+    settings = {}
+    add_request_method = pretend.call_recorder(lambda fn, name, reify: None)
+    config = pretend.stub(
+        registry=pretend.stub(settings=settings),
+        add_request_method=add_request_method,
+    )
+
+    # Call the target includeme
+    includeme(config)
+
+    expected_level = 'INFO'
+    assert dict_config.calls == [
+        pretend.call({
+            'version': 1,
+            'disable_existing_loggers': False,
+            'handlers': {
+                'console': {
+                    'class': 'logging.StreamHandler',
+                    'level': 'NOTSET',
+                    'stream': 'ext://sys.stdout',
+                },
+            },
+            'root': {
+                'level': expected_level,
+                'handlers': ['console'],
+            },
+        }),
+    ]
+
+    assert structlog_configure.calls == [
+        pretend.call(
+            processors=[
+                structlog.stdlib.filter_by_level,
+                structlog.stdlib.add_logger_name,
+                structlog.stdlib.add_log_level,
+                mock.ANY,  # specific test to follow
+                mock.ANY,
+                structlog.processors.format_exc_info,
+                mock.ANY,
+                mock.ANY,  # specific test to follow
+            ],
+            logger_factory=mock.ANY,  # specific test to follow
+            wrapper_class=structlog.stdlib.BoundLogger,
+        ),
+    ]
+    # Check the first set of logging configuration features that mimic stdlib.
+    assert isinstance(
+        structlog_configure.calls[0].kwargs['processors'][3],
+        structlog.stdlib.PositionalArgumentsFormatter,
+    )
+
+    # Check the second set of logging configuration features.
+    assert isinstance(
+        structlog_configure.calls[0].kwargs['processors'][7],
+        structlog.processors.KeyValueRenderer,
+    )
+
+    assert isinstance(
+        structlog_configure.calls[0].kwargs['logger_factory'],
+        structlog.stdlib.LoggerFactory,
+    )
+
+    # Check for request method registration
+    assert config.add_request_method.calls == [
+        pretend.call(press_logging._create_id, name='id', reify=True),
+        pretend.call(press_logging._create_logger, name='log', reify=True),
+    ]
+
+
+def test_request_id(monkeypatch):
+    monkeypatch.setattr(press_logging.uuid, 'uuid4', lambda: '<uuid>')
+    assert press_logging._create_id(None) == '<uuid>'
+
+
+def test_request_log(monkeypatch):
+    bound_logger = pretend.stub()
+    logger_bind = pretend.call_recorder(lambda **kw: bound_logger)
+    logger = pretend.stub(bind=logger_bind)
+    monkeypatch.setattr(structlog, 'get_logger', lambda n: logger)
+
+    expected_id = '<uuid>'
+    request = pretend.stub(id=expected_id)
+    # Check the function creates a bound_logger
+    assert press_logging._create_logger(request) == bound_logger
+    # Check the logger called the bind with a request id.
+    assert logger_bind.calls == [pretend.call(request_id=expected_id)]

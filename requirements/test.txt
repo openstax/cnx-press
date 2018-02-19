@@ -2,8 +2,15 @@
 -r ./main.txt
 
 jinja2==2.10
+
+pretend
+
 pytest==3.4.0
+
 pytest-cov==2.5.1
+
 python-dateutil==2.6.1
+
 recordclass==0.5
+
 WebTest >= 1.3.1
