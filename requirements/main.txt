@@ -10,4 +10,4 @@ pyramid==1.9.1
 
 pyramid_swagger==2.6.0
 
-structlog
+structlog==18.1.0
