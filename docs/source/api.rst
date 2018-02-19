@@ -11,6 +11,19 @@ Configuration
 .. automodule:: press.config
    :members:
 
+.. seealso::
+
+   See also :ref:`configuration_chapter` for environment variables,
+   defaults and required settings.
+
+.. automodule:: press.logging
+   :members: includeme
+
+.. seealso::
+
+   See also :ref:`configuration_chapter__logging` for information
+   on how to configure logging.
+
 Publishing
 ==========
 
