@@ -3,7 +3,7 @@
 
 jinja2==2.10
 
-pretend
+pretend==1.0.8
 
 pytest==3.4.0
 
