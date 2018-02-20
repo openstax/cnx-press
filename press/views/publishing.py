@@ -1,7 +1,7 @@
 import logging
 import zipfile
 
-from litezip import parse_litezip
+from litezip import parse_litezip, validate_litezip
 from pyramid.view import view_config
 
 from ..legacy_publishing import publish_litezip
@@ -40,7 +40,22 @@ def publish(request):
     litezip_dir = expand_zip(upload_filepath)
     litezip_dir = discover_content_dir(litezip_dir)
 
+    # Parse the litezip to a data type structure.
     litezip_struct = parse_litezip(litezip_dir)
+
+    # Validate the litezip content
+    validation_msgs = validate_litezip(litezip_struct)
+    if validation_msgs:  # if it's not an empty list of messages
+        request.response.status = 400
+        return {'messages': [
+            {'id': 2,
+             'message': 'validation issue',
+             'item': str(path.relative_to(litezip_dir)),
+             'error': message,
+             }
+            for path, message in validation_msgs
+        ]}
+
     id_mapping = publish_litezip(litezip_struct, (publisher, message),
                                  request.registry)
 
