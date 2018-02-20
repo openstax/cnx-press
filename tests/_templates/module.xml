@@ -13,6 +13,12 @@
   <md:revised>{{ metadata.revised }}</md:revised>
   <md:actors>
     {# Currently these values are ignored #}
+    {# Must have one actor for this element to be valid, so here is a fake #}
+    <md:person>
+      <md:firstname>College</md:firstname>
+      <md:surname>Physics</md:surname>
+      <md:fullname>OpenStax College Physics</md:fullname>
+    </md:person>
   </md:actors>
   <md:roles>
     <md:role type="author">{% for r in metadata.authors -%}{{ r }}{{ ' ' }}{%- endfor %}</md:role>
@@ -20,11 +26,13 @@
     <md:role type="licensor">{% for r in metadata.licensors -%}{{ r }}{{ ' ' }}{%- endfor %}</md:role>
   </md:roles>
   <md:license url="{{ metadata.license_url }}" />
+  {%- if metadata.keywords %}
   <md:keywordlist>
     {%- for keyword in metadata.keywords %}
     <md:keyword>{{ keyword }}</md:keyword>
     {%- endfor %}
   </md:keywordlist>
+  {%- endif %}
   <md:subjectlist>
     {%- for subject in metadata.subjects %}
     <md:subject>{{ subject }}</md:subject>
