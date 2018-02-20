@@ -1,4 +1,4 @@
-FROM python:3.6-slim
+FROM python:3.6-jessie
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONPATH /app/

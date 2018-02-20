@@ -15,6 +15,7 @@ script:
   # Report test coverage to codecov.io
   # See also: https://docs.codecov.io/docs/testing-with-docker
   - ci_env=`bash <(curl -s https://codecov.io/env)`
+  - docker-compose build
   - docker-compose run $ci_env web bin/test
 notifications:
   email: false
