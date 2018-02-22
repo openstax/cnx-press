@@ -21,6 +21,7 @@ Setting                          Env Variable            Required?
 ``shared_directory``             ``SHARED_DIR``          yes
 ``debug``                        ``DEBUG``               no
 ``logging.level``                ``DEBUG``               no
+``sentry.dsn``                   ``SENTRY_DSN``          no
 ===============================  ======================  =============
 
 See `cnx-db configuration docs
@@ -38,3 +39,12 @@ Logging
 The logging configuration is by default set to ``INFO`` level logging.
 If you wish to receive ``DEBUG`` level logging you should set the
 ``DEBUG`` environment variable to ``true``.
+
+Error Reporting
+---------------
+
+This application contains integration code to report errors
+to a `Sentry <https://sentry.io>`_ instance.
+The integration can be configured by supplying the ``SENTRY_DSN``,
+which is usually provided to you during your projects setup
+in the sentry software.

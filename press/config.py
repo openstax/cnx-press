@@ -44,12 +44,15 @@ def configure(settings=None):
     assert os.path.exists(settings['shared_directory'])  # required
     # TODO check permissions for write access
 
+    discover_set(settings, 'sentry.dsn', 'SENTRY_DSN')
+
     discover_set(settings, 'debug', 'DEBUG', False, asbool)
     settings['logging.level'] = settings['debug'] and 'DEBUG' or 'INFO'
 
     # Create the configuration object
     config = Configurator(settings=settings)
     config.include('.logging')
+    config.include('.raven')
     config.include('.views')
 
     with warnings.catch_warnings():

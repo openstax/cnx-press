@@ -24,6 +24,15 @@ Configuration
    See also :ref:`configuration_chapter__logging` for information
    on how to configure logging.
 
+.. automodule:: press.raven
+   :members: includeme
+
+.. seealso::
+
+   See also :ref:`configuration_chapter__error_reporting` for information
+   on how to configure Sentry's Raven integration.
+
+
 Publishing
 ==========
 
@@ -67,3 +76,9 @@ Data Models
 
 .. automodule:: press.models
    :members:
+
+Tweens
+======
+
+.. automodule:: press.raven
+   :members: raven_tween_factory
