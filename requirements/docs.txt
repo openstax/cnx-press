@@ -1,7 +1,7 @@
 # The project's documentation dependencies...
 -r ./main.txt
 
-Sphinx==1.7.0
+Sphinx==1.7.1
 
 # FIXME Pointing at a personal branch with specific changes.
 #       These changes have been submitted upstream (unaguil/sphinx-swaggerdoc).
