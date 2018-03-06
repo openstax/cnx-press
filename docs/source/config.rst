@@ -40,6 +40,8 @@ The logging configuration is by default set to ``INFO`` level logging.
 If you wish to receive ``DEBUG`` level logging you should set the
 ``DEBUG`` environment variable to ``true``.
 
+.. _configuration_chapter__error_reporting:
+
 Error Reporting
 ---------------
 
