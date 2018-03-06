@@ -14,10 +14,6 @@ __all__ = (
 )
 
 
-# FIXME Update litezip namespaces to include 'cnxorg' namespace.
-COLLECTION_NSMAP['cnxorg'] = 'http://cnx.rice.edu/system-info'
-
-
 def publish_litezip(struct, submission, registry):
     """Publish the contents of a litezip structured set of data.
 
