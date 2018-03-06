@@ -2,6 +2,7 @@ import io
 from pathlib import Path
 from zipfile import ZipFile
 
+import pretend
 from pyramid import testing as pyramid_testing
 
 from press.publishing import (
@@ -64,15 +65,18 @@ def test_discover_content_dir(tmpdir):
     assert found_dir == dir
 
 
-def test_discover_content_dir_with_multiple_dirs(tmpdir):
-    root = Path(str(tmpdir.mkdir('root')))
-    (root / 'foo').mkdir()
-    (root / 'bar').mkdir()
-    dir = root / 'alp'
-    dir.mkdir()
+def test_discover_content_dir_with_multiple_dirs():
+    # We stub out the objects here because the 'iterdir' method on
+    # a Path returns a list in arbitrary order.
+    dirs = []
+    for name in range(0, 3):
+        # Stub a Path with the 'is_dir' method.
+        dirs.append(pretend.stub(is_dir=lambda: True))
+    # Stub the root directory to list from
+    root = pretend.stub(iterdir=lambda: dirs)
 
     found_dir = discover_content_dir(root)
-    assert found_dir == dir
+    assert found_dir == dirs[0]
 
 
 def test_discover_content_dir_with_no_dirs(tmpdir):
