@@ -39,6 +39,7 @@ However the HTTP API will change to adapt to changes and the feature timeline.
    config.rst
    web_api.rst
    api.rst
+   changes.rst
 
 Indices and tables
 ==================
