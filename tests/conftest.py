@@ -5,14 +5,18 @@ import shutil
 import tempfile
 import zipfile
 import warnings
+from copy import copy
 
 import jinja2
 import pytest
+from cnxdb.init import init_db
 from litezip import Collection, Module
 from litezip.main import COLLECTION_NSMAP
 from lxml import etree
 from pyramid.settings import asbool
 from recordclass import recordclass
+from sqlalchemy import create_engine
+from sqlalchemy.exc import OperationalError, ProgrammingError
 from sqlalchemy.sql import text
 
 
@@ -97,8 +101,50 @@ def db_tables(db_tables_session_scope):
     return db_tables_session_scope
 
 
+def _create_database(db_engines):
+    url = copy(db_engines['super'].url)
+    db_name = url.database
+    common_user = db_engines['common'].url.username
+    url.database = 'postgres'
+
+    sys_engine = create_engine(url, isolation_level='AUTOCOMMIT')
+    conn = sys_engine.connect()
+    conn.execute(text('CREATE DATABASE "{}"'.format(db_name)))
+    conn.execute(text('ALTER DATABASE "{}" OWNER TO {}'
+                      .format(db_name, common_user)))
+    conn.execute(text('GRANT ALL PRIVILEGES ON DATABASE "{}" TO {}'
+                      .format(db_name, common_user)))
+    sys_engine.dispose()
+
+
+@pytest.fixture(scope='session')
+def _init_database(db_engines):
+    engine = db_engines['super']
+    try:
+        # Check for database
+        engine.execute('select 1')
+    except (ProgrammingError, OperationalError):
+        # Create the database and initialize the schema
+        _create_database(db_engines)
+        init_db(db_engines['super'])
+        # Assign priveleges to our common user.
+        for element in ('tables', 'sequences',):
+            engine.execute(
+                text('GRANT ALL PRIVILEGES ON ALL {} '
+                     'IN SCHEMA PUBLIC TO {}'
+                     .format(element.upper(),
+                             db_engines['common'].url.username)))
+        engine.execute(
+            text('REASSIGN OWNED BY {} TO {}'
+                 .format(db_engines['super'].url.username,
+                         db_engines['common'].url.username)))
+    finally:
+        # Dispose of any connection(s)
+        engine.dispose()
+
+
 @pytest.fixture(scope='session', autouse=True)
-def testing(db_engines, db_tables_session_scope):
+def testing(_init_database, db_engines, db_tables_session_scope):
     """This fixture clears all the tables prior to any test run.
     Additionally, it minimally sets up database content. This content
     is of the type that would not typically be handed by this application.
