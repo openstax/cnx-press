@@ -15,6 +15,8 @@ Change Log
   by installing ``cnx-litezip==1.3.1``.
   See https://github.com/Connexions/cnx-press/pull/43
 - Refactor legacy_publishing module into a package.
+- Rename ``press.views.publishing`` module
+  to ``press.views.legacy_publishing``.
 
 1.0.0
 -----
