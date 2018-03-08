@@ -5,7 +5,7 @@ from pyramid import tweens
 from press import raven
 
 
-class TestException(Exception):
+class FauxException(Exception):
     """Used to invoke an exception within a request handler"""
 
 
@@ -56,12 +56,12 @@ def test_tween_with_error(monkeypatch):
 
     @pretend.call_recorder
     def handler(request):
-        raise TestException
+        raise FauxException
 
     tween = raven.raven_tween_factory(handler, registry)
 
     request = object()  # marker object
-    with pytest.raises(TestException):
+    with pytest.raises(FauxException):
         tween(request)
 
     assert client_factory.calls == [pretend.call(test_dsn)]
