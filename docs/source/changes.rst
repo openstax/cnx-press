@@ -5,6 +5,7 @@ Change Log
 ?.?.?
 -----
 
+- Fix issue parsing abstracts that contain cnxml.
 - Adjust ``make test`` to use an extended docker-compose configuration.
   Test runs should now use
   ``docker-compose -f docker-compose.yml -f docker-compose.test.yml ...``.
