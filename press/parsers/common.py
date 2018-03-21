@@ -1,3 +1,4 @@
+import re
 from functools import partial
 
 from lxml import etree
@@ -39,6 +40,18 @@ def make_cnx_xpath(elm_tree):
     return partial(elm_tree.xpath, namespaces=COLLECTION_NSMAP)
 
 
+def _squash_to_text(elm, remove_namespaces=False):
+    if elm is None:
+        return None
+    value = [elm.text or '']
+    for child in elm.getchildren():
+        value.append(etree.tostring(child).decode('utf-8').strip())
+    if remove_namespaces:
+        value = [re.sub(' xmlns:?[^=]*="[^"]*"', '', v) for v in value]
+    value = ''.join(value)
+    return value
+
+
 def parse_common_properties(elm_tree):
     """Given an element-like object (:mod:`lxml.etree`)
     lookup the common and return the properties.
@@ -70,6 +83,7 @@ def parse_common_properties(elm_tree):
         'licensors': role_xpath('//md:role[@type="licensor"]/text()'),
         'keywords': tuple(xpath('//md:keywordlist/md:keyword/text()')),
         'subjects': tuple(xpath('//md:subjectlist/md:subject/text()')),
-        'abstract': _maybe(xpath('//md:abstract/text()')),
+        'abstract': _squash_to_text(_maybe(xpath('//md:abstract')),
+                                    remove_namespaces=True),
     }
     return props
