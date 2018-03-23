@@ -35,8 +35,7 @@ def publish_legacy_page(model, metadata, submission, registry):
             .where(t.latest_modules.c.moduleid == metadata.id))
         # At this time, this code assumes an existing module
         existing_module = result.fetchone()
-        version = tuple(int(x) for x in existing_module.version.split('.'))
-        version = '.'.join([str(version[0]), str(version[1] + 1)])
+        major_version = existing_module.major_version + 1
 
         # Insert module metadata
         result = trans.execute(t.abstracts.insert()
@@ -48,7 +47,7 @@ def publish_legacy_page(model, metadata, submission, registry):
         licenseid = result.fetchone().licenseid
         result = trans.execute(t.modules.insert().values(
             moduleid=metadata.id,
-            version=version,
+            major_version=major_version,
             portal_type='Module',
             name=metadata.title,
             created=metadata.created,
