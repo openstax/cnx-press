@@ -26,6 +26,8 @@ def test_publish_revision_to_legacy_page(
             .where(db_tables.modules.c.module_ident == ident))
     result = db_engines['common'].execute(stmt).fetchone()
     assert result.version == '1.2'
+    assert result.major_version == 2
+    assert result.minor_version is None
     assert result.abstract == metadata.abstract
     assert result.created == parse_date(metadata.created)
     assert result.revised == parse_date(metadata.revised)

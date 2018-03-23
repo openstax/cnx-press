@@ -5,6 +5,10 @@ Change Log
 ?.?.?
 -----
 
+- On publish assign ``major_version`` rather than ``version`` to prevent
+  the database triggers that deal with legacy content from manipulating
+  the record and invoking revision publications.
+  See https://github.com/Connexions/cnx-press/issues/53
 - Fix issue parsing abstracts that contain cnxml.
 - Adjust ``make test`` to use an extended docker-compose configuration.
   Test runs should now use
