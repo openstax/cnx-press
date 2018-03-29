@@ -432,6 +432,71 @@ class _PersistUtil:
         self.db_tables = db_tables
         self.content_util = content_util
 
+    def _insert_module_metadata(self, trans, metadata, type_):
+        """Insert the module metadata with using the given database
+        transaction.
+
+        """
+        t = self.db_tables
+
+        if metadata.id is None:
+            prefix = {'C': 'col', 'M': 'm'}[type_[0]]
+            moduleid = self.content_util.randid(prefix=prefix)
+        else:
+            moduleid = metadata.id
+
+        result = trans.execute(t.abstracts.insert()
+                               .values(abstract=metadata.abstract))
+        abstractid = result.inserted_primary_key[0]
+        result = trans.execute(
+            t.licenses.select()
+            .where(t.licenses.c.url == metadata.license_url))
+        licenseid = result.fetchone().licenseid
+        result = trans.execute(t.modules.insert().values(
+            moduleid=moduleid,
+            version=metadata.version,
+            portal_type=type_,
+            name=metadata.title,
+            created=metadata.created,
+            revised=metadata.revised,
+            abstractid=abstractid,
+            licenseid=licenseid,
+            doctype='',
+            submitter='user1',
+            submitlog='util inserted',
+            language=metadata.language,
+            authors=metadata.authors,
+            maintainers=metadata.maintainers,
+            licensors=metadata.licensors,
+            parent=None,
+            parentauthors=None,
+        ).returning(t.modules.c.module_ident, t.modules.c.moduleid))
+        ident, id = result.fetchone()
+
+        # Insert subjects metadata
+        stmt = (text('INSERT INTO moduletags '
+                     'SELECT :module_ident AS module_ident, tagid '
+                     'FROM tags WHERE tag = any(:subjects)')
+                .bindparams(module_ident=ident,
+                            subjects=list(metadata.subjects)))
+        result = trans.execute(stmt)
+
+        # Insert keywords metadata
+        stmt = (text('INSERT INTO keywords (word) '
+                     'SELECT iword AS word '
+                     'FROM unnest(:keywords ::text[]) AS iword '
+                     '     LEFT JOIN keywords AS kw ON (kw.word = iword) '
+                     'WHERE kw.keywordid IS NULL')
+                .bindparams(keywords=list(metadata.keywords)))
+        trans.execute(stmt)
+        stmt = (text('INSERT INTO modulekeywords '
+                     'SELECT :module_ident AS module_ident, keywordid '
+                     'FROM keywords WHERE word = any(:keywords)')
+                .bindparams(module_ident=ident,
+                            keywords=list(metadata.keywords)))
+        trans.execute(stmt)
+        return ident, id
+
     def insert_module(self, model):
         # This is validly used here because the tests associated with
         # this parser functions are outside the scope of persistent
@@ -442,63 +507,10 @@ class _PersistUtil:
         engine = self.db_engines['common']
         t = self.db_tables
 
-        if metadata.id is None:
-            moduleid = self.content_util.randid()
-        else:
-            moduleid = metadata.id
-
         with engine.begin() as trans:
             # Insert module metadata
-            result = trans.execute(t.abstracts.insert()
-                                   .values(abstract=metadata.abstract))
-            abstractid = result.inserted_primary_key[0]
-            result = trans.execute(
-                t.licenses.select()
-                .where(t.licenses.c.url == metadata.license_url))
-            licenseid = result.fetchone().licenseid
-            result = trans.execute(t.modules.insert().values(
-                moduleid=moduleid,
-                version=metadata.version,
-                portal_type='Module',
-                name=metadata.title,
-                created=metadata.created,
-                revised=metadata.revised,
-                abstractid=abstractid,
-                licenseid=licenseid,
-                doctype='',
-                submitter='user1',
-                submitlog='util inserted',
-                language=metadata.language,
-                authors=metadata.authors,
-                maintainers=metadata.maintainers,
-                licensors=metadata.licensors,
-                parent=None,
-                parentauthors=None,
-            ).returning(t.modules.c.module_ident, t.modules.c.moduleid))
-            ident, id = result.fetchone()
-
-            # Insert subjects metadata
-            stmt = (text('INSERT INTO moduletags '
-                         'SELECT :module_ident AS module_ident, tagid '
-                         'FROM tags WHERE tag = any(:subjects)')
-                    .bindparams(module_ident=ident,
-                                subjects=list(metadata.subjects)))
-            result = trans.execute(stmt)
-
-            # Insert keywords metadata
-            stmt = (text('INSERT INTO keywords (word) '
-                         'SELECT iword AS word '
-                         'FROM unnest(:keywords ::text[]) AS iword '
-                         '     LEFT JOIN keywords AS kw ON (kw.word = iword) '
-                         'WHERE kw.keywordid IS NULL')
-                    .bindparams(keywords=list(metadata.keywords)))
-            trans.execute(stmt)
-            stmt = (text('INSERT INTO modulekeywords '
-                         'SELECT :module_ident AS module_ident, keywordid '
-                         'FROM keywords WHERE word = any(:keywords)')
-                    .bindparams(module_ident=ident,
-                                keywords=list(metadata.keywords)))
-            trans.execute(stmt)
+            ident, id = self._insert_module_metadata(trans, metadata,
+                                                     'Module')
 
             # Rewrite the content with the id
             with model.file.open('rb') as fb:
@@ -541,62 +553,8 @@ class _PersistUtil:
 
         with engine.begin() as trans:
             # Insert metadata
-            result = trans.execute(t.abstracts.insert()
-                                   .values(abstract=metadata.abstract))
-            abstractid = result.inserted_primary_key[0]
-            result = trans.execute(
-                t.licenses.select()
-                .where(t.licenses.c.url == metadata.license_url))
-            licenseid = result.fetchone().licenseid
-            result = trans.execute(t.modules.insert().values(
-                moduleid=moduleid,
-                version=metadata.version,
-                portal_type='Collection',
-                name=metadata.title,
-                created=metadata.created,
-                revised=metadata.revised,
-                abstractid=abstractid,
-                licenseid=licenseid,
-                doctype='',
-                submitter='user1',
-                submitlog='util inserted',
-                language=metadata.language,
-                authors=metadata.authors,
-                maintainers=metadata.maintainers,
-                licensors=metadata.licensors,
-                parent=None,
-                parentauthors=None,
-            ).returning(t.modules.c.module_ident, t.modules.c.moduleid))
-            ident, id = result.fetchone()
-            # Force this into a 'current' state. It's necessary to do this
-            # as an update, because a trigger paves over an inserted value.
-            trans.execute(
-                t.modules.update()
-                .where(t.modules.c.module_ident == ident)
-                .values(stateid=1))
-
-            # Insert subjects metadata
-            stmt = (text('INSERT INTO moduletags '
-                         'SELECT :module_ident AS module_ident, tagid '
-                         'FROM tags WHERE tag = any(:subjects)')
-                    .bindparams(module_ident=ident,
-                                subjects=list(metadata.subjects)))
-            result = trans.execute(stmt)
-
-            # Insert keywords metadata
-            stmt = (text('INSERT INTO keywords (word) '
-                         'SELECT iword AS word '
-                         'FROM unnest(:keywords ::text[]) AS iword '
-                         '     LEFT JOIN keywords AS kw ON (kw.word = iword) '
-                         'WHERE kw.keywordid IS NULL')
-                    .bindparams(keywords=list(metadata.keywords)))
-            trans.execute(stmt)
-            stmt = (text('INSERT INTO modulekeywords '
-                         'SELECT :module_ident AS module_ident, keywordid '
-                         'FROM keywords WHERE word = any(:keywords)')
-                    .bindparams(module_ident=ident,
-                                keywords=list(metadata.keywords)))
-            trans.execute(stmt)
+            ident, id = self._insert_module_metadata(trans, metadata,
+                                                     'Collection')
 
             # Rewrite the content with the id
             with model.file.open('rb') as fb:
