@@ -339,15 +339,7 @@ class _ContentUtil:
             if random.randint(1, 40) % 2 == 0 or depth == max_depth:
                 module = self.gen_module(relative_to=relative_to)
                 modules.append(module)
-                from press.parsers import parse_module_metadata
-                metadata = parse_module_metadata(module)
-                # The 'id' can be `None` for tests, because we don't have
-                # a way to specify something as "new" yet.
-                node = ModuleNode(id=metadata.id,
-                                  version='latest',
-                                  version_at=metadata.version,
-                                  title=metadata.title,
-                                  module=module)
+                node = self.make_tree_node_from(module)
                 tree.append(node)
             else:
                 contents, additional_modules = self.gen_collection_tree(
