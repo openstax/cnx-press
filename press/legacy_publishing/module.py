@@ -10,8 +10,7 @@ __all__ = (
 
 def publish_legacy_page(model, metadata, submission, registry):
     """Publish a Page (aka Module) as the legacy (zope-based) system
-    would. This should trigger the same (in-database) logic used when
-    the legacy system publishes a module.
+    would.
 
     :param model: module
     :type model: :class:`litezip.Module`
