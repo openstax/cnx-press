@@ -10,8 +10,7 @@ __all__ = (
 
 def publish_legacy_book(model, metadata, submission, registry):
     """Publish a Book (aka Collection) as the legacy (zope-based) system
-    would. This should trigger the same (in-database) logic used when
-    the legacy system publishes a collection.
+    would.
 
     :param model: module
     :type model: :class:`litezip.Collection`
