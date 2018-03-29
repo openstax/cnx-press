@@ -452,9 +452,10 @@ class _PersistUtil:
             t.licenses.select()
             .where(t.licenses.c.url == metadata.license_url))
         licenseid = result.fetchone().licenseid
+        major_version = metadata.version.split('.')[-1]
         result = trans.execute(t.modules.insert().values(
             moduleid=moduleid,
-            version=metadata.version,
+            major_version=major_version,
             portal_type=type_,
             name=metadata.title,
             created=metadata.created,
