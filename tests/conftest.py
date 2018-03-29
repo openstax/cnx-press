@@ -328,13 +328,16 @@ class _ContentUtil:
         collection = Collection(id, pathlib.Path(filepath), resources)
         return collection, tree, modules
 
-    def gen_collection_tree(self, max_depth=1, depth=0, relative_to=None):
+    def gen_collection_tree(self, modules=[],
+                            max_depth=1, depth=0, relative_to=None):
         """Returns a sequence containing a dict of title and contents
         and/or Module objects.
 
         """
         tree = []
-        modules = []
+        for module in modules:
+            node = self.make_tree_node_from(module)
+            tree.append(node)
         for x in range(2, 6):
             if random.randint(1, 40) % 2 == 0 or depth == max_depth:
                 module = self.gen_module(relative_to=relative_to)
