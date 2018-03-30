@@ -308,8 +308,8 @@ class _ContentUtil:
         template = jinja2.Template(COLLECTION_DOC)
         return template.render(metadata=metadata, tree=tree)
 
-    def gen_module(self, resources=[], relative_to=None):
-        id = None
+    def gen_module(self, id=None, resources=[], relative_to=None):
+        id = not id and self.randid(prefix='m') or id
         module_dir = self._gen_dir(relative_to=relative_to)
         module_filepath = module_dir / 'index.cnxml'
         metadata = self.gen_module_metadata(id=id)
@@ -317,8 +317,9 @@ class _ContentUtil:
             fb.write(self.gen_cnxml(metadata, resources))
         return Module(id, pathlib.Path(module_filepath), resources)
 
-    def gen_collection(self, resources=[], relative_to=None):
-        id = None
+    def gen_collection(self, id=None, resources=[],
+                       relative_to=None):
+        id = not id and self.randid(prefix='col') or id
         relative_to = dir = self._gen_dir(relative_to=relative_to)
         filepath = dir / 'collection.xml'
         metadata = self.gen_module_metadata(id=id)
@@ -439,12 +440,6 @@ class _PersistUtil:
         """
         t = self.db_tables
 
-        if metadata.id is None:
-            prefix = {'C': 'col', 'M': 'm'}[type_[0]]
-            moduleid = self.content_util.randid(prefix=prefix)
-        else:
-            moduleid = metadata.id
-
         result = trans.execute(t.abstracts.insert()
                                .values(abstract=metadata.abstract))
         abstractid = result.inserted_primary_key[0]
@@ -454,7 +449,7 @@ class _PersistUtil:
         licenseid = result.fetchone().licenseid
         major_version = metadata.version.split('.')[-1]
         result = trans.execute(t.modules.insert().values(
-            moduleid=moduleid,
+            moduleid=metadata.id,
             major_version=major_version,
             portal_type=type_,
             name=metadata.title,
@@ -508,6 +503,9 @@ class _PersistUtil:
         engine = self.db_engines['common']
         t = self.db_tables
 
+        # Anything inserted with this tool must already have a valid id
+        assert metadata.id is not None
+
         with engine.begin() as trans:
             # Insert module metadata
             ident, id = self._insert_module_metadata(trans, metadata,
@@ -547,10 +545,8 @@ class _PersistUtil:
         engine = self.db_engines['common']
         t = self.db_tables
 
-        if metadata.id is None:
-            moduleid = self.content_util.randid(prefix='col')
-        else:
-            moduleid = metadata.id
+        # Anything inserted with this tool must already have a valid id
+        assert metadata.id is not None
 
         with engine.begin() as trans:
             # Insert metadata
