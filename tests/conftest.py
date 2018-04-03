@@ -506,6 +506,16 @@ class _PersistUtil:
         result = trans.execute(stmt)
         return bool(result.fetchone())
 
+    def _set_state(self, trans, moduleid, version, state_name):
+        stmt = (text('UPDATE modules '
+                     'SET stateid = (SELECT stateid '
+                     '               FROM modulestates '
+                     '               WHERE statename = :state_name)'
+                     'WHERE moduleid = :moduleid AND version = :version ')
+                .bindparams(moduleid=moduleid, version=version,
+                            state_name=state_name))
+        trans.execute(stmt)
+
     def insert_module(self, model):
         # This is validly used here because the tests associated with
         # this parser functions are outside the scope of persistent
@@ -593,6 +603,8 @@ class _PersistUtil:
                 filename='collection.xml',
             ))
             # TODO Insert resource files (recipes, cover image, etc.)
+
+            self._set_state(trans, metadata.id, metadata.version, 'current')
 
         return Collection(id, model.file, model.resources)
 
