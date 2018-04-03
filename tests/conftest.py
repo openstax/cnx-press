@@ -493,6 +493,19 @@ class _PersistUtil:
         trans.execute(stmt)
         return ident, id
 
+    def _already_exists(self, trans, model, metadata):
+        """Check if the given model already exists in the database.
+        This is a simple check done by moduleid and version.
+        It's assumed the programmer will not insert the same file twice.
+
+        """
+        t = self.db_tables
+        stmt = (t.modules.select()
+                .where(t.modules.c.moduleid == metadata.id)
+                .where(t.modules.c.version == metadata.version))
+        result = trans.execute(stmt)
+        return bool(result.fetchone())
+
     def insert_module(self, model):
         # This is validly used here because the tests associated with
         # this parser functions are outside the scope of persistent
@@ -507,6 +520,9 @@ class _PersistUtil:
         assert metadata.id is not None
 
         with engine.begin() as trans:
+            if self._already_exists(trans, model, metadata):
+                return model
+
             # Insert module metadata
             ident, id = self._insert_module_metadata(trans, metadata,
                                                      'Module')
@@ -549,6 +565,9 @@ class _PersistUtil:
         assert metadata.id is not None
 
         with engine.begin() as trans:
+            if self._already_exists(trans, model, metadata):
+                return model
+
             # Insert metadata
             ident, id = self._insert_module_metadata(trans, metadata,
                                                      'Collection')
