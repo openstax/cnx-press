@@ -5,6 +5,8 @@ Change Log
 ?.?.?
 -----
 
+- Refactor the testing persistence utility. And correct the versioning usage
+  similar to what previous changes addressed except in the testing code.
 - On publish assign ``major_version`` rather than ``version`` to prevent
   the database triggers that deal with legacy content from manipulating
   the record and invoking revision publications.
