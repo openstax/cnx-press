@@ -1,6 +1,9 @@
 import pretend
 
-from press.publishing.helpers import bump_version
+from press.publishing.helpers import (
+    bump_version,
+    get_previous_published_version,
+)
 
 
 class TestBumpVersion:
@@ -51,4 +54,35 @@ class TestBumpVersion:
         version = bump_version(db_transaction, uuid, is_minor_bump=True)
 
         expected_version = (major_version, minor_version + 1)
+        assert version == expected_version
+
+
+class TestGetPreviousPublishedVersion:
+
+    def test_for_module(self):
+        uuid = '<uuid>'
+        major_version, minor_version = (4, None)
+
+        row = (major_version - 1, None)
+        db_result = pretend.stub(fetchone=lambda: row)
+        db_transaction = pretend.stub(execute=lambda _: db_result)
+
+        version = get_previous_published_version(
+            db_transaction, uuid, (major_version, minor_version))
+
+        expected_version = (major_version - 1, minor_version)
+        assert version == expected_version
+
+    def test_without_previous_version(self):
+        uuid = '<uuid>'
+        major_version, minor_version = (1, 1)
+
+        row = None
+        db_result = pretend.stub(fetchone=lambda: row)
+        db_transaction = pretend.stub(execute=lambda _: db_result)
+
+        version = get_previous_published_version(
+            db_transaction, uuid, (major_version, minor_version))
+
+        expected_version = (None, None)
         assert version == expected_version
