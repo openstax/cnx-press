@@ -326,13 +326,14 @@ class _ContentUtil:
             fb.write(self.gen_cnxml(metadata, resources))
         return Module(id, pathlib.Path(module_filepath), resources)
 
-    def gen_collection(self, id=None, resources=[],
+    def gen_collection(self, id=None, modules=[], resources=[],
                        relative_to=None):
         id = not id and self.randid(prefix='col') or id
         relative_to = dir = self._gen_dir(relative_to=relative_to)
         filepath = dir / 'collection.xml'
         metadata = self.gen_module_metadata(id=id)
-        tree, modules = self.gen_collection_tree(relative_to=relative_to)
+        tree, modules = self.gen_collection_tree(modules=modules,
+                                                 relative_to=relative_to)
         with filepath.open('w') as fb:
             fb.write(self.gen_colxml(metadata, tree))
         collection = Collection(id, pathlib.Path(filepath), resources)
