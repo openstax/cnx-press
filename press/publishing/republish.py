@@ -65,8 +65,7 @@ WITH RECURSIVE t(nodeid, parent_id, documentid, title, childorder, latest,
     ARRAY[tr.nodeid]
   FROM trees AS tr
     JOIN modules AS m ON (tr.documentid = m.module_ident)
-  WHERE tr.documentid = m.module_indent
-    AND m.uuid = :uuid
+  WHERE m.uuid = :uuid
     AND m.major_version = :major_version
     AND m.minor_version = :minor_version
     AND tr.is_collated = FALSE
