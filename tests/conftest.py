@@ -668,6 +668,17 @@ class _PersistUtil:
 
         return Collection(id, model.file, model.resources)
 
+    def insert_all(self, collection, tree, modules):
+        """Persist all the modules and the collection.
+        Returns the rebuilt collection, tree and modules.
+
+        """
+        modules = list([self.insert_module(m) for m in modules])
+        collection, tree, modules = self.content_util.rebuild_collection(
+            collection, tree)
+        collection = self.insert_collection(collection)
+        return collection, tree, modules
+
 
 @pytest.fixture(scope='session')
 def persist_util(request, db_engines, db_tables_session_scope, content_util):
