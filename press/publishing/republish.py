@@ -8,7 +8,7 @@ __all__ = (
 )
 
 
-_republish_tmplt = """\
+_republish_collection = text("""\
 WITH previous AS (
   SELECT module_ident
   FROM modules
@@ -37,20 +37,22 @@ inserted AS (
     stateid, doctype
   FROM modules AS m JOIN previous AS p ON (m.module_ident = p.module_ident)
   RETURNING
-    ident_hash(uuid, major_version, minor_version) AS ident_hash,
-    module_ident),
+    uuid, major_version, minor_version, module_ident
+),
 keywords AS (
   INSERT INTO modulekeywords (module_ident, keywordid)
   SELECT i.module_ident, keywordid
   FROM modulekeywords AS mk, inserted AS i, previous AS p
-  WHERE mk.module_ident = p.module_ident),
+  WHERE mk.module_ident = p.module_ident
+),
 tags AS (
   INSERT INTO moduletags (module_ident, tagid)
   SELECT i.module_ident, tagid
   FROM moduletags AS mt, inserted AS i, previous AS p
-  WHERE mt.module_ident = p.module_ident)
+  WHERE mt.module_ident = p.module_ident
+)
 SELECT uuid, major_version, minor_version FROM inserted
-"""
+""")
 
 
 _collection_tree_sql = text("""\
@@ -116,14 +118,14 @@ def republish_collection(trans, uuid, version, change_map):
     (major_version, minor_version) = version
     bumped_version = bump_version(trans, uuid, is_minor_bump=True)
 
-    stmt = text(_republish_tmplt).bindparams(
+    result = trans.execute(
+        _republish_collection,
         uuid=uuid,
         major_version=major_version,
         minor_version=minor_version,
         next_major_version=bumped_version[0],
-        next_minor_version=bumped_version[0],
+        next_minor_version=bumped_version[1],
     )
-    result = trans.execute(stmt)
     uuid, new_major_version, new_minor_version = result.fetchone()
 
     # Add this new version to the change map
