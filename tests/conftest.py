@@ -399,6 +399,10 @@ class _ContentUtil:
                 node.version_at = metadata.version
 
     def _flatten_collection_tree_to_modules(self, tree):
+        """Given a collection tree data structure,
+        flatten this to a list of module nodes.
+
+        """
         for node in tree:
             if isinstance(node, SubCollection):
                 contents = node.contents
@@ -428,6 +432,48 @@ class _ContentUtil:
                 zb.write(str(file), str(rel_file_path))
                 # TODO Write resources into this zipfile
         return zip_file
+
+    def bump_version(self, module):
+        with module.file.open('rb') as fb:
+            xml = etree.parse(fb)
+
+        elm = xml.xpath('//md:version', namespaces=COLLECTION_NSMAP)[0]
+        version = int(elm.text.split('.')[-1]) + 1
+        elm.text = '1.{}'.format(version)
+
+        with module.file.open('wb') as fb:
+            fb.write(etree.tostring(xml))
+
+        return module
+
+    def append_to_module(self, module, appendage=None):
+        """Append the given ``appendage`` string to the given ``module``,
+        then return the module object.
+
+        """
+        with module.file.open('rb') as fb:
+            xml = etree.parse(fb)
+        elm = xml.xpath('//c:content', namespaces=COLLECTION_NSMAP)[0]
+
+        if appendage is None:
+            appendage = 'fooppendage'
+        elm_name = '{{{}}}para'.format(COLLECTION_NSMAP['c'])
+        appendage_elm = etree.Element(elm_name, id=str(self._rand_id_num()))
+        appendage_elm.text = appendage
+        elm.append(appendage_elm)
+
+        with module.file.open('wb') as fb:
+            fb.write(etree.tostring(xml))
+
+        return module
+
+    def flatten_collection_tree_to_nodes(self, tree):
+        """Given a collection tree, flatten it to end nodes (module items)."""
+        for node in tree['contents']:
+            if 'contents' in node:
+                yield from self.flatten_collection_tree_to_nodes(node)
+            else:
+                yield node
 
 
 @pytest.fixture(scope='session')
