@@ -42,7 +42,8 @@ class TestRepublishCollection:
 
         row = (uuid, next_mjr_version, next_mnr_version)
         db_result = pretend.stub(fetchone=lambda: row)
-        db_transaction = pretend.stub(execute=lambda _: db_result)
+        execute = pretend.call_recorder(lambda *a, **kw: db_result)
+        db_transaction = pretend.stub(execute=execute)
 
         id, version = republish_collection(
             db_transaction,
@@ -58,6 +59,17 @@ class TestRepublishCollection:
 
         expected_call = pretend.call(db_transaction, uuid, is_minor_bump=True)
         assert bump_version.calls == [expected_call]
+
+        # Check the sql execution submits the correct parameters
+        expected_call = pretend.call(
+            ANY,
+            uuid='<uuid>',
+            major_version=4,
+            minor_version=5,
+            next_major_version=4, 
+            next_minor_version=6,
+        )
+        assert execute.calls == [expected_call]
 
 
 class TestRebuildCollectionTree:
