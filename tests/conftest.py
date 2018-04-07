@@ -13,6 +13,7 @@ from cnxdb.init import init_db
 from litezip import Collection, Module
 from litezip.main import COLLECTION_NSMAP
 from lxml import etree
+from pyramid import testing as pyramid_testing
 from pyramid.settings import asbool
 from recordclass import recordclass
 from sqlalchemy import create_engine
@@ -64,6 +65,14 @@ def env_vars(keep_shared_directory):
             else:
                 f.unlink()
     shutil.rmtree(temp_shared_directory)
+
+
+# TODO move to functional/conftest.py when unit/* tests no longer depend on it
+@pytest.fixture
+def app(env_vars):
+    from press.config import configure
+    yield configure()
+    pyramid_testing.tearDown()
 
 
 PERSONS = (
