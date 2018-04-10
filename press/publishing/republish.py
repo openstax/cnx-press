@@ -94,7 +94,7 @@ VALUES
     FROM modules
     WHERE uuid = :uuid
       AND major_version = :major_version
-      AND minor_version = :minor_version
+      AND (portal_type = 'Module' OR minor_version = :minor_version)
     ),
    :title, :childorder, :latest)
 RETURNING nodeid""")
