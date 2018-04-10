@@ -313,9 +313,18 @@ class _ContentUtil:
         return template.render(metadata=metadata, resources=resources,
                                terms=' '.join(terms))
 
-    def gen_colxml(self, metadata, tree):
+    def gen_colxml(self, metadata, tree, these_as_latest=[]):
+        """Generate a colxml content from the given metadata and tree.
+        The ``these_as_latest`` list should contain ids for content
+        that should be marked as using the latest version.
+
+        """
         template = jinja2.Template(COLLECTION_DOC)
-        return template.render(metadata=metadata, tree=tree)
+        return template.render(
+            metadata=metadata,
+            tree=tree,
+            these_as_latest=these_as_latest,
+        )
 
     def gen_module(self, id=None, resources=[], relative_to=None):
         id = not id and self.randid(prefix='m') or id
@@ -327,15 +336,17 @@ class _ContentUtil:
         return Module(id, pathlib.Path(module_filepath), resources)
 
     def gen_collection(self, id=None, modules=[], resources=[],
-                       relative_to=None):
+                       relative_to=None, these_as_latest=[]):
         id = not id and self.randid(prefix='col') or id
         relative_to = dir = self._gen_dir(relative_to=relative_to)
         filepath = dir / 'collection.xml'
         metadata = self.gen_module_metadata(id=id)
         tree, modules = self.gen_collection_tree(modules=modules,
                                                  relative_to=relative_to)
+        these_as_latest = [m.id for m in modules]  # XXX
+        these_as_latest.extend(id)
         with filepath.open('w') as fb:
-            fb.write(self.gen_colxml(metadata, tree))
+            fb.write(self.gen_colxml(metadata, tree, these_as_latest))
         collection = Collection(id, pathlib.Path(filepath), resources)
         return collection, tree, modules
 
