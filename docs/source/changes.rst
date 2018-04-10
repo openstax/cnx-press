@@ -5,6 +5,10 @@ Change Log
 ?.?.?
 -----
 
+- Add functions to republish Collections that share Modules. This is a step
+  towards replacing the existing republish feature of the legacy software
+  which republishes Collections that share Modules with the contextual
+  publication.
 - Refactor the testing persistence utility. And correct the versioning usage
   similar to what previous changes addressed except in the testing code.
 - On publish assign ``major_version`` rather than ``version`` to prevent

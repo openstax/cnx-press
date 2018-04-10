@@ -86,7 +86,7 @@
             {% for sub_item in item.contents %}
               <col:module document="{{ sub_item.id }}" version="{{ sub_item.version }}"
                           repository="http://cnx.org/content"
-                          cnxorg:version-at-this-collection-version="{{ sub_item.version_at }}">
+                          cnxorg:version-at-this-collection-version="{{ sub_item.id in these_as_latest and 'latest' or sub_item.version_at }}">
                 <md:title>{{ sub_item.title }}</md:title>
               </col:module>
             {% endfor %}
@@ -95,7 +95,7 @@
       {% else %}
         <col:module document="{{ item.id }}" version="{{ item.version }}"
                     repository="http://cnx.org/content"
-                    cnxorg:version-at-this-collection-version="{{ item.version_at }}">
+                    cnxorg:version-at-this-collection-version="{{ item.id in these_as_latest and 'latest' or item.version_at }}">
           <md:title>{{ item.title }}</md:title>
         </col:module>
       {% endif %}

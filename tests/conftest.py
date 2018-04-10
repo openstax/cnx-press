@@ -13,6 +13,7 @@ from cnxdb.init import init_db
 from litezip import Collection, Module
 from litezip.main import COLLECTION_NSMAP
 from lxml import etree
+from pyramid import testing as pyramid_testing
 from pyramid.settings import asbool
 from recordclass import recordclass
 from sqlalchemy import create_engine
@@ -64,6 +65,14 @@ def env_vars(keep_shared_directory):
             else:
                 f.unlink()
     shutil.rmtree(temp_shared_directory)
+
+
+# TODO move to functional/conftest.py when unit/* tests no longer depend on it
+@pytest.fixture
+def app(env_vars):
+    from press.config import configure
+    yield configure()
+    pyramid_testing.tearDown()
 
 
 PERSONS = (
@@ -304,9 +313,18 @@ class _ContentUtil:
         return template.render(metadata=metadata, resources=resources,
                                terms=' '.join(terms))
 
-    def gen_colxml(self, metadata, tree):
+    def gen_colxml(self, metadata, tree, these_as_latest=[]):
+        """Generate a colxml content from the given metadata and tree.
+        The ``these_as_latest`` list should contain ids for content
+        that should be marked as using the latest version.
+
+        """
         template = jinja2.Template(COLLECTION_DOC)
-        return template.render(metadata=metadata, tree=tree)
+        return template.render(
+            metadata=metadata,
+            tree=tree,
+            these_as_latest=these_as_latest,
+        )
 
     def gen_module(self, id=None, resources=[], relative_to=None):
         id = not id and self.randid(prefix='m') or id
@@ -317,15 +335,18 @@ class _ContentUtil:
             fb.write(self.gen_cnxml(metadata, resources))
         return Module(id, pathlib.Path(module_filepath), resources)
 
-    def gen_collection(self, id=None, resources=[],
-                       relative_to=None):
+    def gen_collection(self, id=None, modules=[], resources=[],
+                       relative_to=None, these_as_latest=[]):
         id = not id and self.randid(prefix='col') or id
         relative_to = dir = self._gen_dir(relative_to=relative_to)
         filepath = dir / 'collection.xml'
         metadata = self.gen_module_metadata(id=id)
-        tree, modules = self.gen_collection_tree(relative_to=relative_to)
+        tree, modules = self.gen_collection_tree(modules=modules,
+                                                 relative_to=relative_to)
+        these_as_latest = [m.id for m in modules]  # XXX
+        these_as_latest.extend(id)
         with filepath.open('w') as fb:
-            fb.write(self.gen_colxml(metadata, tree))
+            fb.write(self.gen_colxml(metadata, tree, these_as_latest))
         collection = Collection(id, pathlib.Path(filepath), resources)
         return collection, tree, modules
 
@@ -336,6 +357,7 @@ class _ContentUtil:
 
         """
         tree = []
+        modules = modules.copy()
         for module in modules:
             node = self.make_tree_node_from(module)
             tree.append(node)
@@ -385,6 +407,10 @@ class _ContentUtil:
                 node.version_at = metadata.version
 
     def _flatten_collection_tree_to_modules(self, tree):
+        """Given a collection tree data structure,
+        flatten this to a list of module nodes.
+
+        """
         for node in tree:
             if isinstance(node, SubCollection):
                 contents = node.contents
@@ -415,6 +441,48 @@ class _ContentUtil:
                 # TODO Write resources into this zipfile
         return zip_file
 
+    def bump_version(self, module):
+        with module.file.open('rb') as fb:
+            xml = etree.parse(fb)
+
+        elm = xml.xpath('//md:version', namespaces=COLLECTION_NSMAP)[0]
+        version = int(elm.text.split('.')[-1]) + 1
+        elm.text = '1.{}'.format(version)
+
+        with module.file.open('wb') as fb:
+            fb.write(etree.tostring(xml))
+
+        return module
+
+    def append_to_module(self, module, appendage=None):
+        """Append the given ``appendage`` string to the given ``module``,
+        then return the module object.
+
+        """
+        with module.file.open('rb') as fb:
+            xml = etree.parse(fb)
+        elm = xml.xpath('//c:content', namespaces=COLLECTION_NSMAP)[0]
+
+        if appendage is None:
+            appendage = 'fooppendage'
+        elm_name = '{{{}}}para'.format(COLLECTION_NSMAP['c'])
+        appendage_elm = etree.Element(elm_name, id=str(self._rand_id_num()))
+        appendage_elm.text = appendage
+        elm.append(appendage_elm)
+
+        with module.file.open('wb') as fb:
+            fb.write(etree.tostring(xml))
+
+        return module
+
+    def flatten_collection_tree_to_nodes(self, tree):
+        """Given a collection tree, flatten it to end nodes (module items)."""
+        for node in tree['contents']:
+            if 'contents' in node:
+                yield from self.flatten_collection_tree_to_nodes(node)
+            else:
+                yield node
+
 
 @pytest.fixture(scope='session')
 def content_util(request):
@@ -433,7 +501,8 @@ class _PersistUtil:
         self.db_tables = db_tables
         self.content_util = content_util
 
-    def _insert_module_metadata(self, trans, metadata, type_):
+    def _insert_module_metadata(self, trans, metadata, type_,
+                                existing_uuid=None):
         """Insert the module metadata with using the given database
         transaction.
 
@@ -449,6 +518,7 @@ class _PersistUtil:
         licenseid = result.fetchone().licenseid
         major_version = metadata.version.split('.')[-1]
         result = trans.execute(t.modules.insert().values(
+            uuid=existing_uuid,  # If not set one will be generated
             moduleid=metadata.id,
             major_version=major_version,
             portal_type=type_,
@@ -506,6 +576,15 @@ class _PersistUtil:
         result = trans.execute(stmt)
         return bool(result.fetchone())
 
+    def _find_existing_record(self, trans, model):
+        """Lookup the existing record for the given model"""
+        t = self.db_tables
+        stmt = (t.modules.select()
+                .where(t.modules.c.moduleid == model.id))
+        result = trans.execute(stmt)
+        record = result.fetchone()
+        return not record and {} or record
+
     def _set_state(self, trans, moduleid, version, state_name):
         stmt = (text('UPDATE modules '
                      'SET stateid = (SELECT stateid '
@@ -533,9 +612,13 @@ class _PersistUtil:
             if self._already_exists(trans, model, metadata):
                 return model
 
+            insert_args = [trans, metadata, 'Module']
+            existing_record = self._find_existing_record(trans, model)
+            if existing_record is not None:
+                insert_args.append(existing_record.uuid)
+
             # Insert module metadata
-            ident, id = self._insert_module_metadata(trans, metadata,
-                                                     'Module')
+            ident, id = self._insert_module_metadata(*insert_args)
 
             # Rewrite the content with the id
             with model.file.open('rb') as fb:
@@ -578,9 +661,13 @@ class _PersistUtil:
             if self._already_exists(trans, model, metadata):
                 return model
 
-            # Insert metadata
-            ident, id = self._insert_module_metadata(trans, metadata,
-                                                     'Collection')
+            insert_args = [trans, metadata, 'Collection']
+            existing_record = self._find_existing_record(trans, model)
+            if existing_record is not None:
+                insert_args.append(existing_record.uuid)
+
+            # Insert module metadata
+            ident, id = self._insert_module_metadata(*insert_args)
 
             # Rewrite the content with the id
             with model.file.open('rb') as fb:
@@ -607,6 +694,17 @@ class _PersistUtil:
             self._set_state(trans, metadata.id, metadata.version, 'current')
 
         return Collection(id, model.file, model.resources)
+
+    def insert_all(self, collection, tree, modules):
+        """Persist all the modules and the collection.
+        Returns the rebuilt collection, tree and modules.
+
+        """
+        modules = list([self.insert_module(m) for m in modules])
+        collection, tree, modules = self.content_util.rebuild_collection(
+            collection, tree)
+        collection = self.insert_collection(collection)
+        return collection, tree, modules
 
 
 @pytest.fixture(scope='session')
