@@ -501,7 +501,8 @@ class _PersistUtil:
         self.db_tables = db_tables
         self.content_util = content_util
 
-    def _insert_module_metadata(self, trans, metadata, type_):
+    def _insert_module_metadata(self, trans, metadata, type_,
+                                existing_uuid=None):
         """Insert the module metadata with using the given database
         transaction.
 
@@ -517,6 +518,7 @@ class _PersistUtil:
         licenseid = result.fetchone().licenseid
         major_version = metadata.version.split('.')[-1]
         result = trans.execute(t.modules.insert().values(
+            uuid=existing_uuid,  # If not set one will be generated
             moduleid=metadata.id,
             major_version=major_version,
             portal_type=type_,
@@ -574,6 +576,15 @@ class _PersistUtil:
         result = trans.execute(stmt)
         return bool(result.fetchone())
 
+    def _find_existing_record(self, trans, model):
+        """Lookup the existing record for the given model"""
+        t = self.db_tables
+        stmt = (t.modules.select()
+                .where(t.modules.c.moduleid == model.id))
+        result = trans.execute(stmt)
+        record = result.fetchone()
+        return not record and {} or record
+
     def _set_state(self, trans, moduleid, version, state_name):
         stmt = (text('UPDATE modules '
                      'SET stateid = (SELECT stateid '
@@ -601,9 +612,13 @@ class _PersistUtil:
             if self._already_exists(trans, model, metadata):
                 return model
 
+            insert_args = [trans, metadata, 'Module']
+            existing_record = self._find_existing_record(trans, model)
+            if existing_record is not None:
+                insert_args.append(existing_record.uuid)
+
             # Insert module metadata
-            ident, id = self._insert_module_metadata(trans, metadata,
-                                                     'Module')
+            ident, id = self._insert_module_metadata(*insert_args)
 
             # Rewrite the content with the id
             with model.file.open('rb') as fb:
@@ -646,9 +661,13 @@ class _PersistUtil:
             if self._already_exists(trans, model, metadata):
                 return model
 
-            # Insert metadata
-            ident, id = self._insert_module_metadata(trans, metadata,
-                                                     'Collection')
+            insert_args = [trans, metadata, 'Collection']
+            existing_record = self._find_existing_record(trans, model)
+            if existing_record is not None:
+                insert_args.append(existing_record.uuid)
+
+            # Insert module metadata
+            ident, id = self._insert_module_metadata(*insert_args)
 
             # Rewrite the content with the id
             with model.file.open('rb') as fb:
