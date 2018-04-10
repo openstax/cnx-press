@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy.sql import text
 
 from .helpers import bump_version
@@ -177,10 +179,11 @@ def _rebuild_collection_tree(trans, uuid, version, change_map):
     def build_tree(nodeid, parent_id=None):
         node = tree[nodeid]
         node['parent_id'] = parent_id
-        if change_map.get(node['uuid']) is not None \
+        node_uuid = UUID(node['uuid'])
+        if change_map.get(node_uuid) is not None \
            and (node['latest'] or parent_id is None):
-            node['major_version'] = change_map[node['uuid']][0]
-            node['minor_version'] = change_map[node['uuid']][1]
+            node['major_version'] = change_map[node_uuid][0]
+            node['minor_version'] = change_map[node_uuid][1]
         new_nodeid = insert(node)
         for child_nodeid in children.get(nodeid, []):
             build_tree(child_nodeid, new_nodeid)
