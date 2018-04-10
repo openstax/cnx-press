@@ -71,8 +71,10 @@ def republish_books(collection, models, submission, registry):
             republished.append((uuid, new_version))
 
         # Translate (uuid, version) to (moduleid, legacy-version)
-        identifiers = ['@'.join([uuid, '.'.join([str(x) for x in version])])
-                       for uuid, version in republished]
+        identifiers = [
+            '@'.join([str(uuid), '.'.join([str(x) for x in version])])
+            for uuid, version in republished
+        ]
         result = trans.execute(_legacy_identifiers_query,
                                identifiers=identifiers)
         republished = [(moduleid, version)
