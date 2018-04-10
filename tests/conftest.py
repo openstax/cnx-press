@@ -361,6 +361,7 @@ class _ContentUtil:
 
         """
         tree = []
+        modules = modules.copy()
         for module in modules:
             node = self.make_tree_node_from(module)
             tree.append(node)
