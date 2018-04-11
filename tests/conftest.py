@@ -71,7 +71,11 @@ def env_vars(keep_shared_directory):
 @pytest.fixture
 def app(env_vars):
     from press.config import configure
-    yield configure()
+    config = configure()
+    config.begin()
+    yield config
+    config.end()
+    # For good measure call the pyramid's testing teardown
     pyramid_testing.tearDown()
 
 
