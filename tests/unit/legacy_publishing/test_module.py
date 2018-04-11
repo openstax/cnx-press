@@ -15,10 +15,13 @@ def test_publish_revision_to_legacy_page(
 
     metadata = parse_module_metadata(module)
 
-    registry = app.registry
-    (id, version), ident = publish_legacy_page(module, metadata,
-                                               ('user1', 'test publish',),
-                                               registry)
+    with db_engines['common'].begin() as conn:
+        (id, version), ident = publish_legacy_page(
+            module,
+            metadata,
+            ('user1', 'test publish',),
+            conn,
+        )
 
     # Check core metadata insertion
     stmt = (db_tables.modules.join(db_tables.abstracts)

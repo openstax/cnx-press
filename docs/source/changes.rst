@@ -5,6 +5,8 @@ Change Log
 ?.?.?
 -----
 
+- Move the database connection creation into the publishing view code
+  so that a single transaction can be pushed down through the functions.
 - Refactor the testing persistence utility. And correct the versioning usage
   similar to what previous changes addressed except in the testing code.
 - On publish assign ``major_version`` rather than ``version`` to prevent
