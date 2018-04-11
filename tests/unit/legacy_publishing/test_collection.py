@@ -33,10 +33,13 @@ def test_publish_legacy_book(
     collection, tree, modules = content_util.rebuild_collection(collection,
                                                                 tree)
 
-    registry = app.registry
-    (id, version), ident = publish_legacy_book(collection, metadata,
-                                               ('user1', 'test publish',),
-                                               registry)
+    with db_engines['common'].begin() as conn:
+        (id, version), ident = publish_legacy_book(
+            collection,
+            metadata,
+            ('user1', 'test publish',),
+            conn,
+        )
 
     # Check core metadata insertion
     stmt = (db_tables.modules.join(db_tables.abstracts)

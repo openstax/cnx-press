@@ -29,8 +29,13 @@ def test_publish_litezip(
                                                                 tree)
     struct = tuple([collection, new_module])
 
-    registry = app.registry
-    id_map = publish_litezip(struct, ('user1', 'test publish',), registry)
+    with db_engines['common'].begin() as conn:
+        id_map = publish_litezip(
+            struct,
+            ('user1', 'test publish',),
+            conn,
+        )
+
     expected_id_map = {
         new_module.id: (new_module.id, '1.2'),
         collection.id: (collection.id, '1.2'),

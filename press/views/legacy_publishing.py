@@ -56,8 +56,9 @@ def publish(request):
             for path, message in validation_msgs
         ]}
 
-    id_mapping = publish_litezip(litezip_struct, (publisher, message),
-                                 request.registry)
+    with request.registry.engines['common'].begin() as db_conn:
+        id_mapping = publish_litezip(litezip_struct, (publisher, message),
+                                     db_conn)
 
     resp_data = []
     for src_id, (id, ver) in id_mapping.items():

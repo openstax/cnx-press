@@ -14,7 +14,7 @@ __all__ = (
 )
 
 
-def publish_litezip(struct, submission, registry):
+def publish_litezip(struct, submission, db_conn):
     """Publish the contents of a litezip structured set of data.
 
     :param struct: a litezip struct from (probably from
@@ -22,8 +22,8 @@ def publish_litezip(struct, submission, registry):
     :param submission: a two value tuple containing a userid
                        and submit message
     :type submission: tuple
-    :param registry: the pyramid component architecture registry
-    :type registry: :class:`pyramid.registry.Registry`
+    :param db_conn: a database connection object
+    :type db_conn: :class:`sqlalchemy.engine.Connection`
 
     """
     # Dissect objects from litezip struct.
@@ -42,7 +42,7 @@ def publish_litezip(struct, submission, registry):
         metadata = parse_module_metadata(module)
         old_id = module.id
         (id, version), ident = publish_legacy_page(module, metadata,
-                                                   submission, registry)
+                                                   submission, db_conn)
         id_map[old_id] = (id, version)
         # Update the Collection tree
         xpath = '//col:module[@document="{}"]'.format(old_id)
@@ -61,7 +61,7 @@ def publish_litezip(struct, submission, registry):
     metadata = parse_collection_metadata(collection)
     old_id = collection.id
     (id, version), ident = publish_legacy_book(collection, metadata,
-                                               submission, registry)
+                                               submission, db_conn)
     id_map[old_id] = (id, version)
 
     return id_map
