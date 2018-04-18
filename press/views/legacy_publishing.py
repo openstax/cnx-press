@@ -56,7 +56,7 @@ def publish(request):
             for path, message in validation_msgs
         ]}
 
-    with request.registry.engines['common'].begin() as db_conn:
+    with request.get_db_engine('common').begin() as db_conn:
         id_mapping = publish_litezip(litezip_struct, (publisher, message),
                                      db_conn)
 
