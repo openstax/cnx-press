@@ -333,9 +333,18 @@ class _ContentUtil:
         return template.render(metadata=metadata, resources=resources,
                                terms=' '.join(terms))
 
-    def gen_colxml(self, metadata, tree):
+    def gen_colxml(self, metadata, tree, these_as_latest=[]):
+        """Generate a colxml content from the given metadata and tree.
+        The ``these_as_latest`` list should contain ids for content
+        that should be marked as using the latest version.
+
+        """
         template = jinja2.Template(COLLECTION_DOC)
-        return template.render(metadata=metadata, tree=tree)
+        return template.render(
+            metadata=metadata,
+            tree=tree,
+            these_as_latest=these_as_latest,
+        )
 
     def gen_module(self, id=None, resources=[], relative_to=None):
         id = not id and self.randid(prefix='m') or id
@@ -347,15 +356,17 @@ class _ContentUtil:
         return Module(id, pathlib.Path(module_filepath), resources)
 
     def gen_collection(self, id=None, modules=[], resources=[],
-                       relative_to=None):
+                       relative_to=None, these_as_latest=[]):
         id = not id and self.randid(prefix='col') or id
         relative_to = dir = self._gen_dir(relative_to=relative_to)
         filepath = dir / 'collection.xml'
         metadata = self.gen_module_metadata(id=id)
         tree, modules = self.gen_collection_tree(modules=modules,
                                                  relative_to=relative_to)
+        these_as_latest = [m.id for m in modules]  # XXX
+        these_as_latest.extend(id)
         with filepath.open('w') as fb:
-            fb.write(self.gen_colxml(metadata, tree))
+            fb.write(self.gen_colxml(metadata, tree, these_as_latest))
         collection = Collection(id, pathlib.Path(filepath), resources)
         return collection, tree, modules
 
@@ -366,6 +377,7 @@ class _ContentUtil:
 
         """
         tree = []
+        modules = modules.copy()
         for module in modules:
             node = self.make_tree_node_from(module)
             tree.append(node)
@@ -509,7 +521,8 @@ class _PersistUtil:
         self.db_tables = db_tables
         self.content_util = content_util
 
-    def _insert_module_metadata(self, trans, metadata, type_):
+    def _insert_module_metadata(self, trans, metadata, type_,
+                                existing_uuid=None):
         """Insert the module metadata with using the given database
         transaction.
 
@@ -525,6 +538,7 @@ class _PersistUtil:
         licenseid = result.fetchone().licenseid
         major_version = metadata.version.split('.')[-1]
         result = trans.execute(t.modules.insert().values(
+            uuid=existing_uuid,  # If not set one will be generated
             moduleid=metadata.id,
             major_version=major_version,
             portal_type=type_,
@@ -582,6 +596,15 @@ class _PersistUtil:
         result = trans.execute(stmt)
         return bool(result.fetchone())
 
+    def _find_existing_record(self, trans, model):
+        """Lookup the existing record for the given model"""
+        t = self.db_tables
+        stmt = (t.modules.select()
+                .where(t.modules.c.moduleid == model.id))
+        result = trans.execute(stmt)
+        record = result.fetchone()
+        return not record and {} or record
+
     def _set_state(self, trans, moduleid, version, state_name):
         stmt = (text('UPDATE modules '
                      'SET stateid = (SELECT stateid '
@@ -609,9 +632,13 @@ class _PersistUtil:
             if self._already_exists(trans, model, metadata):
                 return model
 
+            insert_args = [trans, metadata, 'Module']
+            existing_record = self._find_existing_record(trans, model)
+            if existing_record is not None:
+                insert_args.append(existing_record.uuid)
+
             # Insert module metadata
-            ident, id = self._insert_module_metadata(trans, metadata,
-                                                     'Module')
+            ident, id = self._insert_module_metadata(*insert_args)
 
             # Rewrite the content with the id
             with model.file.open('rb') as fb:
@@ -654,9 +681,13 @@ class _PersistUtil:
             if self._already_exists(trans, model, metadata):
                 return model
 
-            # Insert metadata
-            ident, id = self._insert_module_metadata(trans, metadata,
-                                                     'Collection')
+            insert_args = [trans, metadata, 'Collection']
+            existing_record = self._find_existing_record(trans, model)
+            if existing_record is not None:
+                insert_args.append(existing_record.uuid)
+
+            # Insert module metadata
+            ident, id = self._insert_module_metadata(*insert_args)
 
             # Rewrite the content with the id
             with model.file.open('rb') as fb:

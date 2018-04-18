@@ -5,6 +5,10 @@ Change Log
 ?.?.?
 -----
 
+- Add functions to republish Collections that share Modules. This is a step
+  towards replacing the existing republish feature of the legacy software
+  which republishes Collections that share Modules with the contextual
+  publication.
 - Move the database connection creation into the publishing view code
   so that a single transaction can be pushed down through the functions.
 - Refactor the testing persistence utility. And correct the versioning usage
