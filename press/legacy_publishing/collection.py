@@ -1,4 +1,4 @@
-from pyramid.threadlocal import get_current_registry
+from pyramid.threadlocal import get_current_request
 from sqlalchemy.sql import text
 
 from .utils import replace_id_and_version
@@ -23,7 +23,7 @@ def publish_legacy_book(model, metadata, submission, db_conn):
     :type db_conn: :class:`sqlalchemy.engine.Connection`
 
     """
-    t = get_current_registry().tables
+    t = get_current_request().db_tables
 
     if model.id is None or metadata.id is None:  # pragma: no cover
         raise NotImplementedError()

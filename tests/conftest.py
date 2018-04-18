@@ -14,6 +14,7 @@ from litezip import Collection, Module
 from litezip.main import COLLECTION_NSMAP
 from lxml import etree
 from pyramid import testing as pyramid_testing
+from pyramid.request import apply_request_extensions, Request
 from pyramid.settings import asbool
 from recordclass import recordclass
 from sqlalchemy import create_engine
@@ -70,10 +71,25 @@ def env_vars(keep_shared_directory):
 # TODO move to functional/conftest.py when unit/* tests no longer depend on it
 @pytest.fixture
 def app(env_vars):
+    # Deprecated in favor of either making your test use pretend.stub
+    # or be a functional test using WebTest
     from press.config import configure
     config = configure()
-    config.begin()
+    config.commit()
+
+    # Create a real request object with no real destination or attribution
+    request = Request({})
+
+    # Initialize the configuration and globalize the app's ZCA registry
+    config.begin(request=request)
+
+    # Set the registry on the request (something done by the router)
+    setattr(request, 'registry', config.registry)
+    # Extend the request to include out custom request methods
+    apply_request_extensions(request)
+
     yield config
+
     config.end()
     # For good measure call the pyramid's testing teardown
     pyramid_testing.tearDown()
