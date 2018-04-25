@@ -4,6 +4,7 @@ import zipfile
 from litezip import parse_litezip, validate_litezip
 from pyramid.view import view_config
 
+from .. import events
 from ..legacy_publishing import publish_litezip
 from ..publishing import (
     discover_content_dir,
@@ -56,9 +57,13 @@ def publish(request):
             for path, message in validation_msgs
         ]}
 
+    start_event = events.LegacyPublicationStarted(litezip_struct)
+    request.registry.notify(start_event)
     with request.get_db_engine('common').begin() as db_conn:
         id_mapping = publish_litezip(litezip_struct, (publisher, message),
                                      db_conn)
+    finish_event = events.LegacyPublicationFinished(id_mapping.values())
+    request.registry.notify(finish_event)
 
     resp_data = []
     for src_id, (id, ver) in id_mapping.items():
