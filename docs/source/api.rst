@@ -27,6 +27,15 @@ Configuration
 Publishing
 ==========
 
+Events
+------
+
+.. autoclass:: press.events.LegacyPublicationStarted
+   :members:
+
+.. autoclass:: press.events.LegacyPublicationFinished
+   :members:
+
 :mod:`press.publishing`
 -----------------------
 
