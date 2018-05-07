@@ -2,7 +2,7 @@
 Change Log
 ==========
 
-?.?.?
+2.0.0
 -----
 
 - Move the database connection creation into the publishing view code
