@@ -99,6 +99,6 @@
           <md:title>{{ item.title }}</md:title>
         </col:module>
       {% endif %}
-    {% endfor %}    
+    {% endfor %}
   </col:content>
 </col:collection>
