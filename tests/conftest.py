@@ -524,25 +524,33 @@ class _PersistUtil:
             .where(t.licenses.c.url == metadata.license_url))
         licenseid = result.fetchone().licenseid
         major_version = metadata.version.split('.')[-1]
-        result = trans.execute(t.modules.insert().values(
-            moduleid=metadata.id,
-            major_version=major_version,
-            portal_type=type_,
-            name=metadata.title,
-            created=metadata.created,
-            revised=metadata.revised,
-            abstractid=abstractid,
-            licenseid=licenseid,
-            doctype='',
-            submitter='user1',
-            submitlog='util inserted',
-            language=metadata.language,
-            authors=metadata.authors,
-            maintainers=metadata.maintainers,
-            licensors=metadata.licensors,
-            parent=None,
-            parentauthors=None,
-        ).returning(t.modules.c.module_ident, t.modules.c.moduleid))
+        existing_metadata = trans.execute(
+            t.modules.select().where(t.modules.c.moduleid == metadata.id)
+        ).fetchone()
+        existing_uuid = existing_metadata and existing_metadata.uuid or None
+
+        result = trans.execute(
+            t.modules.insert().values(
+                uuid=existing_uuid,
+                moduleid=metadata.id,
+                major_version=major_version,
+                portal_type=type_,
+                name=metadata.title,
+                created=metadata.created,
+                revised=metadata.revised,
+                abstractid=abstractid,
+                licenseid=licenseid,
+                doctype='',
+                submitter='user1',
+                submitlog='util inserted',
+                language=metadata.language,
+                authors=metadata.authors,
+                maintainers=metadata.maintainers,
+                licensors=metadata.licensors,
+                parent=None,
+                parentauthors=None,
+            ).returning(t.modules.c.module_ident, t.modules.c.moduleid)
+        )
         ident, id = result.fetchone()
 
         # Insert subjects metadata
