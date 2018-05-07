@@ -15,6 +15,13 @@ def test_publish_revision_to_legacy_page(
 
     metadata = parse_module_metadata(module)
 
+    # Collect control data for non-legacy metadata
+    stmt = (
+        db_tables.modules.select()
+        .where(db_tables.modules.c.moduleid == metadata.id)
+    )
+    control_metadata = db_engines['common'].execute(stmt).fetchone()
+
     with db_engines['common'].begin() as conn:
         (id, version), ident = publish_legacy_page(
             module,
@@ -24,11 +31,14 @@ def test_publish_revision_to_legacy_page(
         )
 
     # Check core metadata insertion
-    stmt = (db_tables.modules.join(db_tables.abstracts)
-            .select()
-            .where(db_tables.modules.c.module_ident == ident))
+    stmt = (
+        db_tables.modules.join(db_tables.abstracts)
+        .select()
+        .where(db_tables.modules.c.module_ident == ident)
+    )
     result = db_engines['common'].execute(stmt).fetchone()
     assert result.version == '1.2'
+    assert result.uuid == control_metadata.uuid
     assert result.major_version == 2
     assert result.minor_version is None
     assert result.abstract == metadata.abstract

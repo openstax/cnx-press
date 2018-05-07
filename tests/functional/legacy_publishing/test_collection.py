@@ -23,6 +23,13 @@ def test_publish_legacy_book(
     collection = persist_util.insert_collection(collection)
     metadata = parse_collection_metadata(collection)
 
+    # Collect control data for non-legacy metadata
+    stmt = (
+        db_tables.modules.select()
+        .where(db_tables.modules.c.moduleid == metadata.id)
+    )
+    control_metadata = db_engines['common'].execute(stmt).fetchone()
+
     # Insert a new module ...
     new_module = content_util.gen_module()
     new_module = persist_util.insert_module(new_module)
@@ -42,10 +49,13 @@ def test_publish_legacy_book(
         )
 
     # Check core metadata insertion
-    stmt = (db_tables.modules.join(db_tables.abstracts)
-            .select()
-            .where(db_tables.modules.c.module_ident == ident))
+    stmt = (
+        db_tables.modules.join(db_tables.abstracts)
+        .select()
+        .where(db_tables.modules.c.module_ident == ident)
+    )
     result = db_engines['common'].execute(stmt).fetchone()
+    assert result.uuid == control_metadata.uuid
     assert result.major_version == 2
     assert result.minor_version == 1
     assert result.version == '1.2'
