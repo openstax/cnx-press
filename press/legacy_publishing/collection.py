@@ -46,6 +46,7 @@ def publish_legacy_book(model, metadata, submission, db_conn):
         .where(t.licenses.c.url == metadata.license_url))
     licenseid = result.fetchone().licenseid
     result = db_conn.execute(t.modules.insert().values(
+        uuid=existing_module.uuid,
         moduleid=metadata.id,
         major_version=major_version,
         portal_type='Collection',

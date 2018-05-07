@@ -30,7 +30,8 @@ def publish_legacy_page(model, metadata, submission, db_conn):
 
     result = db_conn.execute(
         t.latest_modules.select()
-        .where(t.latest_modules.c.moduleid == metadata.id))
+        .where(t.latest_modules.c.moduleid == metadata.id)
+    )
     # At this time, this code assumes an existing module
     existing_module = result.fetchone()
     major_version = existing_module.major_version + 1
@@ -44,6 +45,7 @@ def publish_legacy_page(model, metadata, submission, db_conn):
         .where(t.licenses.c.url == metadata.license_url))
     licenseid = result.fetchone().licenseid
     result = db_conn.execute(t.modules.insert().values(
+        uuid=existing_module.uuid,
         moduleid=metadata.id,
         major_version=major_version,
         portal_type='Module',

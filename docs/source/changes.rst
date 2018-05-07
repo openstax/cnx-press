@@ -2,6 +2,13 @@
 Change Log
 ==========
 
+?.?.X
+-----
+
+- Fix publication insertion to use the existing UUID for content rather
+  than create a new UUID.
+  See https://github.com/Connexions/cnx-press/issues/75
+
 2.0.0
 -----
 
