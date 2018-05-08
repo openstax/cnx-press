@@ -5,6 +5,9 @@ Change Log
 ?.?.X
 -----
 
+- Fix issue with published content missing resources. This was because we
+  don't link the previous versions resources to the newly published version.
+  See https://github.com/Connexions/nebuchadnezzar/issues/23
 - Fix publication insertion to use the existing UUID for content rather
   than create a new UUID.
   See https://github.com/Connexions/cnx-press/issues/75

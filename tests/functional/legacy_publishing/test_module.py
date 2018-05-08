@@ -10,7 +10,8 @@ from press.parsers import (
 
 def test_publish_revision_to_legacy_page(
         content_util, persist_util, app, db_engines, db_tables):
-    module = content_util.gen_module()
+    resources = list([content_util.gen_resource() for x in range(0, 2)])
+    module = content_util.gen_module(resources=resources)
     module = persist_util.insert_module(module)
 
     metadata = parse_module_metadata(module)
@@ -76,7 +77,9 @@ def test_publish_revision_to_legacy_page(
             .where(db_tables.module_files.c.module_ident == ident))
     result = db_engines['common'].execute(stmt).fetchall()
     filenames = [x.filename for x in result]
+    assert len(filenames) == len(resources) + 2  # content files
     assert 'index.cnxml' in filenames
     assert 'index.cnxml.html' in filenames
-
-    # TODO Check for resource file insertion
+    # Check for resource file insertion
+    for resource in resources:
+        assert resource.filename in filenames

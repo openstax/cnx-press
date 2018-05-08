@@ -1,10 +1,12 @@
+import hashlib
+import io
 import os
 import pathlib
 import random
 import shutil
 import tempfile
-import zipfile
 import warnings
+import zipfile
 from copy import copy
 
 import jinja2
@@ -19,7 +21,7 @@ from pyramid.settings import asbool
 from recordclass import recordclass
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError, ProgrammingError
-from sqlalchemy.sql import text
+from sqlalchemy.sql import select, text
 
 
 TEMPLATE_DIR = pathlib.Path(__file__).parent / '_templates'
@@ -337,6 +339,23 @@ class _ContentUtil:
         template = jinja2.Template(COLLECTION_DOC)
         return template.render(metadata=metadata, tree=tree)
 
+    def gen_resource(self):
+        content = io.StringIO(' '.join([self.randtitle(), self.randtitle()]))
+        filename = '_'.join([self.randword(), self.randword()]) + '.txt'
+
+        hasher = hashlib.sha1()
+        hasher.update(content.read().encode('utf-8'))
+        sha1 = hasher.hexdigest()
+        content.seek(0)
+
+        from press.models import Resource
+        return Resource(
+            content,
+            filename,
+            'text/plain',
+            sha1,
+        )
+
     def gen_module(self, id=None, resources=[], relative_to=None):
         id = not id and self.randid(prefix='m') or id
         module_dir = self._gen_dir(relative_to=relative_to)
@@ -600,6 +619,47 @@ class _PersistUtil:
                             state_name=state_name))
         trans.execute(stmt)
 
+    def insert_resource(self, resource):
+        """Insert a resource file into the ``files`` table."""
+        engine = self.db_engines['common']
+        t = self.db_tables
+
+        exists = engine.execute(
+            select([t.files.c.fileid])
+            .where(t.files.c.sha1 == resource.sha1)
+        ).fetchone()
+
+        if not exists:
+            engine.execute(
+                t.files.insert().values(
+                    file=resource.data.read().encode('utf-8'),
+                    sha1=resource.sha1,
+                    media_type=resource.media_type,
+                )
+            )
+
+        return resource
+
+    def _insert_module_file(self, resource, module_ident):
+        """Insert a resource file into the ``module_files`` table."""
+        engine = self.db_engines['common']
+
+        self.insert_resource(resource)
+
+        stmt = text(
+            "INSERT INTO module_files (module_ident, fileid, filename) "
+            "VALUES ("
+            "  :module_ident,"
+            "  (SELECT fileid FROM files WHERE sha1 = :sha1),"
+            "  :filename)"
+        )
+        engine.execute(
+            stmt,
+            module_ident=module_ident,
+            sha1=resource.sha1,
+            filename=resource.filename,
+        )
+
     def insert_module(self, model):
         # This is validly used here because the tests associated with
         # this parser functions are outside the scope of persistent
@@ -641,7 +701,9 @@ class _PersistUtil:
                 fileid=fileid,
                 filename='index.cnxml',
             ))
-            # TODO Insert resource files (images, pdfs, etc.)
+        # Insert resource files (images, pdfs, etc.)
+        for resource in model.resources:
+            self._insert_module_file(resource, ident)
 
         return Module(id, model.file, model.resources)
 
@@ -686,9 +748,11 @@ class _PersistUtil:
                 fileid=fileid,
                 filename='collection.xml',
             ))
-            # TODO Insert resource files (recipes, cover image, etc.)
-
             self._set_state(trans, metadata.id, metadata.version, 'current')
+
+        # Insert resource files (recipes, cover image, etc.)
+        for resource in model.resources:
+            self._insert_module_file(resource, ident)
 
         return Collection(id, model.file, model.resources)
 

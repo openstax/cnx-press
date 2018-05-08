@@ -113,4 +113,20 @@ def publish_legacy_book(model, metadata, submission, db_conn):
 
     # TODO Insert resource files (cover image, recipe, etc.)
 
+    # Copy over existing module_files entries
+    stmt = text(
+        'INSERT INTO module_files '
+        'SELECT :module_ident, fileid, filename '
+        'FROM module_files '
+        'WHERE module_ident = :previous_module_ident '
+        '      AND filename NOT IN (SELECT filename '
+        '                           FROM module_files '
+        '                           WHERE module_ident = :module_ident)'
+    )
+    db_conn.execute(
+        stmt,
+        module_ident=ident,
+        previous_module_ident=existing_module.module_ident,
+    )
+
     return (id, version), ident
