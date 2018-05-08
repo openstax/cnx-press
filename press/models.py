@@ -9,7 +9,7 @@ CollectionMetadata = namedtuple(
     ('id version created revised title '
      'license_url language print_style '
      'authors maintainers licensors '
-     'keywords subjects abstract')
+     'keywords subjects abstract'),
 )
 
 ModuleMetadata = namedtuple(
@@ -17,5 +17,11 @@ ModuleMetadata = namedtuple(
     ('id version created revised title '
      'license_url language '
      'authors maintainers licensors '
-     'keywords subjects abstract')
+     'keywords subjects abstract'),
+)
+
+
+Resource = namedtuple(
+    'Resource',
+    ('data filename media_type sha1'),
 )

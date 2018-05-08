@@ -16,7 +16,10 @@ from tests.helpers import (
 def test_publish_legacy_book(
         content_util, persist_util, app, db_engines, db_tables):
     # Insert initial collection and modules.
-    collection, tree, modules = content_util.gen_collection()
+    resources = list([content_util.gen_resource() for x in range(0, 2)])
+    collection, tree, modules = content_util.gen_collection(
+        resources=resources
+    )
     modules = list([persist_util.insert_module(m) for m in modules])
     collection, tree, modules = content_util.rebuild_collection(collection,
                                                                 tree)
@@ -94,9 +97,12 @@ def test_publish_legacy_book(
             .where(db_tables.module_files.c.module_ident == ident))
     result = db_engines['common'].execute(stmt).fetchall()
     filenames = [x.filename for x in result]
+    assert len(filenames) == len(resources) + 1  # content file
     assert 'collection.xml' in filenames
 
-    # TODO Check for resource file insertion
+    # Check for resource file insertion
+    for resource in resources:
+        assert resource.filename in filenames
 
     # Check the tree for accuracy (even though this is out of scope)
     stmt = (
