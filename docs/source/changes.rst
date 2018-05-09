@@ -2,7 +2,7 @@
 Change Log
 ==========
 
-?.?.X
+2.0.1
 -----
 
 - Fix issue with published content missing resources. This was because we
