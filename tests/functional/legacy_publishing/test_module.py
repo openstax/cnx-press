@@ -1,4 +1,7 @@
+from datetime import datetime, timedelta
+
 from dateutil.parser import parse as parse_date
+from dateutil.utils import default_tzinfo
 
 from press.legacy_publishing.module import (
     publish_legacy_page,
@@ -44,7 +47,8 @@ def test_publish_revision_to_legacy_page(
     assert result.minor_version is None
     assert result.abstract == metadata.abstract
     assert result.created == parse_date(metadata.created)
-    assert result.revised == parse_date(metadata.revised)
+    now = default_tzinfo(datetime.now(), result.revised.tzinfo)
+    assert (now - result.revised) < timedelta(minutes=1)
     assert result.portal_type == 'Module'
     assert result.name == metadata.title
     assert result.licenseid == 13
