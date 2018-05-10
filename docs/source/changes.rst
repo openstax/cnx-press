@@ -2,6 +2,14 @@
 Change Log
 ==========
 
+?.?.X
+-----
+
+- Let the database set the revised content timestamp, which is associated
+  with when the last publish was made.
+  See https://github.com/Connexions/cnx-press/issues/81 &
+  https://github.com/Connexions/nebuchadnezzar/issues/35
+
 2.0.1
 -----
 

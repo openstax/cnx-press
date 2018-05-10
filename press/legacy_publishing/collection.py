@@ -52,7 +52,6 @@ def publish_legacy_book(model, metadata, submission, db_conn):
         portal_type='Collection',
         name=metadata.title,
         created=metadata.created,
-        revised=metadata.revised,
         abstractid=abstractid,
         licenseid=licenseid,
         doctype='',
