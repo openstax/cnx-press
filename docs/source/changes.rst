@@ -10,6 +10,9 @@ Change Log
   See https://github.com/Connexions/cnx-press/issues/81 &
   https://github.com/Connexions/nebuchadnezzar/issues/35
 
+- Change ``/api/v3/publish`` to ``/api/publish-litezip``, because
+  the OpenStax developer community is favoring api versioning by HTTP header.
+
 2.0.1
 -----
 

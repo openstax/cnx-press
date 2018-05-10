@@ -668,7 +668,7 @@ paths:
           description: Not found
       tags:
         - content
-  '/api/v3/publish':
+  '/api/publish-litezip':
     post:
       summary: Add a peice of content to the repository
       description: ''

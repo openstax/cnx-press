@@ -14,8 +14,12 @@ def test_publishing_invalid_zip(tmpdir, webapp):
     with file.open('rb') as fb:
         file_data = [('file', 'contents.zip', fb.read(),)]
     form_data = {'publisher': publisher, 'message': message}
-    resp = webapp.post('/api/v3/publish', form_data, upload_files=file_data,
-                       expect_errors=True)
+    resp = webapp.post(
+        '/api/publish-litezip',
+        form_data,
+        upload_files=file_data,
+        expect_errors=True,
+    )
     assert resp.status_code == 400
     expected_msgs = [
         {'id': 1,
@@ -91,8 +95,12 @@ def test_publishing_invalid_revision_litezip(
     with file.open('rb') as fb:
         file_data = [('file', 'contents.zip', fb.read(),)]
     form_data = {'publisher': publisher, 'message': message}
-    resp = webapp.post('/api/v3/publish', form_data, upload_files=file_data,
-                       expect_errors=True)
+    resp = webapp.post(
+        '/api/publish-litezip',
+        form_data,
+        upload_files=file_data,
+        expect_errors=True,
+    )
     assert resp.status_code == 400
     expected_msgs = [
         {'id': 2,
@@ -145,7 +153,11 @@ def test_publishing_revision_litezip(
     with file.open('rb') as fb:
         file_data = [('file', 'contents.zip', fb.read(),)]
     form_data = {'publisher': publisher, 'message': message}
-    resp = webapp.post('/api/v3/publish', form_data, upload_files=file_data)
+    resp = webapp.post(
+        '/api/publish-litezip',
+        form_data,
+        upload_files=file_data,
+    )
     assert resp.status_code == 200
 
     # Check resulting data. (id mapping and urls)
