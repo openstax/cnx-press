@@ -1,7 +1,4 @@
-from datetime import datetime, timedelta
-
 from dateutil.parser import parse as parse_date
-from dateutil.utils import default_tzinfo
 from sqlalchemy.sql import text
 
 from press.legacy_publishing.collection import (
@@ -47,6 +44,7 @@ def test_publish_legacy_book(
                                                                 tree)
 
     with db_engines['common'].begin() as conn:
+        now = conn.execute('SELECT CURRENT_TIMESTAMP as now').fetchone().now
         (id, version), ident = publish_legacy_book(
             collection,
             metadata,
@@ -67,8 +65,7 @@ def test_publish_legacy_book(
     assert result.version == '1.2'
     assert result.abstract == metadata.abstract
     assert result.created == parse_date(metadata.created)
-    now = default_tzinfo(datetime.now(), result.revised.tzinfo)
-    assert (now - result.revised) < timedelta(minutes=1)
+    assert result.revised == now
     assert result.portal_type == 'Collection'
     assert result.name == metadata.title
     assert result.licenseid == 13
