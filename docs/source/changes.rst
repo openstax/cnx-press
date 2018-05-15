@@ -5,6 +5,11 @@ Change Log
 ?.?.X
 -----
 
+- Carry over the Google Analytics code from the previous publication.
+  We don't yet have a way to set this in the content
+  or during the publication. Later work will likely address this.
+  See https://github.com/Connexions/cnx-press/issues/84
+
 - Let the database set the revised content timestamp, which is associated
   with when the last publish was made.
   See https://github.com/Connexions/cnx-press/issues/81 &

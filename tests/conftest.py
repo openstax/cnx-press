@@ -116,6 +116,10 @@ SUBJECTS = (
 )
 
 
+# Hard coded here because there is not a method for inputting this value.
+GOOGLE_ANALYTICS_CODE = 'abc123'
+
+
 @pytest.fixture(scope='session')
 def db_tables_session_scope(db_engines):
     from cnxdb.contrib.pytest import db_tables
@@ -568,6 +572,7 @@ class _PersistUtil:
                 licensors=metadata.licensors,
                 parent=None,
                 parentauthors=None,
+                google_analytics=GOOGLE_ANALYTICS_CODE,
             ).returning(t.modules.c.module_ident, t.modules.c.moduleid)
         )
         ident, id = result.fetchone()

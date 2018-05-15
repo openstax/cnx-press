@@ -64,6 +64,7 @@ def publish_legacy_book(model, metadata, submission, db_conn):
         # TODO metadata does not currently capture parentage
         parent=None,
         parentauthors=None,
+        google_analytics=existing_module.google_analytics,
     ).returning(
         t.modules.c.module_ident,
         t.modules.c.moduleid,

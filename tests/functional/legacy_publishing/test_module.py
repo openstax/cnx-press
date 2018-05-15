@@ -7,6 +7,8 @@ from press.parsers import (
     parse_module_metadata,
 )
 
+from tests.conftest import GOOGLE_ANALYTICS_CODE
+
 
 def test_publish_revision_to_legacy_page(
         content_util, persist_util, app, db_engines, db_tables):
@@ -54,6 +56,7 @@ def test_publish_revision_to_legacy_page(
     assert result.authors == list(metadata.authors)
     assert result.maintainers == list(metadata.maintainers)
     assert result.licensors == list(metadata.licensors)
+    assert result.google_analytics == GOOGLE_ANALYTICS_CODE
 
     # Check subject metadata insertion
     stmt = (db_tables.moduletags.join(db_tables.tags)
