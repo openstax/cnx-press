@@ -8,6 +8,7 @@ from press.parsers import (
     parse_collection_metadata,
 )
 
+from tests.conftest import GOOGLE_ANALYTICS_CODE
 from tests.helpers import (
     compare_legacy_tree_similarity,
 )
@@ -74,6 +75,7 @@ def test_publish_legacy_book(
     assert result.authors == list(metadata.authors)
     assert result.maintainers == list(metadata.maintainers)
     assert result.licensors == list(metadata.licensors)
+    assert result.google_analytics == GOOGLE_ANALYTICS_CODE
 
     # Check subject metadata insertion
     stmt = (db_tables.moduletags.join(db_tables.tags)
