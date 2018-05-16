@@ -5,6 +5,9 @@ Change Log
 ?.?.X
 -----
 
+- Fix to insert the missing print-style into the metadata record.
+  See https://github.com/Connexions/cnx-press/issues/86
+
 - Fix broken links in content by making the resource available during
   reference resolution. By inserting the resources after the content,
   we were asking the reference resolution code to look for resources that

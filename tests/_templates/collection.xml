@@ -70,7 +70,9 @@
     <col:param name="vector-notation" value="bold"/>
     <col:param name="print-paper-size" value="8.5x11"/>
     <col:param name="print-font" value="computer-modern"/>
-    <col:param name="print-style" value="{{ metadata.print_style|default('') }}"/>
+    {% if metadata.print_style %}
+    <col:param name="print-style" value="{{ metadata.print_style }}"/>
+    {% endif %}
     <col:param name="print-paragraph-spacing"
                value="compact"/>
   </col:parameters>

@@ -55,6 +55,7 @@ def publish_legacy_book(model, metadata, submission, db_conn):
         abstractid=abstractid,
         licenseid=licenseid,
         doctype='',
+        print_style=metadata.print_style,
         submitter=submission[0],
         submitlog=submission[1],
         language=metadata.language,
