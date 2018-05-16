@@ -2,7 +2,7 @@
 Change Log
 ==========
 
-?.?.X
+3.0.0
 -----
 
 - Fix to insert the missing print-style into the metadata record.
