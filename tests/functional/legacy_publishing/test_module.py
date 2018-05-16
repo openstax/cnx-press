@@ -80,10 +80,16 @@ def test_publish_revision_to_legacy_page(
             .select()
             .where(db_tables.module_files.c.module_ident == ident))
     result = db_engines['common'].execute(stmt).fetchall()
-    filenames = [x.filename for x in result]
-    assert len(filenames) == len(resources) + 2  # content files
-    assert 'index.cnxml' in filenames
-    assert 'index.cnxml.html' in filenames
+    files = {x.filename: x for x in result}
+    assert len(files) == len(resources) + 2  # content files
+    assert 'index.cnxml' in files
+    assert 'index.cnxml.html' in files
+
     # Check for resource file insertion
+    html_content = files['index.cnxml.html'].file.decode('utf8')
     for resource in resources:
-        assert resource.filename in filenames
+        assert resource.filename in files
+        # Check for reference rewrites in the content. This is out of scope
+        # for this project, but order of insertion matters in order for
+        # the references to be rewritten.
+        assert '/resources/{}'.format(resource.sha1) in html_content

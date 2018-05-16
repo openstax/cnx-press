@@ -47,12 +47,7 @@
 {# TODO Update this resource stanza when resources are actually being used #}
 {#      In the mean time this is just a place holder #}
 {% for resource in resources -%}
-<figure id="">
-  <title>...</title>
-  <media id="eip-id#####" alt="...">
-    <image mime-type="image/png" src="filename-here.png"/>
-  </media>
-</figure>
+<link id="id-{{ resource.sha1 }}" resource="{{ resource.filename }}">{{ resource.filename }}</link>
 {%- endfor %}
 
 <para id="eip-254">This is a test document created for passing tests.</para>

@@ -94,6 +94,26 @@ def publish_legacy_page(model, metadata, submission, db_conn):
                         keywords=list(metadata.keywords)))
     db_conn.execute(stmt)
 
+    # TODO Insert resource files (images, pdfs, etc.)
+
+    # Copy over existing module_files entries
+    stmt = text(
+        'INSERT INTO module_files '
+        'SELECT :module_ident, fileid, filename '
+        'FROM module_files '
+        'WHERE module_ident = :previous_module_ident '
+        '      AND ('
+        '          filename NOT IN (SELECT filename '
+        '                           FROM module_files '
+        '                           WHERE module_ident = :module_ident)'
+        '          AND filename !~ \'index.cnxml\')'
+    )
+    db_conn.execute(
+        stmt,
+        module_ident=ident,
+        previous_module_ident=existing_module.module_ident,
+    )
+
     # Rewrite the content with the id and version
     replace_id_and_version(model, id, version)
 
@@ -109,23 +129,5 @@ def publish_legacy_page(model, metadata, submission, db_conn):
         fileid=fileid,
         filename='index.cnxml',
     ))
-
-    # TODO Insert resource files (images, pdfs, etc.)
-
-    # Copy over existing module_files entries
-    stmt = text(
-        'INSERT INTO module_files '
-        'SELECT :module_ident, fileid, filename '
-        'FROM module_files '
-        'WHERE module_ident = :previous_module_ident '
-        '      AND filename NOT IN (SELECT filename '
-        '                           FROM module_files '
-        '                           WHERE module_ident = :module_ident)'
-    )
-    db_conn.execute(
-        stmt,
-        module_ident=ident,
-        previous_module_ident=existing_module.module_ident,
-    )
 
     return (id, version), ident
