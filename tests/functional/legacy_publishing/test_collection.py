@@ -70,6 +70,7 @@ def test_publish_legacy_book(
     assert result.portal_type == 'Collection'
     assert result.name == metadata.title
     assert result.licenseid == 13
+    assert result.print_style == metadata.print_style
     assert result.submitter == 'user1'
     assert result.submitlog == 'test publish'
     assert result.authors == list(metadata.authors)

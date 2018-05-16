@@ -323,6 +323,7 @@ class _ContentUtil:
             'title': self.randtitle(),
             'license_url': 'http://creativecommons.org/licenses/by-nc-sa/4.0/',
             'language': 'en',
+            'print_style': self.randword(),
             'authors': set([self.randperson()[0],
                             self.randperson()[0]]),
             'maintainers': set([self.randperson()[0],
