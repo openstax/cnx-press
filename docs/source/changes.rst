@@ -5,6 +5,13 @@ Change Log
 ?.?.X
 -----
 
+- Fix broken links in content by making the resource available during
+  reference resolution. By inserting the resources after the content,
+  we were asking the reference resolution code to look for resources that
+  did not exist yet. The fix simply puts the resource insertion about the
+  content insertion.
+  See https://github.com/Connexions/nebuchadnezzar/issues/40
+
 - Carry over the Google Analytics code from the previous publication.
   We don't yet have a way to set this in the content
   or during the publication. Later work will likely address this.
