@@ -57,12 +57,20 @@ def publish(request):
             for path, message in validation_msgs
         ]}
 
-    start_event = events.LegacyPublicationStarted(litezip_struct)
+    start_event = events.LegacyPublicationStarted(
+        litezip_struct,
+        request,
+    )
     request.registry.notify(start_event)
+
     with request.get_db_engine('common').begin() as db_conn:
         id_mapping = publish_litezip(litezip_struct, (publisher, message),
                                      db_conn)
-    finish_event = events.LegacyPublicationFinished(id_mapping.values())
+
+    finish_event = events.LegacyPublicationFinished(
+        id_mapping.values(),
+        request,
+    )
     request.registry.notify(finish_event)
 
     resp_data = []
