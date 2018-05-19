@@ -11,6 +11,11 @@ Change Log
 - Add the raven client as a request method. This allows non-critical error
   handling to report issues without bubbling it up through the main process.
 
+- Add publication finished event subscriber that contacts the legacy
+  service to enqueue the content for export file builds (i.e. completezip,
+  collxml, module export).
+  See https://github.com/Connexions/nebuchadnezzar/issues/44
+
 3.0.0
 -----
 
