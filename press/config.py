@@ -53,6 +53,7 @@ def configure(settings=None):
     config = Configurator(settings=settings)
     config.include('.logging')
     config.include('.raven')
+    config.include('.subscribers')
     config.include('.views')
 
     with warnings.catch_warnings():
