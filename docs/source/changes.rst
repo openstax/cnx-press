@@ -8,6 +8,9 @@ Change Log
 - Add events to legacy publications. This enables other subscriber code
   to hook into these events.
 
+- Add the raven client as a request method. This allows non-critical error
+  handling to report issues without bubbling it up through the main process.
+
 3.0.0
 -----
 
