@@ -2,7 +2,7 @@
 Change Log
 ==========
 
-?.?.?
+3.1.0
 -----
 
 - Add events to legacy publications. This enables other subscriber code
