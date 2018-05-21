@@ -8,8 +8,21 @@ from pyramid.threadlocal import get_current_registry
 __all__ = (
     'discover_content_dir',
     'expand_zip',
+    'get_var_location',
     'persist_file_to_filesystem',
 )
+
+
+def get_var_location(registry=None):
+    """Lookup the var location for this application.
+
+    :param registry: the application registry
+    :type registry: :class:`pyramid.registry.Registry`
+
+    """
+    if registry is None:
+        registry = get_current_registry()
+    return Path(registry.settings['shared_directory'])
 
 
 def persist_file_to_filesystem(file):
@@ -22,8 +35,8 @@ def persist_file_to_filesystem(file):
     :rtype: :class:`pathlib.Path`
 
     """
-    shared_directory = get_current_registry().settings['shared_directory']
-    _, filepath = tempfile.mkstemp(dir=shared_directory)
+    shared_directory = get_var_location()
+    _, filepath = tempfile.mkstemp(dir=str(shared_directory))
     filepath = Path(filepath)
     with filepath.open('wb') as fb:
         fb.write(file.read())
@@ -42,8 +55,7 @@ def expand_zip(file):
     :rtype: :class:`pathlib.Path`
 
     """
-    settings = get_current_registry().settings
-    shared_directory = Path(settings['shared_directory'])
+    shared_directory = get_var_location()
     _names = tempfile._get_candidate_names()
     while True:
         dir = shared_directory / next(_names)
