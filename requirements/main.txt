@@ -12,4 +12,6 @@ pyramid_swagger==2.6.0
 
 raven==6.8.0
 
+requests==2.18.4
+
 structlog==18.1.0
