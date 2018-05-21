@@ -3,13 +3,50 @@ from pathlib import Path
 from zipfile import ZipFile
 
 import pretend
+import pytest
 from pyramid import testing as pyramid_testing
 
 from press.publishing import (
     discover_content_dir,
     expand_zip,
+    get_var_location,
     persist_file_to_filesystem,
 )
+
+
+class TestGetVarLocation:
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        self.shared_dir = '/foo'
+        self.settings = {'shared_directory': self.shared_dir}
+        self.registry = pretend.stub(settings=self.settings)
+        func = pretend.call_recorder(lambda: self.registry)
+        self.get_current_registry = func
+
+    def test_without_params(self, monkeypatch):
+        monkeypatch.setattr(
+            'press.publishing.get_current_registry',
+            self.get_current_registry,
+        )
+
+        loc = get_var_location()
+        assert isinstance(loc, Path)
+        assert str(loc) == self.shared_dir
+
+    def test_with_params(self, monkeypatch):
+
+        def get_current_registry(registry=None):
+            raise AssertionError("shouldn't call this func")
+
+        monkeypatch.setattr(
+            'press.publishing.get_current_registry',
+            get_current_registry,
+        )
+
+        loc = get_var_location(self.registry)
+        assert isinstance(loc, Path)
+        assert str(loc) == self.shared_dir
 
 
 def test_persist_file_to_filesystem(tmpdir):
