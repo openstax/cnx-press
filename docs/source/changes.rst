@@ -16,6 +16,10 @@ Change Log
   collxml, module export).
   See https://github.com/Connexions/nebuchadnezzar/issues/44
 
+- Add a publication finished event subscriber that tracks publications to
+  the filesystem. This is used primiarly as a safe guard incase we decide
+  or need to enable the "republishing" of books with shared pages.
+
 3.0.0
 -----
 
