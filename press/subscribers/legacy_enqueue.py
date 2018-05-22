@@ -4,6 +4,7 @@ import requests
 # subscriber for press.events.LegacyPublicationFinished
 def legacy_enqueue(event):
     logger = event.request.log
+
     # Build the enqueue RPC url
     domain = event.request.domain
     scheme = event.request.scheme
