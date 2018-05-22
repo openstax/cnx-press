@@ -2,6 +2,12 @@
 Change Log
 ==========
 
+3.2.0
+-----
+
+- Add a publication finished event subscriber that purges the cache
+  for legacy urls that contain the 'latest' version classifier.
+
 3.1.0
 -----
 

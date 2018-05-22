@@ -3,7 +3,11 @@ from pyramid import events as pyramid_events
 
 from press import events
 from press import subscribers
-from press.subscribers import legacy_enqueue, track_pubs
+from press.subscribers import (
+    legacy_enqueue,
+    purge_cache,
+    track_pubs,
+)
 
 
 def test_includeme():
@@ -27,6 +31,10 @@ def test_includeme():
         ),
         pretend.call(
             track_pubs.track_publications_to_filesystem,
+            events.LegacyPublicationFinished,
+        ),
+        pretend.call(
+            purge_cache.purge_cache,
             events.LegacyPublicationFinished,
         ),
     ]
