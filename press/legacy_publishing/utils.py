@@ -1,6 +1,8 @@
 from litezip.main import COLLECTION_NSMAP
 from lxml import etree
 
+from ..utils import convert_version_to_legacy_version
+
 
 __all__ = (
     'replace_id_and_version',
@@ -14,8 +16,8 @@ def replace_id_and_version(model, id, version):
     :type model: :class:`litezip.Collection` or :class:`litezip.Module`
     :param id: id
     :type id: str
-    :param version: version
-    :type version: str
+    :param version: major and minor version tuple
+    :type version: tuple of int
 
     """
     # Rewrite the content with the id and version
@@ -24,6 +26,6 @@ def replace_id_and_version(model, id, version):
     elm = xml.xpath('//md:content-id', namespaces=COLLECTION_NSMAP)[0]
     elm.text = id
     elm = xml.xpath('//md:version', namespaces=COLLECTION_NSMAP)[0]
-    elm.text = version
+    elm.text = convert_version_to_legacy_version(version)
     with model.file.open('wb') as fb:
         fb.write(etree.tostring(xml))

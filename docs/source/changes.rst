@@ -2,6 +2,12 @@
 Change Log
 ==========
 
+3.2.1
+-----
+
+- Fix internal usage of the version by consistently using a version
+  tuple (major and minor) between functions rather than the legacy version.
+
 3.2.0
 -----
 

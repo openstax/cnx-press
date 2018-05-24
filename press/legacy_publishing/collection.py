@@ -69,9 +69,11 @@ def publish_legacy_book(model, metadata, submission, db_conn):
     ).returning(
         t.modules.c.module_ident,
         t.modules.c.moduleid,
-        t.modules.c.version,
+        t.modules.c.major_version,
+        t.modules.c.minor_version,
     ))
-    ident, id, version = result.fetchone()
+    ident, id, major_version, minor_version = result.fetchone()
+    version = (major_version, minor_version,)
 
     # Insert subjects metadata
     stmt = (text('INSERT INTO moduletags '
