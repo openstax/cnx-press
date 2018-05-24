@@ -7,6 +7,7 @@ from press.parsers import parse_collection_metadata, parse_module_metadata
 
 from .collection import publish_legacy_book
 from .module import publish_legacy_page
+from ..utils import convert_version_to_legacy_version
 
 
 __all__ = (
@@ -51,7 +52,8 @@ def publish_litezip(struct, submission, db_conn):
             version_attrib_name = (
                 '{{{}}}version-at-this-collection-version'
                 .format(COLLECTION_NSMAP['cnxorg']))
-            elm.attrib[version_attrib_name] = version
+            legacy_version = convert_version_to_legacy_version(version)
+            elm.attrib[version_attrib_name] = legacy_version
 
     # Rebuild the Collection tree from the newly published Modules.
     with collection.file.open('wb') as fb:

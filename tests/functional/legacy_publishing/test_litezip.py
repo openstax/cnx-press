@@ -37,8 +37,8 @@ def test_publish_litezip(
         )
 
     expected_id_map = {
-        new_module.id: (new_module.id, '1.2'),
-        collection.id: (collection.id, '1.2'),
+        new_module.id: (new_module.id, (2, None)),
+        collection.id: (collection.id, (2, 1)),
     }
     assert id_map == expected_id_map
 

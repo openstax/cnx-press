@@ -6,7 +6,7 @@ from press.legacy_publishing.utils import (
 def test_replace_id_and_version(content_util):
     module = content_util.gen_module()
     id = '$$$_id_$$$'
-    version = '$$$_version_$$$'
+    version = ('$', '%',)
 
     # Call the target
     replace_id_and_version(module, id, version)
@@ -15,4 +15,4 @@ def test_replace_id_and_version(content_util):
     with module.file.open('r') as fb:
         text = fb.read()
     assert id in text
-    assert version in text
+    assert '1.{}'.format(version[0]) in text
