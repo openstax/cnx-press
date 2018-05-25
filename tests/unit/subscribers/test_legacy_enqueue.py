@@ -31,7 +31,7 @@ def test(requests_mock):
     # Check for request calls
     assert len(request_callback.calls) == len(ids)
     known_base_url = 'mock://example.org'
-    for i, (id, ver) in enumerate(ids):
+    for i, (id, ver) in enumerate(sorted(ids)):
         url = (
             '{}/content/{}/{}/enqueue?colcomplete=True&collxml=True'
             .format(known_base_url, id, '1.{}'.format(ver[0]))
@@ -41,7 +41,7 @@ def test(requests_mock):
 
     # Check for logging
     assert len(logger_info.calls) == len(ids)
-    for i, (id, ver) in enumerate(ids):
+    for i, (id, ver) in enumerate(sorted(ids)):
         assert id in logger_info.calls[i].args[0]
 
 
@@ -53,7 +53,7 @@ def test_failed_request(requests_mock):
     ]
 
     def request_callback(request, context):
-        if ids[0][0] in request.url:
+        if ids[1][0] in request.url:
             raise requests.exceptions.ConnectTimeout
         else:
             return 'enqueued'
@@ -86,8 +86,8 @@ def test_failed_request(requests_mock):
 
     # Check for logging
     assert logger_exception.calls == [
-        pretend.call("problem enqueuing '{}'".format(ids[0][0])),
+        pretend.call("problem enqueuing '{}'".format(ids[1][0])),
     ]
     assert len(logger_info.calls) == len(ids) - 1
-    for i, (id, ver) in enumerate(ids[1:]):
+    for i, (id, ver) in enumerate(sorted(ids)[:-1]):
         assert id in logger_info.calls[i].args[0]
