@@ -17,8 +17,9 @@ def legacy_enqueue(event):
     )
 
     timeout = (1, 5)  # (<connect>, <read>)
+    ids = sorted(event.ids)
     with requests.Session() as session:
-        for id, ver in event.ids:
+        for id, ver in ids:
             version = '1.{}'.format(ver[0])
             url = url_tmplt.format(
                 base_url=base_url,

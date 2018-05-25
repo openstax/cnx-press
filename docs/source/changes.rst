@@ -2,6 +2,15 @@
 Change Log
 ==========
 
+3.2.2
+-----
+
+- Address legacy enqueuing read timeouts by sorting the content so that
+  the collection is sent first. All other requests can timeout
+  without concern. This only addresses the problem and does not fully
+  resolve it.
+  See https://github.com/Connexions/cnx-press/issues/100
+
 3.2.1
 -----
 
