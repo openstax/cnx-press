@@ -16,7 +16,7 @@ def legacy_enqueue(event):
         '/enqueue?colcomplete=True&collxml=True'
     )
 
-    timeout = (1, 5)  # (<connect>, <read>)
+    timeout = (1, 20)  # (<connect>, <read>)
     ids = sorted(event.ids)
     with requests.Session() as session:
         for id, ver in ids:
@@ -30,7 +30,13 @@ def legacy_enqueue(event):
                 session.get(url, timeout=timeout)
             except requests.exceptions.RequestException:
                 event.request.raven_client.captureException()
-                logger.exception("problem enqueuing '{}'".format(id))
+                # try one more time
+                try:
+                    session.get(url, timeout=timeout)
+                except requests.exceptions.RequestException:
+                    event.request.raven_client.captureException()
+                    logger.exception("problem enqueuing '{}'".format(id))
+                    continue
                 continue
             logger.info("enqueued '{}' within the legacy system"
                         .format(id))
