@@ -2,6 +2,12 @@
 Change Log
 ==========
 
+3.2.3
+-----
+
+- One more attempt to address legacy enqueuing read timeouts (caused
+  by DB conflicts in zope) by retrying failed enqueuing attempts.
+
 3.2.2
 -----
 
