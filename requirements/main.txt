@@ -10,7 +10,7 @@ pyramid==1.9.2
 
 pyramid_swagger==2.6.1
 
-raven==6.8.0
+raven==6.9.0
 
 requests==2.18.4
 
