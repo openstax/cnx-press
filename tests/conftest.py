@@ -713,7 +713,7 @@ class _PersistUtil:
 
         return Module(id, model.file, model.resources)
 
-    def insert_collection(self, model):
+    def insert_collection(self, model, state=None):
         # This is validly used here because the tests associated with
         # this parser functions are outside the scope of persistent
         # actions dealing with the database.
@@ -754,7 +754,10 @@ class _PersistUtil:
                 fileid=fileid,
                 filename='collection.xml',
             ))
-            self._set_state(trans, metadata.id, metadata.version, 'current')
+
+            # Set the state, since post-publication is out of scope
+            state = state is not None and state or 'current'
+            self._set_state(trans, metadata.id, metadata.version, state)
 
         # Insert resource files (recipes, cover image, etc.)
         for resource in model.resources:
@@ -762,15 +765,25 @@ class _PersistUtil:
 
         return Collection(id, model.file, model.resources)
 
-    def insert_all(self, collection, tree, modules):
+    @staticmethod
+    def _filter_kwargs(prefix, kwargs):
+        return {
+            k[len(prefix):]: v
+            for k, v in kwargs.items()
+            if k.startswith(prefix)
+        }
+
+    def insert_all(self, collection, tree, modules, **kwargs):
         """Persist all the modules and the collection.
         Returns the rebuilt collection, tree and modules.
 
         """
-        modules = list([self.insert_module(m) for m in modules])
+        m_kwargs = self._filter_kwargs('module_', kwargs)
+        modules = list([self.insert_module(m, **m_kwargs) for m in modules])
         collection, tree, modules = self.content_util.rebuild_collection(
             collection, tree)
-        collection = self.insert_collection(collection)
+        c_kwargs = self._filter_kwargs('collection_', kwargs)
+        collection = self.insert_collection(collection, **c_kwargs)
         return collection, tree, modules
 
 
