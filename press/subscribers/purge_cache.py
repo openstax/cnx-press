@@ -43,7 +43,8 @@ def purge_cache(event):
         start = 0
         range_stop = len(just_ids) + ID_CHUNK_SIZE
         for end in range(ID_CHUNK_SIZE, range_stop, ID_CHUNK_SIZE):
-            url = _gen_purge_url(base_url, just_ids[start:end])
+            ids = just_ids[start:end]
+            url = _gen_purge_url(base_url, ids)
             req = _make_request(url)
             try:
                 session.send(req, timeout=TIMEOUT)
@@ -54,6 +55,6 @@ def purge_cache(event):
                 logger.debug("purge url:  {}".format(url))
                 logger.info("purged urls for the 'latest' version of '{}' "
                             "on the legacy domain"
-                            .format(', '.join(just_ids)))
+                            .format(', '.join(ids)))
             finally:
                 start = end
