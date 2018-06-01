@@ -2,6 +2,12 @@
 Change Log
 ==========
 
+3.2.4
+-----
+
+- Fix error log entry in the cache purging subscriber
+  to only output the content ids within the context of the loop cycle.
+
 3.2.3
 -----
 
