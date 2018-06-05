@@ -13,6 +13,10 @@ services:
       - ./var:/app/var:z
     environment:
       - SHARED_DIR=/app/var
+
+  rabbitmq:
+    image: rabbitmq:latest
+
   db:
     image: openstax/cnx-db:2.2.1
     ports:
@@ -20,6 +24,7 @@ services:
     environment:
       - DB_URL=postgresql://rhaptos@/repository
       - DB_SUPER_URL=postgresql://rhaptos_admin@/repository
+
   web:
     extends:
       service: app
@@ -28,7 +33,23 @@ services:
       - "80:6543"
     links:
       - db
+      - rabbitmq
+      - worker
     environment:
       - SHARED_DIR=/app/var
       - DB_URL=postgresql://rhaptos@db/repository
       - DB_SUPER_URL=postgresql://rhaptos_admin@db/repository
+      - AMQP_URL=amqp://guest@rabbitmq:5672//
+
+  worker:
+    extends:
+      service: app
+    command: celery -A press worker --beat --loglevel debug
+    links:
+      - db
+      - rabbitmq
+    environment:
+      - SHARED_DIR=/app/var
+      - DB_URL=postgresql://rhaptos@db/repository
+      - DB_SUPER_URL=postgresql://rhaptos_admin@db/repository
+      - AMQP_URL=amqp://guest@rabbitmq:5672//

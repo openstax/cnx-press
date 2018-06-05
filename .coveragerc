@@ -1,9 +1,11 @@
 [run]
 omit =
   press/tests/*
+  press/celery.py
 
 [report]
 omit =
   press/tests/*
+  press/celery.py
 exclude_lines =
   pragma: no cover

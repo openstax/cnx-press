@@ -37,6 +37,7 @@ However the HTTP API will change to adapt to changes and the feature timeline.
    :caption: Contents:
 
    config.rst
+   tasks.rst
    web_api.rst
    api.rst
    changes.rst

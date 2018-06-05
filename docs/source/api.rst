@@ -24,6 +24,18 @@ Configuration
    See also :ref:`configuration_chapter__logging` for information
    on how to configure logging.
 
+Tasks
+=====
+
+.. automodule:: press.tasks
+   :members:
+
+.. seealso::
+
+   See also :ref:`asynchronous_tasks_chapter` for usage information
+   and :ref:`configuration_chapter__asynchronous_tasks` for information
+   on how to configure the queuing service.
+
 Publishing
 ==========
 
