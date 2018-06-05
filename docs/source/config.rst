@@ -22,6 +22,7 @@ Setting                          Env Variable            Required?
 ``debug``                        ``DEBUG``               no
 ``logging.level``                ``DEBUG``               no
 ``sentry.dsn``                   ``SENTRY_DSN``          no
+``celery.broker``                ``AMQP_URL``            yes
 ===============================  ======================  =============
 
 See `cnx-db configuration docs
@@ -39,6 +40,23 @@ Logging
 The logging configuration is by default set to ``INFO`` level logging.
 If you wish to receive ``DEBUG`` level logging you should set the
 ``DEBUG`` environment variable to ``true``.
+
+.. _configuration_chapter__asynchronous_tasks:
+
+Celery Asynchronous Tasks
+-------------------------
+
+We use `Celery <http://www.celeryproject.org/>`_
+with an AMQP enabled queue (i.e. `RabbitMQ <https://www.rabbitmq.com/>`_)
+to provide components of our application
+to run as asynchronous tasks
+outside the scope of a request and response cycle.
+This is configured via ``AMQP_URL``
+(e.g. ``amqp://guest@rabbitmq:5672//``).
+
+For information about how to use implement tasks,
+see :ref:`asynchronous_tasks_chapter`
+and the :func:`press.tasks.task` decorator.
 
 .. _configuration_chapter__error_reporting:
 

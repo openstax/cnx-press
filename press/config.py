@@ -45,6 +45,7 @@ def configure(settings=None):
     # TODO check permissions for write access
 
     discover_set(settings, 'sentry.dsn', 'SENTRY_DSN')
+    discover_set(settings, 'celery.broker', 'AMQP_URL')
 
     discover_set(settings, 'debug', 'DEBUG', False, asbool)
     settings['logging.level'] = settings['debug'] and 'DEBUG' or 'INFO'
@@ -55,12 +56,13 @@ def configure(settings=None):
     config.include('.raven')
     config.include('.subscribers')
     config.include('.views')
+    config.include('.tasks')
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=SAWarning)
         config.include('cnxdb.contrib.pyramid')
 
-    config.scan()
+    config.scan(ignore=['press.celery'])
     return config
 
 
