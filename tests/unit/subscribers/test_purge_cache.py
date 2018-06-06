@@ -6,20 +6,8 @@ from press.events import LegacyPublicationFinished
 
 from press.subscribers.purge_cache import (
     ID_CHUNK_SIZE,
-    _build_legacy_domain,
     purge_cache,
 )
-
-
-class TestBuildLegacyDomain:
-
-    def test_prod_domain(self):
-        domain = 'example.com'
-        assert _build_legacy_domain(domain) == '.'.join(['legacy', domain])
-
-    def test_dev_domain(self):
-        domain = 'dev.example.com'
-        assert _build_legacy_domain(domain) == '-'.join(['legacy', domain])
 
 
 class TestPurgeCache:

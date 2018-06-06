@@ -2,6 +2,13 @@
 Change Log
 ==========
 
+?.?.?
+-----
+
+- Add a route for redirecting, for now, to redirect requests for the
+  'latest' version of a Collection to the legacy site with a specific
+  legacy-version.
+
 3.2.4
 -----
 

@@ -15,6 +15,7 @@ def includeme(config):
     add_route('api.v2.resources', '/resources/{hash}')
 
     add_route('api.v3.publications', '/api/publish-litezip')
+    add_route('api.v3.collections', '/api/collections/{id}/{ver}')
 
     s = config.registry.settings
     s['pyramid_swagger.exclude_paths'] = [

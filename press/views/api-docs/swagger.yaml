@@ -668,6 +668,9 @@ paths:
           description: Not found
       tags:
         - content
+  # ###
+  # v3
+  # ###
   '/api/publish-litezip':
     post:
       summary: Add a peice of content to the repository
@@ -702,6 +705,29 @@ paths:
           type: file
           description: The litezip file containing the content
           required: true
+  '/api/collections/{id}/{ver}':
+    get:
+      summary: Retrieves content from the repository
+      deprecated: true
+      description: ''
+      parameters:
+        - name: id
+          in: path
+          description: legacy ID for content
+          required: true
+          type: string
+        - name: ver
+          in: path
+          description: legacy version for content
+          required: true
+          type: string
+      responses:
+        '200':
+          description: successful operation
+        '404':
+          description: Not found
+      tags:
+        - content
 definitions:
   MediaType:
     type: string
