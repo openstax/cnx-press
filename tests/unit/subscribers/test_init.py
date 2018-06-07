@@ -5,6 +5,7 @@ from press import events
 from press import subscribers
 from press.subscribers import (
     legacy_enqueue,
+    legacy_update_latest,
     purge_cache,
     track_pubs,
 )
@@ -21,6 +22,10 @@ def test_includeme():
 
     # Ensure the enqueuing publication finished subscriber is registered
     assert add_subscriber.calls == [
+        pretend.call(
+            legacy_update_latest.legacy_update_latest,
+            events.LegacyPublicationFinished,
+        ),
         pretend.call(
             legacy_enqueue.legacy_enqueue,
             events.LegacyPublicationFinished,
