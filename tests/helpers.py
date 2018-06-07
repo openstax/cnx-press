@@ -1,3 +1,5 @@
+from functools import wraps
+
 
 def compare_legacy_tree_similarity(db_tree, test_tree):
     """Compare the two types of tree, one coming from the database using
@@ -15,3 +17,22 @@ def compare_legacy_tree_similarity(db_tree, test_tree):
             assert v['id'] == node.id
             assert v['title'] == node.title
             assert v['version'] == node.version_at
+
+
+def retryable_timeout_request_mock_callback(f):
+    """Makes a custom requests-mock callback function retryable by
+    passing the try count to the wrapped callback as the ``tries``
+    keyword argument.
+
+    (According to the internet "retryable" is the correct spelling.)
+
+    """
+
+    @wraps(f)
+    def wrapper(request, context):
+        wrapper.tries.setdefault(request.url, 0)
+        wrapper.tries[request.url] += 1
+        return f(request, context, tries=wrapper.tries[request.url])
+    wrapper.tries = {}
+
+    return wrapper
