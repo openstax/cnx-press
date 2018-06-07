@@ -1,12 +1,14 @@
 import requests
 
+from press.utils import convert_to_legacy_domain
+
 
 # subscriber for press.events.LegacyPublicationFinished
 def legacy_enqueue(event):
     logger = event.request.log
 
     # Build the enqueue RPC url
-    domain = event.request.domain
+    domain = convert_to_legacy_domain(event.request.domain)
     scheme = event.request.scheme
     base_url = '{}://{}'.format(scheme, domain)
     # The url is built specifically for collections, but works for modules,
