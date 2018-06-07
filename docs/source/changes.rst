@@ -2,6 +2,14 @@
 Change Log
 ==========
 
+3.3.0
+-----
+
+- Adds an publication finished event subscriber to request the 'latest'
+  version of the content from the legacy software to have it read
+  the latest version from the database, thus allowing it to have an
+  updated object representation of the data for use with other requests.
+
 3.2.4
 -----
 
