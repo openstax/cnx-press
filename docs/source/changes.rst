@@ -2,6 +2,11 @@
 Change Log
 ==========
 
+3.3.1
+-----
+
+- (dependency pinning updates)
+
 3.3.0
 -----
 
