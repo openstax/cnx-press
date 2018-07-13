@@ -13,11 +13,11 @@ def api_modules_id(request):
     query_string = ""
     with request.get_db_engine('common').begin() as db_conn:
         stmt = text(
-            'SELECT moduleid, name, version, submitter, submitlog, authors '
+            'SELECT name, version, submitter, submitlog, authors '
             'FROM modules '
-            'LIMIT 5'
+            'WHERE moduleid=:module_id'
         )
         query_result = db_conn.execute(stmt, module_id=module_id)
     for row in query_result:
         query_string += f"\n{row}"
-    return Response(f"{module_id}\n{query_string}")
+    return Response(f"{query_string}")
