@@ -40,6 +40,9 @@
   </md:subjectlist>
   <md:abstract>{{ metadata.abstract }}</md:abstract>
   <md:language>en</md:language>
+  {%- if metadata.derived_from %}
+  <md:derived-from url="http://cnx.org/content/{{metadata.derived_from.id}}/{{metadata.derived_from.version}}"/>
+  {%- endif %}
 </metadata>
 
 <content>
