@@ -60,9 +60,9 @@ def publish_legacy_page(model, metadata, submission, db_conn):
         authors=metadata.authors,
         maintainers=metadata.maintainers,
         licensors=metadata.licensors,
-        # TODO metadata does not currently capture parentage
-        parent=None,
-        parentauthors=None,
+        # Carry over parentage information
+        parent=existing_module.parent,
+        parentauthors=existing_module.parentauthors,
         google_analytics=existing_module.google_analytics,
     ).returning(
         t.modules.c.module_ident,

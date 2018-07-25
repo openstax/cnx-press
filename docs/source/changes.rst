@@ -2,6 +2,13 @@
 Change Log
 ==========
 
+3.4.0
+-----
+
+- Fix and support the publication of derived works to maintain parentage
+  information. This bit of information was being dropped during publication.
+  See https://github.com/Connexions/cnx-press/issues/126
+
 3.3.1
 -----
 

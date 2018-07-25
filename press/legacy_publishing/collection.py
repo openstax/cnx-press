@@ -45,6 +45,8 @@ def publish_legacy_book(model, metadata, submission, db_conn):
         t.licenses.select()
         .where(t.licenses.c.url == metadata.license_url))
     licenseid = result.fetchone().licenseid
+
+    # Insert the module metadata
     result = db_conn.execute(t.modules.insert().values(
         uuid=existing_module.uuid,
         moduleid=metadata.id,
@@ -62,9 +64,9 @@ def publish_legacy_book(model, metadata, submission, db_conn):
         authors=metadata.authors,
         maintainers=metadata.maintainers,
         licensors=metadata.licensors,
-        # TODO metadata does not currently capture parentage
-        parent=None,
-        parentauthors=None,
+        # Carry over parentage information
+        parent=existing_module.parent,
+        parentauthors=existing_module.parentauthors,
         google_analytics=existing_module.google_analytics,
     ).returning(
         t.modules.c.module_ident,
