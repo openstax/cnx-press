@@ -8,6 +8,7 @@ import tempfile
 import warnings
 import zipfile
 from copy import copy
+from contextlib import contextmanager
 
 import jinja2
 import pytest
@@ -243,6 +244,24 @@ SubCollection = recordclass('SubCollection',  # aka Tree Container
                             'title contents')
 ModuleNode = recordclass('ModuleNode',  # aka Tree Node
                          'title id version version_at module')
+
+
+# ###
+#  Context manager to work with a Model as an ElementTree
+# ###
+@contextmanager
+def element_tree_from_model(model):
+    """Yields an ElementTree of the model's content that will write on
+    changes on exit.
+
+    """
+    with model.file.open('rb') as fb:
+        xml = etree.parse(fb)
+
+    yield xml
+
+    with model.file.open('wb') as fb:
+        fb.write(etree.tostring(xml))
 
 
 # ###
@@ -502,16 +521,10 @@ class _ContentUtil:
         return zip_file
 
     def bump_version(self, module):
-        with module.file.open('rb') as fb:
-            xml = etree.parse(fb)
-
-        elm = xml.xpath('//md:version', namespaces=COLLECTION_NSMAP)[0]
-        version = int(elm.text.split('.')[-1]) + 1
-        elm.text = '1.{}'.format(version)
-
-        with module.file.open('wb') as fb:
-            fb.write(etree.tostring(xml))
-
+        with element_tree_from_model(module) as xml:
+            elm = xml.xpath('//md:version', namespaces=COLLECTION_NSMAP)[0]
+            version = int(elm.text.split('.')[-1]) + 1
+            elm.text = '1.{}'.format(version)
         return module
 
     def append_to_module(self, module, appendage=None):
@@ -519,20 +532,18 @@ class _ContentUtil:
         then return the module object.
 
         """
-        with module.file.open('rb') as fb:
-            xml = etree.parse(fb)
-        elm = xml.xpath('//c:content', namespaces=COLLECTION_NSMAP)[0]
+        with element_tree_from_model(module) as xml:
+            elm = xml.xpath('//c:content', namespaces=COLLECTION_NSMAP)[0]
 
-        if appendage is None:
-            appendage = 'fooppendage'
-        elm_name = '{{{}}}para'.format(COLLECTION_NSMAP['c'])
-        appendage_elm = etree.Element(elm_name, id=str(self._rand_id_num()))
-        appendage_elm.text = appendage
-        elm.append(appendage_elm)
-
-        with module.file.open('wb') as fb:
-            fb.write(etree.tostring(xml))
-
+            if appendage is None:
+                appendage = 'fooppendage'
+            elm_name = '{{{}}}para'.format(COLLECTION_NSMAP['c'])
+            appendage_elm = etree.Element(
+                elm_name,
+                id=str(self._rand_id_num()),
+            )
+            appendage_elm.text = appendage
+            elm.append(appendage_elm)
         return module
 
     def flatten_collection_tree_to_nodes(self, tree):
