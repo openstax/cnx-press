@@ -7,7 +7,7 @@ import shutil
 import tempfile
 import warnings
 import zipfile
-from copy import copy
+from copy import copy, deepcopy
 from contextlib import contextmanager
 
 import jinja2
@@ -352,6 +352,31 @@ class _ContentUtil:
     def rand_module_id(self):
         return 'm{}'.format(self._rand_id_num)
 
+    def copy_model(self, model, relative_to=None):
+        """Copy the given model"""
+        # This is mostly useful, because a copy of the object isn't enough
+        # since much of the model's data is on the filesystem.
+
+        model_type = type(model)
+        new_model_dir = self._gen_dir(relative_to=relative_to)
+        filename = {
+            self.Collection: 'collection.xml',
+            self.Module: 'index.cnxml',
+        }[model_type]
+        new_model_filepath = new_model_dir / filename
+
+        # Copy content
+        with new_model_filepath.open('w') as fb, model.file.open('r') as o:
+            fb.write(o.read())
+        # Copy resources
+        new_resources = deepcopy(model.resources)
+
+        return model_type(
+            model.id,
+            pathlib.Path(new_model_filepath),
+            new_resources,
+        )
+
     def gen_module_metadata(self, id=None, derived_from_metadata=None):
         return {
             'id': id,
@@ -420,13 +445,28 @@ class _ContentUtil:
         return self.Module(id, pathlib.Path(module_filepath), resources)
 
     def gen_collection(self, id=None, modules=[], resources=[],
-                       relative_to=None):
+                       relative_to=None, derived_from=None):
         id = not id and self.randid(prefix='col') or id
         relative_to = dir = self._gen_dir(relative_to=relative_to)
         filepath = dir / 'collection.xml'
-        metadata = self.gen_module_metadata(id=id)
-        tree, modules = self.gen_collection_tree(modules=modules,
-                                                 relative_to=relative_to)
+
+        # Generate metadata
+        if derived_from:
+            derived_metadata = self._parse_collection_metadata(derived_from)
+        else:
+            derived_metadata = None
+        metadata = self.gen_module_metadata(
+            id=id,
+            derived_from_metadata=derived_metadata,
+        )
+
+        # Generate the tree
+        tree, modules = self.gen_collection_tree(
+            modules=modules,
+            relative_to=relative_to,
+        )
+
+        # Write the colxml to the filesystem
         with filepath.open('w') as fb:
             fb.write(self.gen_colxml(metadata, tree))
         collection = self.Collection(id, pathlib.Path(filepath), resources)
@@ -572,9 +612,13 @@ class _PersistUtil:
         self.db_tables = db_tables
         self.content_util = content_util
 
-    def _insert_module_metadata(self, trans, metadata, type_):
+    def _insert_module_metadata(self, trans, metadata, type_,
+                                _derived_from=None):
         """Insert the module metadata with using the given database
         transaction.
+
+        ``_derived_from`` argument is for PersistUtil internal use only.
+        Use the ``derive_from`` method to derive a copy.
 
         """
         t = self.db_tables
@@ -590,8 +634,26 @@ class _PersistUtil:
         existing_metadata = trans.execute(
             t.modules.select().where(t.modules.c.moduleid == metadata.id)
         ).fetchone()
-        existing_uuid = existing_metadata and existing_metadata.uuid or None
+        # Assign values for existing metadata to be carried over
+        if existing_metadata is not None:
+            existing_uuid = existing_metadata.uuid
+            parent_ident = existing_metadata.parent
+            parent_authors = existing_metadata.parentauthors
+        elif _derived_from is not None:  # Used during the derive action
+            existing_uuid = None
+            parent = trans.execute(
+                t.modules.select()
+                .where(t.modules.c.moduleid == _derived_from['id'])
+                .where(t.modules.c.version == _derived_from['version'])
+            ).fetchone()
+            parent_ident = parent.module_ident
+            parent_authors = parent.authors
+        else:
+            existing_uuid = None
+            parent_ident = None
+            parent_authors = None
 
+        # Insert the core metadata
         result = trans.execute(
             t.modules.insert().values(
                 uuid=existing_uuid,
@@ -610,8 +672,8 @@ class _PersistUtil:
                 authors=metadata.authors,
                 maintainers=metadata.maintainers,
                 licensors=metadata.licensors,
-                parent=None,
-                parentauthors=None,
+                parent=parent_ident,
+                parentauthors=parent_authors,
                 google_analytics=GOOGLE_ANALYTICS_CODE,
             ).returning(t.modules.c.module_ident, t.modules.c.moduleid)
         )
@@ -664,6 +726,26 @@ class _PersistUtil:
                             state_name=state_name))
         trans.execute(stmt)
 
+    def _insert_module_file(self, resource, module_ident):
+        """Insert a resource file into the ``module_files`` table."""
+        engine = self.db_engines['common']
+
+        self.insert_resource(resource)
+
+        stmt = text(
+            "INSERT INTO module_files (module_ident, fileid, filename) "
+            "VALUES ("
+            "  :module_ident,"
+            "  (SELECT fileid FROM files WHERE sha1 = :sha1),"
+            "  :filename)"
+        )
+        engine.execute(
+            stmt,
+            module_ident=module_ident,
+            sha1=resource.sha1,
+            filename=resource.filename,
+        )
+
     def insert_resource(self, resource):
         """Insert a resource file into the ``files`` table."""
         engine = self.db_engines['common']
@@ -685,27 +767,77 @@ class _PersistUtil:
 
         return resource
 
-    def _insert_module_file(self, resource, module_ident):
-        """Insert a resource file into the ``module_files`` table."""
-        engine = self.db_engines['common']
+    def derive_from(self, model):
+        """Derive a copy of the given model. Insert this into the database
+        with the changed title prefixed with "Derived copy of ".
 
-        self.insert_resource(resource)
+        This returns a model for the newly inserted content.
 
-        stmt = text(
-            "INSERT INTO module_files (module_ident, fileid, filename) "
-            "VALUES ("
-            "  :module_ident,"
-            "  (SELECT fileid FROM files WHERE sha1 = :sha1),"
-            "  :filename)"
+        """
+        model_cls_name = model.__class__.__name__
+        type_name = model_cls_name.lower()
+        id_prefix = {
+            Module: 'm',
+            Collection: 'col',
+        }[type(model)]
+        parse_metadata = getattr(
+            self.content_util,
+            '_parse_{}_metadata'.format(type_name),
         )
-        engine.execute(
-            stmt,
-            module_ident=module_ident,
-            sha1=resource.sha1,
-            filename=resource.filename,
+        md = parse_metadata(model)
+        derived_from = {'id': md.id, 'version': md.version}
+        insertion_method = getattr(self, 'insert_{}'.format(type_name))
+
+        # Create a copy of the model
+        derived_model = self.content_util.copy_model(model)
+
+        # Change title, id, version, and derived-from
+        with element_tree_from_model(derived_model) as xml:
+            # Title
+            elm = xml.xpath('//md:title', namespaces=COLLECTION_NSMAP)[0]
+            elm.text = 'Derived copy of {}'.format(elm.text)
+            # Id
+            new_id = self.content_util.randid(prefix=id_prefix)
+            elm = xml.xpath('//md:content-id', namespaces=COLLECTION_NSMAP)[0]
+            elm.text = new_id
+            # Version
+            elm = xml.xpath('//md:version', namespaces=COLLECTION_NSMAP)[0]
+            elm.text = '1.1'
+            # Derived-from
+            ns_prefix = {
+                Module: 'c',
+                Collection: 'col',
+            }[type(model)]
+            metadata_elm = xml.xpath(
+                '//{}:metadata'.format(ns_prefix),
+                namespaces=COLLECTION_NSMAP,
+            )[0]
+            derived_from_elm = etree.fromstring(
+                '<derived-from xmlns="{}" url="{}"/>'
+                .format(
+                    COLLECTION_NSMAP['md'],
+                    'http://cnx.org/content/{}/{}'.format(md.id, md.version),
+                )
+            )
+            metadata_elm.append(derived_from_elm)
+
+        # Recreate the model, because we changed the id
+        derived_model = getattr(self.content_util, model_cls_name)(
+            new_id,
+            derived_model.file,
+            derived_model.resources,
         )
 
-    def insert_module(self, model):
+        # Persist the model
+        new_model = insertion_method(
+            derived_model,
+            _derived_from=derived_from,
+        )
+
+        # Return new model of derived copy
+        return new_model
+
+    def insert_module(self, model, _derived_from=None):
         # This is validly used here because the tests associated with
         # this parser functions are outside the scope of persistent
         # actions dealing with the database.
@@ -723,8 +855,12 @@ class _PersistUtil:
                 return model
 
             # Insert module metadata
-            ident, id = self._insert_module_metadata(trans, metadata,
-                                                     'Module')
+            ident, id = self._insert_module_metadata(
+                trans,
+                metadata,
+                'Module',
+                _derived_from=_derived_from,
+            )
 
             # Rewrite the content with the id
             with model.file.open('rb') as fb:
@@ -752,7 +888,7 @@ class _PersistUtil:
 
         return Module(id, model.file, model.resources)
 
-    def insert_collection(self, model):
+    def insert_collection(self, model, _derived_from=None):
         # This is validly used here because the tests associated with
         # this parser functions are outside the scope of persistent
         # actions dealing with the database.
@@ -770,8 +906,12 @@ class _PersistUtil:
                 return model
 
             # Insert metadata
-            ident, id = self._insert_module_metadata(trans, metadata,
-                                                     'Collection')
+            ident, id = self._insert_module_metadata(
+                trans,
+                metadata,
+                'Collection',
+                _derived_from=_derived_from,
+            )
 
             # Rewrite the content with the id
             with model.file.open('rb') as fb:
