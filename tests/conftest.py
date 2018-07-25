@@ -254,12 +254,19 @@ class _ContentUtil:
     _persons = PERSONS
     _subjects = SUBJECTS
 
+    Module = Module
+    Collection = Collection
+    Resource = None
+
     def __init__(self):
         with open(self._word_catalog_filepath, 'r') as fb:
             word_catalog = list([x for x in fb.read().splitlines()
                                  if len(x) >= 3 and "'" not in x])
         self.word_catalog = word_catalog
         self._created_dirs = []
+        # Import during singleton creation
+        from press.models import Resource
+        self.Resource = Resource
 
     def _clean_up(self):
         for dir in self._created_dirs[::-1]:
@@ -294,6 +301,18 @@ class _ContentUtil:
     def _rand_id_num(self):
         return random.randint(10000, 99999)
 
+    def _parse_module_metadata(self, *args, **kwargs):
+        # The parser is validly used here because it is unit tested
+        # without using this utility.
+        from press.parsers import parse_module_metadata
+        return parse_module_metadata(*args, **kwargs)
+
+    def _parse_collection_metadata(self, *args, **kwargs):
+        # The parser is validly used here because it is unit tested
+        # without using this utility.
+        from press.parsers import parse_collection_metadata
+        return parse_collection_metadata(*args, **kwargs)
+
     def randid(self, prefix='m'):
         return '{}{}'.format(prefix, self._rand_id_num())
 
@@ -314,7 +333,7 @@ class _ContentUtil:
     def rand_module_id(self):
         return 'm{}'.format(self._rand_id_num)
 
-    def gen_module_metadata(self, id=None):
+    def gen_module_metadata(self, id=None, derived_from_metadata=None):
         return {
             'id': id,
             'version': '1.1',
@@ -333,6 +352,7 @@ class _ContentUtil:
                          for x in range(1, random.randint(1, 5))],
             'subjects': [self.randsubj()],
             'abstract': 'testing abstract',
+            'derived_from': derived_from_metadata,
         }
 
     def gen_cnxml(self, metadata, resources, terms=[]):
@@ -353,22 +373,32 @@ class _ContentUtil:
         sha1 = hasher.hexdigest()
         content.seek(0)
 
-        from press.models import Resource
-        return Resource(
+        return self.Resource(
             content,
             filename,
             'text/plain',
             sha1,
         )
 
-    def gen_module(self, id=None, resources=[], relative_to=None):
+    def gen_module(self, id=None, resources=[], relative_to=None,
+                   derived_from=None):
         id = not id and self.randid(prefix='m') or id
         module_dir = self._gen_dir(relative_to=relative_to)
         module_filepath = module_dir / 'index.cnxml'
-        metadata = self.gen_module_metadata(id=id)
+
+        # Generate metadata
+        if derived_from:
+            derived_metadata = self._parse_collection_metadata(derived_from)
+        else:
+            derived_metadata = None
+        metadata = self.gen_module_metadata(
+            id=id,
+            derived_from_metadata=derived_metadata,
+        )
+
         with module_filepath.open('w') as fb:
             fb.write(self.gen_cnxml(metadata, resources))
-        return Module(id, pathlib.Path(module_filepath), resources)
+        return self.Module(id, pathlib.Path(module_filepath), resources)
 
     def gen_collection(self, id=None, modules=[], resources=[],
                        relative_to=None):
@@ -380,7 +410,8 @@ class _ContentUtil:
                                                  relative_to=relative_to)
         with filepath.open('w') as fb:
             fb.write(self.gen_colxml(metadata, tree))
-        collection = Collection(id, pathlib.Path(filepath), resources)
+        collection = self.Collection(id, pathlib.Path(filepath), resources)
+
         return collection, tree, modules
 
     def gen_collection_tree(self, modules=[],
@@ -411,8 +442,7 @@ class _ContentUtil:
         return tree, modules
 
     def make_tree_node_from(self, module):
-        from press.parsers import parse_module_metadata
-        metadata = parse_module_metadata(module)
+        metadata = self._parse_module_metadata(module)
         node = ModuleNode(id=metadata.id,
                           version='latest',
                           version_at=metadata.version,
@@ -421,19 +451,17 @@ class _ContentUtil:
         return node
 
     def _update_collection(self, collection, tree):
-        from press.parsers import parse_collection_metadata
-        metadata = parse_collection_metadata(collection)
+        metadata = self._parse_collection_metadata(collection)
         self._update_tree_contents(tree)
         with collection.file.open('w') as fb:
             fb.write(self.gen_colxml(metadata, tree))
 
     def _update_tree_contents(self, tree):
-        from press.parsers import parse_module_metadata
         for node in tree:
             if isinstance(node, SubCollection):
                 self._update_tree_contents(node.contents)
             else:
-                metadata = parse_module_metadata(node.module)
+                metadata = self._parse_module_metadata(node.module)
                 node.title = metadata.title
                 node.id = metadata.id
                 node.version_at = metadata.version
