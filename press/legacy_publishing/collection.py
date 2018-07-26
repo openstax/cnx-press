@@ -38,9 +38,16 @@ def publish_legacy_book(model, metadata, submission, db_conn):
     major_version = existing_module.major_version + 1
 
     # Insert module metadata
-    result = db_conn.execute(t.abstracts.insert()
-                             .values(abstract=metadata.abstract))
-    abstractid = result.inserted_primary_key[0]
+    # Get existing abstract, if exists
+    result = db_conn.execute(
+        t.abstracts.select()
+        .where(t.abstracts.c.abstract == metadata.abstract))
+    if result:
+        abstractid = result.fetchone().abstractid
+    else:  # Nope, insert a new one
+        result = db_conn.execute(t.abstracts.insert()
+                                 .values(abstract=metadata.abstract))
+        abstractid = result.inserted_primary_key[0]
     result = db_conn.execute(
         t.licenses.select()
         .where(t.licenses.c.url == metadata.license_url))
