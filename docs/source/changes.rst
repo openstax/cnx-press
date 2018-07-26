@@ -2,6 +2,14 @@
 Change Log
 ==========
 
+3.4.1
+-----
+
+- Fix abstract publishing by finding and re-useing the existing abstract
+  in the database rather than inserting a new matching abstract. Only if
+  the abstract does not match do we insert a new abstract.
+  See https://github.com/Connexions/cnx-press/issues/126
+
 3.4.0
 -----
 
