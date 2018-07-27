@@ -392,7 +392,7 @@ class _ContentUtil:
             'keywords': [self.randword()
                          for x in range(1, random.randint(1, 5))],
             'subjects': [self.randsubj()],
-            'abstract': 'testing abstract',
+            'abstract': self.randtitle(),
             'derived_from': derived_from_metadata,
         }
 

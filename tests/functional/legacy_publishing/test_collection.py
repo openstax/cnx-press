@@ -1,4 +1,5 @@
 from dateutil.parser import parse as parse_date
+from litezip.main import COLLECTION_NSMAP
 from sqlalchemy.sql import text
 
 from press.legacy_publishing.collection import (
@@ -11,10 +12,11 @@ from press.parsers import (
 from tests.conftest import GOOGLE_ANALYTICS_CODE
 from tests.helpers import (
     compare_legacy_tree_similarity,
+    element_tree_from_model,
 )
 
 
-def test_publish_legacy_book(
+def test_publish_revision(
         content_util, persist_util, app, db_engines, db_tables):
     # Insert initial collection and modules.
     resources = list([content_util.gen_resource() for x in range(0, 2)])
@@ -56,7 +58,7 @@ def test_publish_legacy_book(
 
     # Check core metadata insertion
     stmt = (
-        db_tables.modules.join(db_tables.abstracts)
+        db_tables.modules
         .select()
         .where(db_tables.modules.c.module_ident == ident)
     )
@@ -65,7 +67,7 @@ def test_publish_legacy_book(
     assert result.major_version == 2
     assert result.minor_version == 1
     assert result.version == '1.2'
-    assert result.abstract == metadata.abstract
+    assert result.abstractid == control_metadata.abstractid
     assert result.created == parse_date(metadata.created)
     assert result.revised == now
     assert result.portal_type == 'Collection'
@@ -122,7 +124,59 @@ def test_publish_legacy_book(
     compare_legacy_tree_similarity(inserted_tree['contents'], tree)
 
 
-def test_publish_derived_legacy_book(
+def test_publish_revision_with_new_abstract(
+        content_util, persist_util, app, db_engines, db_tables):
+    # Insert initial collection and modules.
+    resources = list([content_util.gen_resource() for x in range(0, 2)])
+    collection, tree, modules = content_util.gen_collection(
+        resources=resources
+    )
+    modules = list([persist_util.insert_module(m) for m in modules])
+    collection, tree, modules = content_util.rebuild_collection(collection,
+                                                                tree)
+    collection = persist_util.insert_collection(collection)
+    with element_tree_from_model(collection) as xml:
+        elm = xml.xpath('//md:abstract', namespaces=COLLECTION_NSMAP)[0]
+        elm.text += ' -- appendage'
+    metadata = parse_collection_metadata(collection)
+
+    # Collect control data for non-legacy metadata
+    stmt = (
+        db_tables.modules.select()
+        .where(db_tables.modules.c.moduleid == metadata.id)
+    )
+    control_metadata = db_engines['common'].execute(stmt).fetchone()
+
+    # Insert a new module ...
+    new_module = content_util.gen_module()
+    new_module = persist_util.insert_module(new_module)
+    # ... remove second element from the tree ...
+    tree.pop(1)
+    # ... and append the new module to the tree.
+    tree.append(content_util.make_tree_node_from(new_module))
+    collection, tree, modules = content_util.rebuild_collection(collection,
+                                                                tree)
+
+    # TARGET
+    with db_engines['common'].begin() as conn:
+        (id, version), ident = publish_legacy_book(
+            collection,
+            metadata,
+            ('user1', 'test publish',),
+            conn,
+        )
+
+    # Check core metadata insertion
+    stmt = (
+        db_tables.modules
+        .select()
+        .where(db_tables.modules.c.module_ident == ident)
+    )
+    result = db_engines['common'].execute(stmt).fetchone()
+    assert result.abstractid != control_metadata.abstractid
+
+
+def test_publish_derived(
         content_util, persist_util, app, db_engines, db_tables):
     # Insert initial collection and modules.
     resources = list([content_util.gen_resource() for x in range(0, 2)])

@@ -1,4 +1,5 @@
 from dateutil.parser import parse as parse_date
+from litezip.main import COLLECTION_NSMAP
 
 from press.legacy_publishing.module import (
     publish_legacy_page,
@@ -8,9 +9,10 @@ from press.parsers import (
 )
 
 from tests.conftest import GOOGLE_ANALYTICS_CODE
+from tests.helpers import element_tree_from_model
 
 
-def test_publish_revision_to_legacy_page(
+def test_publish_revision(
         content_util, persist_util, app, db_engines, db_tables):
     resources = list([content_util.gen_resource() for x in range(0, 2)])
     module = content_util.gen_module(resources=resources)
@@ -37,7 +39,7 @@ def test_publish_revision_to_legacy_page(
 
     # Check core metadata insertion
     stmt = (
-        db_tables.modules.join(db_tables.abstracts)
+        db_tables.modules
         .select()
         .where(db_tables.modules.c.module_ident == ident)
     )
@@ -46,7 +48,8 @@ def test_publish_revision_to_legacy_page(
     assert result.uuid == control_metadata.uuid
     assert result.major_version == 2
     assert result.minor_version is None
-    assert result.abstract == metadata.abstract
+    # Check for reuse of the existing abstract
+    assert result.abstractid == control_metadata.abstractid
     assert result.created == parse_date(metadata.created)
     assert result.revised == now
     assert result.portal_type == 'Module'
@@ -96,7 +99,45 @@ def test_publish_revision_to_legacy_page(
         assert '/resources/{}'.format(resource.sha1) in html_content
 
 
-def test_publish_derived_legacy_page(
+def test_publish_revision_with_new_abstract(
+        content_util, persist_util, app, db_engines, db_tables):
+    resources = list([content_util.gen_resource() for x in range(0, 2)])
+    module = content_util.gen_module(resources=resources)
+    module = persist_util.insert_module(module)
+
+    with element_tree_from_model(module) as xml:
+        elm = xml.xpath('//md:abstract', namespaces=COLLECTION_NSMAP)[0]
+        elm.text += ' -- appendage'
+
+    metadata = parse_module_metadata(module)
+
+    # Collect control data for non-legacy metadata
+    stmt = (
+        db_tables.modules.select()
+        .where(db_tables.modules.c.moduleid == metadata.id)
+    )
+    control_metadata = db_engines['common'].execute(stmt).fetchone()
+
+    # TARGET
+    with db_engines['common'].begin() as conn:
+        (id, version), ident = publish_legacy_page(
+            module,
+            metadata,
+            ('user1', 'test publish',),
+            conn,
+        )
+
+    # Check for a new abstract insertion
+    stmt = (
+        db_tables.modules
+        .select()
+        .where(db_tables.modules.c.module_ident == ident)
+    )
+    result = db_engines['common'].execute(stmt).fetchone()
+    assert result.abstractid != control_metadata.abstractid
+
+
+def test_publish_revision_that_is_derived(
         content_util, persist_util, app, db_engines, db_tables):
     resources = list([content_util.gen_resource() for x in range(0, 2)])
     module = content_util.gen_module(resources=resources)
