@@ -11,6 +11,7 @@ from copy import copy, deepcopy
 from contextlib import contextmanager
 
 import jinja2
+import pretend
 import pytest
 from cnxdb.init import init_db
 from litezip import Collection, Module
@@ -235,6 +236,19 @@ def testing(_init_database, db_engines, db_tables_session_scope):
     db_engines['common'].execute(
         t.persons.insert(),
         [dict(zip(column_names, x)) for x in PERSONS])
+
+
+@pytest.fixture
+def pretend_logger():
+    info = pretend.call_recorder(lambda *a, **kw: None)
+    debug = pretend.call_recorder(lambda *a, **kw: None)
+    exception = pretend.call_recorder(lambda *a, **kw: None)
+    logger = pretend.stub(
+        info=info,
+        debug=debug,
+        exception=exception,
+    )
+    return logger
 
 
 # ###

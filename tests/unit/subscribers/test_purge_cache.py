@@ -12,7 +12,7 @@ from press.subscribers.purge_cache import (
 
 class TestPurgeCache:
 
-    def test(self, requests_mock):
+    def test(self, requests_mock, event_request):
         request_callback = pretend.call_recorder(
             lambda request, context: 'purged')
         # mock the request to purge
@@ -22,22 +22,13 @@ class TestPurgeCache:
             text=request_callback,
         )
 
-        # stub out the logger
-        logger_info = pretend.call_recorder(lambda *a, **kw: None)
-        logger_debug = pretend.call_recorder(lambda *a, **kw: None)
-        logger = pretend.stub(info=logger_info, debug=logger_debug)
         # Create an event with a stub request
         ids = [
             ('m12345', (2, None)),
             ('m54321', (4, None)),
             ('col32154', (5, 1)),
         ]
-        request = pretend.stub(
-            domain='example.org',
-            scheme='mock',
-            log=logger,
-        )
-        event = LegacyPublicationFinished(ids, request)
+        event = LegacyPublicationFinished(ids, event_request)
 
         # Call the subcriber
         purge_cache(event)
@@ -53,16 +44,16 @@ class TestPurgeCache:
         assert url == sent_request.url
 
         # Check for logging
-        assert logger_debug.calls == [
+        assert event_request.log.debug.calls == [
             pretend.call("purge url:  {}".format(url)),
         ]
-        assert logger_info.calls == [
+        assert event_request.log.info.calls == [
             pretend.call("purged urls for the 'latest' version of '{}' "
                          "on the legacy domain"
                          .format(', '.join(map(lambda x: x[0], ids)))),
         ]
 
-    def test_failed_request(self, requests_mock):
+    def test_failed_request(self, requests_mock, event_request):
         # mock the failing request to purge
         requests_mock.register_uri(
             'PURGE_REGEXP',
@@ -70,37 +61,19 @@ class TestPurgeCache:
             exc=requests.exceptions.ConnectTimeout,
         )
 
-        # stub out the raven client
-        captureException = pretend.call_recorder(lambda: None)
-        raven_client = pretend.stub(captureException=captureException)
-        # stub out the logger
-        logger_info = pretend.call_recorder(lambda *a, **kw: None)
-        logger_debug = pretend.call_recorder(lambda *a, **kw: None)
-        logger_exception = pretend.call_recorder(lambda *a, **kw: None)
-        logger = pretend.stub(
-            info=logger_info,
-            debug=logger_debug,
-            exception=logger_exception,
-        )
         # Create an event with a stub request
         ids = [
             ('m12345', (2, None)),
             ('m54321', (4, None)),
             ('col32154', (5, 1)),
         ]
-        request = pretend.stub(
-            domain='example.org',
-            scheme='mock',
-            log=logger,
-            raven_client=raven_client,
-        )
-        event = LegacyPublicationFinished(ids, request)
+        event = LegacyPublicationFinished(ids, event_request)
 
         # Call the subcriber
         purge_cache(event)
 
         # Check raven was used...
-        assert captureException.calls
+        assert event_request.raven_client.captureException.calls
 
         known_base_url = 'mock://legacy.example.org'
         url = (
@@ -108,13 +81,13 @@ class TestPurgeCache:
             .format(known_base_url, '|'.join([x[0] for x in ids]))
         )
         # Check for logging
-        assert logger_debug.calls == []
-        assert logger_info.calls == []
-        assert logger_exception.calls == [
+        assert event_request.log.debug.calls == []
+        assert event_request.log.info.calls == []
+        assert event_request.log.exception.calls == [
             pretend.call('problem purging with {}'.format(url)),
         ]
 
-    def test_large_publication(self, requests_mock):
+    def test_large_publication(self, requests_mock, event_request):
 
         def _make_callback(text='purged', is_exception=False):
             def callback(request, context):
@@ -141,18 +114,6 @@ class TestPurgeCache:
             response_list,
         )
 
-        # stub out the raven client
-        captureException = pretend.call_recorder(lambda: None)
-        raven_client = pretend.stub(captureException=captureException)
-        # stub out the logger
-        logger_info = pretend.call_recorder(lambda *a, **kw: None)
-        logger_debug = pretend.call_recorder(lambda *a, **kw: None)
-        logger_exception = pretend.call_recorder(lambda *a, **kw: None)
-        logger = pretend.stub(
-            info=logger_info,
-            debug=logger_debug,
-            exception=logger_exception,
-        )
         # Create an event with a stub request
         ids = [
             ('m12', (2, None)),
@@ -179,25 +140,19 @@ class TestPurgeCache:
             ('col21', (5, 1)),
             ('col52', (5, 1)),
         ]
-        request = pretend.stub(
-            domain='example.org',
-            scheme='mock',
-            log=logger,
-            raven_client=raven_client,
-        )
-        event = LegacyPublicationFinished(ids, request)
+        event = LegacyPublicationFinished(ids, event_request)
 
         # Call the subcriber
         purge_cache(event)
 
         # Check raven was used...
-        assert len(captureException.calls) == 1
+        assert len(event_request.raven_client.captureException.calls) == 1
 
         # Check for logging, but not the details, because that's not the
         # focus of this particular test.
-        assert len(logger_debug.calls) == 2
-        assert len(logger_info.calls) == 2
-        assert len(logger_exception.calls) == 1
+        assert len(event_request.log.debug.calls) == 2
+        assert len(event_request.log.info.calls) == 2
+        assert len(event_request.log.exception.calls) == 1
 
         # Check the requests have the correct set of ids in them.
         just_ids = list(map(lambda x: x[0], ids))
