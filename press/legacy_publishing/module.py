@@ -36,21 +36,25 @@ def publish_legacy_page(model, metadata, submission, db_conn):
     existing_module = result.fetchone()
     major_version = existing_module.major_version + 1
 
-    # Insert module metadata
-    # Get existing abstract, if exists
+    # Get existing abstract, if exists, otherwise add it
     result = db_conn.execute(
         t.abstracts.select()
-        .where(t.abstracts.c.abstract == metadata.abstract))
-    if result:
+        .where(t.abstracts.c.abstract == metadata.abstract)
+    )
+    try:
         abstractid = result.fetchone().abstractid
-    else:  # Nope, insert a new one
+    except AttributeError:  # NoneType
         result = db_conn.execute(t.abstracts.insert()
                                  .values(abstract=metadata.abstract))
         abstractid = result.inserted_primary_key[0]
+
+    # Get the license identifier
     result = db_conn.execute(
         t.licenses.select()
         .where(t.licenses.c.url == metadata.license_url))
     licenseid = result.fetchone().licenseid
+
+    # Insert module metadata
     result = db_conn.execute(t.modules.insert().values(
         uuid=existing_module.uuid,
         moduleid=metadata.id,
