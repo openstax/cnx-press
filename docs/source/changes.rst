@@ -2,6 +2,12 @@
 Change Log
 ==========
 
+3.4.2
+-----
+
+- Fix ``AttributeError: 'NoneType' object has no attribute 'abstractid'``.
+  See https://github.com/Connexions/cnx-press/issues/132
+
 3.4.1
 -----
 
