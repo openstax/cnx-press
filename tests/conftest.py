@@ -8,7 +8,6 @@ import tempfile
 import warnings
 import zipfile
 from copy import copy, deepcopy
-from contextlib import contextmanager
 
 import jinja2
 import pretend
@@ -24,6 +23,8 @@ from recordclass import recordclass
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError, ProgrammingError
 from sqlalchemy.sql import select, text
+
+from .helpers import element_tree_from_model
 
 
 TEMPLATE_DIR = pathlib.Path(__file__).parent / '_templates'
@@ -258,24 +259,6 @@ SubCollection = recordclass('SubCollection',  # aka Tree Container
                             'title contents')
 ModuleNode = recordclass('ModuleNode',  # aka Tree Node
                          'title id version version_at module')
-
-
-# ###
-#  Context manager to work with a Model as an ElementTree
-# ###
-@contextmanager
-def element_tree_from_model(model):
-    """Yields an ElementTree of the model's content that will write on
-    changes on exit.
-
-    """
-    with model.file.open('rb') as fb:
-        xml = etree.parse(fb)
-
-    yield xml
-
-    with model.file.open('wb') as fb:
-        fb.write(etree.tostring(xml))
 
 
 # ###

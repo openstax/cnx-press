@@ -1,4 +1,21 @@
+from contextlib import contextmanager
 from functools import wraps
+from lxml import etree
+
+
+@contextmanager
+def element_tree_from_model(model):
+    """Yields an ElementTree of the model's content that will write on
+    changes on exit.
+
+    """
+    with model.file.open('rb') as fb:
+        xml = etree.parse(fb)
+
+    yield xml
+
+    with model.file.open('wb') as fb:
+        fb.write(etree.tostring(xml))
 
 
 def compare_legacy_tree_similarity(db_tree, test_tree):
