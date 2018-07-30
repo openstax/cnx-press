@@ -7,6 +7,9 @@ Change Log
 
 - Add Celery to the project to move non-critical-path event handling logic
   to asynchronous tasks.
+- Revise the subscriber communication to update the legacy 'latest' version.
+  This procedure is now an asynchronous out-of-band task. The custom
+  request retry behavior has been removed in favor of Celery's retry behavior.
 
 3.4.2
 -----

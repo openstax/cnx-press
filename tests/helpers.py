@@ -3,6 +3,27 @@ from functools import wraps
 from lxml import etree
 
 
+def count_calls(func):
+    """Counts the number of times a function was called.
+
+    The original intend of this decorator is to count the number of times
+    a requests_mock callback has been called. The internal logic of the
+    callback uses the counter to either succeed or fail depending on how
+    many times it has been called. The end result is a callback function
+    that is able to simulate request retries.
+
+    This annotates the function so that it has a `call_count` parameter
+    that increments each time the function is called.
+
+    """
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        wrapper.call_count += 1
+        return func(*args, **kwargs)
+    wrapper.call_count = 0
+    return wrapper
+
+
 @contextmanager
 def element_tree_from_model(model):
     """Yields an ElementTree of the model's content that will write on
@@ -36,7 +57,7 @@ def compare_legacy_tree_similarity(db_tree, test_tree):
             assert v['version'] == node.version_at
 
 
-def retryable_timeout_request_mock_callback(f):
+def retryable_timeout_request_mock_callback(func):
     """Makes a custom requests-mock callback function retryable by
     passing the try count to the wrapped callback as the ``tries``
     keyword argument.
@@ -45,11 +66,11 @@ def retryable_timeout_request_mock_callback(f):
 
     """
 
-    @wraps(f)
+    @wraps(func)
     def wrapper(request, context):
         wrapper.tries.setdefault(request.url, 0)
         wrapper.tries[request.url] += 1
-        return f(request, context, tries=wrapper.tries[request.url])
+        return func(request, context, tries=wrapper.tries[request.url])
     wrapper.tries = {}
 
     return wrapper
