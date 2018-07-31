@@ -5,6 +5,7 @@ from litezip import parse_litezip, validate_litezip
 from pyramid.view import view_config
 
 from .. import events
+from ..errors import StaleVersion
 from ..legacy_publishing import publish_litezip
 from ..publishing import (
     discover_content_dir,
@@ -64,9 +65,22 @@ def publish(request):
     )
     request.registry.notify(start_event)
 
-    with request.get_db_engine('common').begin() as db_conn:
-        id_mapping = publish_litezip(litezip_struct, (publisher, message),
-                                     db_conn)
+    try:
+        with request.get_db_engine('common').begin() as db_conn:
+            id_mapping = publish_litezip(litezip_struct, (publisher, message),
+                                         db_conn)
+    except StaleVersion as err:
+        request.response.status = 400
+        return {'messages': [
+            {'id': 3,
+             'message': 'stale version',
+             'item': err.item.id,
+             'error': 'checked out version is {co}'
+                      ' but currently published'
+                      ' is {cv}'.format(co=err.checked_out_version,
+                                        cv=err.current_version),
+             }
+        ]}
 
     finish_event = events.LegacyPublicationFinished(
         id_mapping.values(),
