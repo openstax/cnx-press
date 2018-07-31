@@ -66,6 +66,30 @@ class TestMakeRequest:
         assert len(self.request.log.debug.calls) == 0
         assert len(self.request.log.exception.calls) == 0
 
+    def test_custom_request_method(self, requests_mock):
+        request_callback = pretend.call_recorder(
+            lambda request, context: 'ok')
+        # Mock the request
+        request_method = 'KISS'
+        requests_mock.register_uri(
+            request_method,
+            rmock.ANY,
+            text=request_callback,
+        )
+
+        # Call the target
+        self.target(self.celery_task, self.url, method=request_method)
+
+        # Check for request calls
+        request, context = request_callback.calls[0].args
+        assert request.url == self.url
+        assert request.method == request_method
+
+        # Check for logging
+        assert len(self.request.log.info.calls) == 0
+        assert len(self.request.log.debug.calls) == 0
+        assert len(self.request.log.exception.calls) == 0
+
     def test_failed_request_and_retry(self, requests_mock):
 
         @count_calls
