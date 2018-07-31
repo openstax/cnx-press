@@ -9,21 +9,21 @@ from press.subscribers.legacy_update_latest import (
 
 class TestLegacyUpdateLatest:
 
-    def test(self, event_request):
+    def test(self, stub_request):
         # Create an event with a stub request
         ids = [
             ('m12345', (2, None)),
             ('m54321', (4, None)),
             ('col32154', (5, 1)),
         ]
-        event = LegacyPublicationFinished(ids, event_request)
+        event = LegacyPublicationFinished(ids, stub_request)
 
         # Call the subcriber
         legacy_update_latest(event)
 
         # Check for task calls
         task_path = '.'.join([make_request.__module__, make_request.__name__])
-        task = event_request.registry.celery_app.tasks[task_path]
+        task = stub_request.registry.celery_app.tasks[task_path]
         expected_calls = [
             pretend.call('mock://legacy.example.org/content/col32154/latest'),
             pretend.call('mock://legacy.example.org/content/m12345/latest'),
@@ -32,6 +32,6 @@ class TestLegacyUpdateLatest:
         assert task.delay.calls == expected_calls
 
         # Check for logging
-        assert len(event_request.log.info.calls) == len(ids)
+        assert len(stub_request.log.info.calls) == len(ids)
         for i, (id, ver) in enumerate(sorted(ids)):
-            assert id in event_request.log.info.calls[i].args[0]
+            assert id in stub_request.log.info.calls[i].args[0]
