@@ -2,7 +2,7 @@ from pyramid.threadlocal import get_current_request
 from sqlalchemy.sql import text
 
 from .utils import replace_id_and_version
-
+from ..errors import StaleVersion
 
 __all__ = (
     'publish_legacy_page',
@@ -34,6 +34,10 @@ def publish_legacy_page(model, metadata, submission, db_conn):
     )
     # At this time, this code assumes an existing module
     existing_module = result.fetchone()
+
+    if metadata.version != existing_module.version:
+        raise StaleVersion(metadata.version, existing_module.version, model)
+
     major_version = existing_module.major_version + 1
 
     # Get existing abstract, if exists, otherwise add it
