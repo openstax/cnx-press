@@ -4,7 +4,7 @@ import pytest
 
 # List of known tasks
 TASKS_AS_IMPORT_PATHS = [
-    'press.subscribers.legacy_update_latest.poke_latest',
+    'press.outofband.make_request',
 ]
 
 
@@ -14,7 +14,7 @@ def _make_task(x):
 
 
 @pytest.fixture
-def event_request(pretend_logger):
+def stub_request(pretend_logger):
     # Stub out the Celery app
     tasks = dict(map(_make_task, TASKS_AS_IMPORT_PATHS))
     celery_app = pretend.stub(tasks=tasks)
@@ -35,3 +35,7 @@ def event_request(pretend_logger):
         registry=registry,
     )
     return request
+
+
+# BBB (7-30-12018) to be removed in next commit
+event_request = stub_request
