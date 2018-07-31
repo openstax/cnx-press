@@ -35,7 +35,3 @@ def stub_request(pretend_logger):
         registry=registry,
     )
     return request
-
-
-# BBB (7-30-12018) to be removed in next commit
-event_request = stub_request
