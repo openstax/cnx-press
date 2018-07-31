@@ -11,10 +11,11 @@ REQUESTS_TIMEOUT = (1, 120)  # (<connect>, <read>)
 
 
 @task(bind=True, max_retries=3, default_retry_delay=5)
-def make_request(self, url):
+def make_request(self, url, method='GET'):
+    req = requests.Request(method, url).prepare()
     with requests.Session() as session:
         try:
-            session.get(url, timeout=REQUESTS_TIMEOUT)
+            session.send(req, timeout=REQUESTS_TIMEOUT)
         except requests.exceptions.RequestException as exc:
             pyramid_request = self.get_pyramid_request()
             try:
@@ -23,5 +24,6 @@ def make_request(self, url):
                 # max_retries will stop us from doing a too many retries.
                 pyramid_request.raven_client.captureException()
                 raise
+            # XXX url?
             msg = "problem requesting '{}'".format(url)
             pyramid_request.log.exception(msg)
