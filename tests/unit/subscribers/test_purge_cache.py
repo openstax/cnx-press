@@ -1,27 +1,34 @@
 import pretend
-import requests
-import requests_mock as rmock
 
 from press.events import LegacyPublicationFinished
 
+from press.outofband import make_request
 from press.subscribers.purge_cache import (
     ID_CHUNK_SIZE,
     purge_cache,
 )
 
 
+def _make_url(ids):
+    ids = '|'.join(ids)
+    known_base_url = 'mock://legacy.example.org'
+    return (
+        '{}/content/({})/latest.*$'
+        .format(known_base_url, ids)
+    )
+
+
+def _chunk_ids(ids):
+    start = 0
+    range_stop = len(ids) + ID_CHUNK_SIZE
+    for end in range(ID_CHUNK_SIZE, range_stop, ID_CHUNK_SIZE):
+        yield ids[start:end]
+        start = end
+
+
 class TestPurgeCache:
 
-    def test(self, requests_mock, stub_request):
-        request_callback = pretend.call_recorder(
-            lambda request, context: 'purged')
-        # mock the request to purge
-        requests_mock.register_uri(
-            'PURGE_REGEXP',
-            rmock.ANY,
-            text=request_callback,
-        )
-
+    def test(self, stub_request):
         # Create an event with a stub request
         ids = [
             ('m12345', (2, None)),
@@ -29,19 +36,18 @@ class TestPurgeCache:
             ('col32154', (5, 1)),
         ]
         event = LegacyPublicationFinished(ids, stub_request)
+        url = _make_url([x[0] for x in ids])
 
         # Call the subcriber
         purge_cache(event)
 
-        # Check for request call
-        assert request_callback.calls
-        known_base_url = 'mock://legacy.example.org'
-        url = (
-            '{}/content/({})/latest.*$'
-            .format(known_base_url, '|'.join([x[0] for x in ids]))
-        )
-        sent_request, context = request_callback.calls[0].args
-        assert url == sent_request.url
+        # Check for task calls
+        task_path = '.'.join([make_request.__module__, make_request.__name__])
+        task = stub_request.registry.celery_app.tasks[task_path]
+        expected_calls = [
+            pretend.call(url, method='PURGE_REGEXP'),
+        ]
+        assert task.delay.calls == expected_calls
 
         # Check for logging
         assert stub_request.log.debug.calls == [
@@ -53,67 +59,7 @@ class TestPurgeCache:
                          .format(', '.join(map(lambda x: x[0], ids)))),
         ]
 
-    def test_failed_request(self, requests_mock, stub_request):
-        # mock the failing request to purge
-        requests_mock.register_uri(
-            'PURGE_REGEXP',
-            rmock.ANY,
-            exc=requests.exceptions.ConnectTimeout,
-        )
-
-        # Create an event with a stub request
-        ids = [
-            ('m12345', (2, None)),
-            ('m54321', (4, None)),
-            ('col32154', (5, 1)),
-        ]
-        event = LegacyPublicationFinished(ids, stub_request)
-
-        # Call the subcriber
-        purge_cache(event)
-
-        # Check raven was used...
-        assert stub_request.raven_client.captureException.calls
-
-        known_base_url = 'mock://legacy.example.org'
-        url = (
-            '{}/content/({})/latest.*$'
-            .format(known_base_url, '|'.join([x[0] for x in ids]))
-        )
-        # Check for logging
-        assert stub_request.log.debug.calls == []
-        assert stub_request.log.info.calls == []
-        assert stub_request.log.exception.calls == [
-            pretend.call('problem purging with {}'.format(url)),
-        ]
-
-    def test_large_publication(self, requests_mock, stub_request):
-
-        def _make_callback(text='purged', is_exception=False):
-            def callback(request, context):
-                if is_exception:
-                    raise requests.exceptions.ConnectTimeout
-                else:
-                    return text
-            return callback
-
-        # mock the failing request to purge
-        response_list = [
-            _make_callback(),
-            _make_callback(is_exception=True),
-            _make_callback(),
-        ]
-        # format the responses for registration and call recording
-        response_list = [
-            {'text': pretend.call_recorder(y)} for y in response_list
-        ]
-        # register the mock request to purge
-        requests_mock.register_uri(
-            'PURGE_REGEXP',
-            rmock.ANY,
-            response_list,
-        )
-
+    def test_large_publication(self, stub_request):
         # Create an event with a stub request
         ids = [
             ('m12', (2, None)),
@@ -145,23 +91,20 @@ class TestPurgeCache:
         # Call the subcriber
         purge_cache(event)
 
-        # Check raven was used...
-        assert len(stub_request.raven_client.captureException.calls) == 1
-
         # Check for logging, but not the details, because that's not the
         # focus of this particular test.
-        assert len(stub_request.log.debug.calls) == 2
-        assert len(stub_request.log.info.calls) == 2
-        assert len(stub_request.log.exception.calls) == 1
+        assert len(stub_request.log.debug.calls) == 3
+        assert len(stub_request.log.info.calls) == 3
 
-        # Check the requests have the correct set of ids in them.
+        # Assemble the expected urls together
         just_ids = list(map(lambda x: x[0], ids))
-        sent_requests = map(
-            lambda x: x['text'].calls[0].args[0],
-            response_list,
-        )
-        for i, request in enumerate(sent_requests):
-            start = i * ID_CHUNK_SIZE
-            end = (i + 1) * ID_CHUNK_SIZE
-            expected_text = '|'.join(just_ids[start:end])
-            assert expected_text in request.url
+        expected_method = 'PURGE_REGEXP'
+        expected_calls = []
+        for chunk_of_ids in _chunk_ids(just_ids):
+            url = _make_url(chunk_of_ids)
+            expected_calls.append(pretend.call(url, method=expected_method))
+
+        # Check for task calls
+        task_path = '.'.join([make_request.__module__, make_request.__name__])
+        task = stub_request.registry.celery_app.tasks[task_path]
+        assert task.delay.calls == expected_calls
