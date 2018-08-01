@@ -1,5 +1,5 @@
 # The project's dependencies...
-celery==4.1.1
+celery==4.2.1
 
 # If this pinning changes, remember to also change the pinning of the
 # cnx-db docker container image.
