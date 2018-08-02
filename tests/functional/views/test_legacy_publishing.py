@@ -188,3 +188,66 @@ def test_publishing_revision_litezip(
         assert result.version == '1.2'
         assert result.submitter == publisher
         assert result.submitlog == message
+
+
+
+def test_publishing_overwrite_litezip(
+        content_util, persist_util, webapp, db_engines, db_tables):
+    # Insert initial collection and modules.
+    collection, tree, modules = content_util.gen_collection()
+    modules = list([persist_util.insert_module(m) for m in modules])
+    collection, tree, modules = content_util.rebuild_collection(collection,
+                                                                tree)
+    collection = persist_util.insert_collection(collection)
+
+    # Insert a new module ...
+    new_module = content_util.gen_module(relative_to=collection)
+    new_module = persist_util.insert_module(new_module)
+    new_module_id = new_module.id
+
+    # ... remove second element from the tree ...
+    tree.pop(1)
+    # ... and append the new module to the tree.
+    tree.append(content_util.make_tree_node_from(new_module))
+    collection, tree, modules = content_util.rebuild_collection(collection,
+                                                                tree)
+
+    struct = tuple([collection, new_module])
+
+    file = content_util.mk_zipfile_from_litezip_struct(struct)
+
+    publisher = 'user1'
+    message = 'test http publish'
+
+    # Submit a publication
+    with file.open('rb') as fb:
+        file_data = [('file', 'contents.zip', fb.read(),)]
+    form_data = {'publisher': publisher, 'message': message}
+    resp = webapp.post(
+        '/api/publish-litezip',
+        form_data,
+        upload_files=file_data,
+    )
+    assert resp.status_code == 200
+
+    # Submit a publication, again
+    with file.open('rb') as fb:
+        file_data = [('file', 'contents.zip', fb.read(),)]
+    form_data = {'publisher': publisher, 'message': message}
+    resp = webapp.post(
+        '/api/publish-litezip',
+        form_data,
+        upload_files=file_data,
+        expect_errors=True,
+    )
+    assert resp.status_code == 400
+    expected_msgs = [
+        {
+            "id": 3,
+            "message": "stale version",
+            "item": new_module_id,
+            "error": "checked out version is 1.1"
+                     " but currently published is 1.2"
+        }
+    ]
+    assert resp.json['messages'] == expected_msgs
