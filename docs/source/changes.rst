@@ -2,7 +2,7 @@
 Change Log
 ==========
 
-?.?.?
+4.0.0
 -----
 
 - Add Celery to the project to move non-critical-path event handling logic
