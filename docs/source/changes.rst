@@ -2,6 +2,11 @@
 Change Log
 ==========
 
+?.?.?
+-----
+
+- Add functionality to stop accidently overwriting others published changes
+
 4.0.0
 -----
 
