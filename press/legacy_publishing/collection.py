@@ -2,7 +2,7 @@ from pyramid.threadlocal import get_current_request
 from sqlalchemy.sql import text
 
 from .utils import replace_id_and_version
-
+from ..errors import StaleVersion
 
 __all__ = (
     'publish_legacy_book',
@@ -35,6 +35,14 @@ def publish_legacy_book(model, metadata, submission, db_conn):
         .limit(1))
     # At this time, this code assumes an existing module
     existing_module = result.fetchone()
+
+    # Verify that at least the current major version is the same
+    # TODO  store the full major.minor at "get" time and return it
+    # to press in the metadata, so we can be even more safe
+
+    if metadata.version != existing_module.version:
+        raise StaleVersion(metadata.version, existing_module.version, model)
+
     major_version = existing_module.major_version + 1
 
     # Get existing abstract, if exists, otherwise add it

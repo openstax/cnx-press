@@ -190,8 +190,7 @@ def test_publishing_revision_litezip(
         assert result.submitlog == message
 
 
-
-def test_publishing_overwrite_litezip(
+def test_publishing_overwrite_module_litezip(
         content_util, persist_util, webapp, db_engines, db_tables):
     # Insert initial collection and modules.
     collection, tree, modules = content_util.gen_collection()
@@ -246,6 +245,60 @@ def test_publishing_overwrite_litezip(
             "id": 3,
             "message": "stale version",
             "item": new_module_id,
+            "error": "checked out version is 1.1"
+                     " but currently published is 1.2"
+        }
+    ]
+    assert resp.json['messages'] == expected_msgs
+
+
+def test_publishing_overwrite_collection_litezip(
+        content_util, persist_util, webapp, db_engines, db_tables):
+    # Insert initial collection and modules.
+    collection, tree, modules = content_util.gen_collection()
+    modules = list([persist_util.insert_module(m) for m in modules])
+    collection, tree, modules = content_util.rebuild_collection(collection,
+                                                                tree)
+    collection = persist_util.insert_collection(collection)
+
+    # ... remove second element from the tree ...
+    tree.pop(1)
+    # ... and append the new module to the tree.
+
+    struct = tuple([collection, ])
+
+    file = content_util.mk_zipfile_from_litezip_struct(struct)
+
+    publisher = 'user1'
+    message = 'test http publish'
+
+    # Submit a publication
+    with file.open('rb') as fb:
+        file_data = [('file', 'contents.zip', fb.read(),)]
+    form_data = {'publisher': publisher, 'message': message}
+    resp = webapp.post(
+        '/api/publish-litezip',
+        form_data,
+        upload_files=file_data,
+    )
+    assert resp.status_code == 200
+
+    # Submit a publication, again
+    with file.open('rb') as fb:
+        file_data = [('file', 'contents.zip', fb.read(),)]
+    form_data = {'publisher': publisher, 'message': message}
+    resp = webapp.post(
+        '/api/publish-litezip',
+        form_data,
+        upload_files=file_data,
+        expect_errors=True,
+    )
+    assert resp.status_code == 400
+    expected_msgs = [
+        {
+            "id": 3,
+            "message": "stale version",
+            "item": collection.id,
             "error": "checked out version is 1.1"
                      " but currently published is 1.2"
         }
