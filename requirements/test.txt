@@ -1,9 +1,31 @@
 # The project's testing dependencies...
 -r ./main.txt
 
-jinja2==2.10
+atomicwrites==1.1.5
+
+attrs==18.1.0
+
+beautifulsoup4==4.6.1
+
+certifi==2018.4.16
+
+chardet==3.0.4
+
+coverage==4.5.1
+
+idna==2.7
+
+Jinja2==2.10
+
+MarkupSafe==1.0
+
+more-itertools==4.3.0
+
+pluggy==0.7.1
 
 pretend==1.0.9
+
+py==1.5.4
 
 pytest==3.7.0
 
@@ -13,6 +35,16 @@ python-dateutil==2.7.3
 
 recordclass==0.5
 
+requests==2.19.1
+
 requests-mock==1.5.2
 
-WebTest >= 1.3.1
+six==1.11.0
+
+urllib3==1.23
+
+waitress==1.1.0
+
+WebOb==1.8.2
+
+WebTest==2.0.30
