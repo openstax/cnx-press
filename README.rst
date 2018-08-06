@@ -21,6 +21,10 @@ Usage::
 
   make help
 
+** Note that you must have Docker installed and
+running locally in order to run Press.
+
+
 License
 -------
 
