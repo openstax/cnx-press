@@ -2,7 +2,7 @@
 Change Log
 ==========
 
-?.?.?
+4.1.0
 -----
 
 - Add functionality to stop accidently overwriting others published changes
