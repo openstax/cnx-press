@@ -8,6 +8,7 @@ from .. import events
 from ..errors import StaleVersion
 from sqlalchemy.exc import IntegrityError
 from ..legacy_publishing import publish_litezip
+from ..models import convert_litezip_resources
 from ..publishing import (
     discover_content_dir,
     expand_zip,
@@ -49,6 +50,7 @@ def publish(request):
 
     # Parse the litezip to a data type structure.
     litezip_struct = parse_litezip(litezip_dir)
+    litezip_struct = convert_litezip_resources(litezip_struct)
 
     # Validate the litezip content
     validation_msgs = validate_litezip(litezip_struct)

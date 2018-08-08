@@ -263,3 +263,104 @@ def test_publish_revision_that_is_derived(
         'utf-8',
     )
     assert expected in module_doc.file
+
+
+def test_publish_revision_with_new_resources(
+        content_util, persist_util, app, db_engines, db_tables):
+    resources = list([content_util.gen_resource() for x in range(0, 2)])
+    module = content_util.gen_module(resources=resources)
+    module = persist_util.insert_module(module)
+
+    # Add a new resouce to the module
+    new_resource = content_util.gen_resource()
+    module.resources.append(new_resource)
+
+    metadata = parse_module_metadata(module)
+
+    # Collect control data for this current version
+    stmt = (
+        db_tables.module_files
+        .join(db_tables.files)
+        .select()
+        .where(db_tables.modules.c.moduleid == metadata.id)
+    )
+    control_data = db_engines['common'].execute(stmt).fetchall()
+
+    # Ensure the resource is not in the content
+    # prior to our publication
+    control_files = {x.filename: x for x in control_data}
+    assert new_resource.filename not in control_files
+
+    # TARGET
+    with db_engines['common'].begin() as conn:
+        (id, version), ident = publish_legacy_page(
+            module,
+            metadata,
+            ('user1', 'test publish',),
+            conn,
+        )
+
+    # Check for file insertion
+    stmt = (db_tables.module_files
+            .join(db_tables.files)
+            .select()
+            .where(db_tables.module_files.c.module_ident == ident))
+    result = db_engines['common'].execute(stmt).fetchall()
+    files = {x.filename: x for x in result}
+    assert new_resource.filename in files
+    assert files[new_resource.filename].sha1 == new_resource.sha1
+    assert files[new_resource.filename].file == new_resource.data.read()
+
+
+def test_publish_revision_that_overwrites_existing_resources(
+        content_util, persist_util, app, db_engines, db_tables):
+    resources = list([content_util.gen_resource() for x in range(0, 2)])
+    module = content_util.gen_module(resources=resources)
+    module = persist_util.insert_module(module)
+
+    # Replace an existing resource with new file contents the module
+    replaced_resource = module.resources.pop()
+    new_resource = content_util.gen_resource(
+        filename=replaced_resource.filename,
+    )
+    module.resources.append(new_resource)
+    assert replaced_resource.filename == new_resource.filename
+
+    metadata = parse_module_metadata(module)
+
+    # Collect control data for this current version
+    stmt = (
+        db_tables.module_files
+        .join(db_tables.files)
+        .select()
+        .where(db_tables.modules.c.moduleid == metadata.id)
+    )
+    control_data = db_engines['common'].execute(stmt).fetchall()
+
+    # Ensure the replaced resource really was in the content
+    # prior to our publication
+    control_files = {x.filename: x for x in control_data}
+    replaced_file_record = control_files[replaced_resource.filename]
+    assert replaced_file_record.sha1 == replaced_resource.sha1
+    assert replaced_file_record.file == replaced_resource.data.read()
+    new_resource.data.seek(0)
+
+    # TARGET
+    with db_engines['common'].begin() as conn:
+        (id, version), ident = publish_legacy_page(
+            module,
+            metadata,
+            ('user1', 'test publish',),
+            conn,
+        )
+
+    # Check for file insertion
+    stmt = (db_tables.module_files
+            .join(db_tables.files)
+            .select()
+            .where(db_tables.module_files.c.module_ident == ident))
+    result = db_engines['common'].execute(stmt).fetchall()
+    files = {x.filename: x for x in result}
+    assert new_resource.filename in files
+    assert files[new_resource.filename].sha1 == new_resource.sha1
+    assert files[new_resource.filename].file == new_resource.data.read()
