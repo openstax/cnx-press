@@ -410,22 +410,23 @@ class _ContentUtil:
         template = jinja2.Template(COLLECTION_DOC)
         return template.render(metadata=metadata, tree=tree)
 
-    def gen_resource(self, filename=None):
-        content = io.BytesIO(
-            ' '.join([self.randtitle(), self.randtitle()]).encode()
-        )
+    def gen_resource(self, data=None, filename=None, media_type='text/plain'):
+        if data is None:
+            data = io.BytesIO(
+                ' '.join([self.randtitle(), self.randtitle()]).encode()
+            )
         if filename is None:
             filename = '_'.join([self.randword(), self.randword()]) + '.txt'
 
         hasher = hashlib.sha1()
-        hasher.update(content.read())
+        hasher.update(data.read())
         sha1 = hasher.hexdigest()
-        content.seek(0)
+        data.seek(0)
 
         return self.Resource(
-            content,
+            data,
             filename,
-            'text/plain',
+            media_type,
             sha1,
         )
 

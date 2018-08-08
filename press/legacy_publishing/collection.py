@@ -121,7 +121,31 @@ def publish_legacy_book(model, metadata, submission, db_conn):
                         keywords=list(metadata.keywords)))
     db_conn.execute(stmt)
 
-    # TODO Insert resource files (cover image, recipe, etc.)
+    # Insert resource files (images, pdfs, etc.)
+    for resource in model.resources:
+        try:
+            # Try finding an existing file first
+            fileid = db_conn.execute(
+                t.files.select()
+                .where(t.files.c.sha1 == resource.sha1)
+            ).fetchone().fileid
+        except AttributeError:
+            # Insert it when it doesn't exist
+            result = db_conn.execute(
+                t.files.insert().values(
+                    file=resource.data.read(),
+                    media_type=resource.media_type,
+                )
+            )
+            resource.data.seek(0)
+            fileid = result.inserted_primary_key[0]
+        result = db_conn.execute(
+            t.module_files.insert().values(
+                module_ident=ident,
+                fileid=fileid,
+                filename=resource.filename,
+            )
+        )
 
     # Copy over existing module_files entries
     stmt = text(
