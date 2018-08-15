@@ -2,6 +2,13 @@
 Change Log
 ==========
 
+4.1.1
+-----
+
+- Fix publish submission logic to use the existing 'created' value
+  rather than reading it from the xml document's metadata.
+  See https://github.com/Connexions/cnx-press/issues/148
+
 4.1.0
 -----
 

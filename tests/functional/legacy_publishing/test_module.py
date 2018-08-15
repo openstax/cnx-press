@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from dateutil.parser import parse as parse_date
 from litezip.main import COLLECTION_NSMAP
 
@@ -135,6 +137,49 @@ def test_publish_revision_with_new_abstract(
     )
     result = db_engines['common'].execute(stmt).fetchone()
     assert result.abstractid != control_metadata.abstractid
+
+
+# https://github.com/Connexions/cnx-press/issues/148
+def test_publish_revision_with_created_value_changed(
+        content_util, persist_util, app, db_engines, db_tables):
+    resources = list([content_util.gen_resource() for x in range(0, 2)])
+    module = content_util.gen_module(resources=resources)
+    module = persist_util.insert_module(module)
+
+    with element_tree_from_model(module) as xml:
+        elm = xml.xpath('//md:created', namespaces=COLLECTION_NSMAP)[0]
+        actual_created = parse_date(elm.text)
+        changed_created = actual_created - (timedelta(days=365) * 8)
+        elm.text = changed_created.isoformat()
+
+    metadata = parse_module_metadata(module)
+
+    # Collect control data for non-legacy metadata
+    stmt = (
+        db_tables.modules.select()
+        .where(db_tables.modules.c.moduleid == metadata.id)
+    )
+    control_metadata = db_engines['common'].execute(stmt).fetchone()
+    assert control_metadata.created == actual_created
+
+    # TARGET
+    with db_engines['common'].begin() as conn:
+        (id, version), ident = publish_legacy_page(
+            module,
+            metadata,
+            ('user1', 'test publish',),
+            conn,
+        )
+
+    # Check for a new abstract insertion
+    stmt = (
+        db_tables.modules
+        .select()
+        .where(db_tables.modules.c.module_ident == ident)
+    )
+    result = db_engines['common'].execute(stmt).fetchone()
+    assert result.created == control_metadata.created
+    assert result.created != changed_created
 
 
 def test_publish_revision_that_is_derived(

@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from dateutil.parser import parse as parse_date
 from litezip.main import COLLECTION_NSMAP
 from sqlalchemy.sql import text
@@ -174,6 +176,65 @@ def test_publish_revision_with_new_abstract(
     )
     result = db_engines['common'].execute(stmt).fetchone()
     assert result.abstractid != control_metadata.abstractid
+
+
+# https://github.com/Connexions/cnx-press/issues/148
+def test_publish_revision_with_created_value_changed(
+        content_util, persist_util, app, db_engines, db_tables):
+    # Insert initial collection and modules.
+    resources = list([content_util.gen_resource() for x in range(0, 2)])
+    collection, tree, modules = content_util.gen_collection(
+        resources=resources
+    )
+    modules = list([persist_util.insert_module(m) for m in modules])
+    collection, tree, modules = content_util.rebuild_collection(collection,
+                                                                tree)
+    collection = persist_util.insert_collection(collection)
+
+    with element_tree_from_model(collection) as xml:
+        elm = xml.xpath('//md:created', namespaces=COLLECTION_NSMAP)[0]
+        actual_created = parse_date(elm.text)
+        changed_created = actual_created - (timedelta(days=365) * 8)
+        elm.text = changed_created.isoformat()
+
+    metadata = parse_collection_metadata(collection)
+
+    # Collect control data for non-legacy metadata
+    stmt = (
+        db_tables.modules.select()
+        .where(db_tables.modules.c.moduleid == metadata.id)
+    )
+    control_metadata = db_engines['common'].execute(stmt).fetchone()
+    assert control_metadata.created == actual_created
+
+    # Insert a new module ...
+    new_module = content_util.gen_module()
+    new_module = persist_util.insert_module(new_module)
+    # ... remove second element from the tree ...
+    tree.pop(1)
+    # ... and append the new module to the tree.
+    tree.append(content_util.make_tree_node_from(new_module))
+    collection, tree, modules = content_util.rebuild_collection(collection,
+                                                                tree)
+
+    # TARGET
+    with db_engines['common'].begin() as conn:
+        (id, version), ident = publish_legacy_book(
+            collection,
+            metadata,
+            ('user1', 'test publish',),
+            conn,
+        )
+
+    # Check core metadata insertion
+    stmt = (
+        db_tables.modules
+        .select()
+        .where(db_tables.modules.c.module_ident == ident)
+    )
+    result = db_engines['common'].execute(stmt).fetchone()
+    assert result.created == control_metadata.created
+    assert result.created != changed_created
 
 
 def test_publish_derived(
