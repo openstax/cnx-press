@@ -70,7 +70,7 @@ def publish_legacy_book(model, metadata, submission, db_conn):
         major_version=major_version,
         portal_type='Collection',
         name=metadata.title,
-        created=metadata.created,
+        created=existing_module.created,
         abstractid=abstractid,
         licenseid=licenseid,
         doctype='',
