@@ -18,7 +18,7 @@ services:
     image: rabbitmq:latest
 
   db:
-    image: openstax/cnx-db:2.2.1
+    image: openstax/cnx-db:2.3.0
     ports:
       - "5432:5432"
     environment:
