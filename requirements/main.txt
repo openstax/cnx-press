@@ -16,9 +16,10 @@ chardet==3.0.4
 # cnx-db docker container image.
 cnx-db==2.3.0
 
-cnx-litezip==1.3.1
+#cnx-litezip==1.3.1
+git+git://github.com/Connexions/cnx-litezip@be522a6c4e0a4a90c211e85d3e1adab21df34167#egg=cnx-litezip
 
-cnxml==2.1.1
+cnxml==2.2.0
 
 hupper==1.3
 

@@ -185,4 +185,10 @@ help-serve :
 serve: $(STATEDIR)/docker-build
 	docker-compose up
 
+restart: $(STATEDIR)/docker-build
+	docker-compose restart
+
+stop:
+	docker-compose stop
+
 # /Serve
