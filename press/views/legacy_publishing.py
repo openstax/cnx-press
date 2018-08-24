@@ -6,6 +6,7 @@ from pyramid.view import view_config
 
 from .. import events
 from ..errors import StaleVersion
+from sqlalchemy.exc import IntegrityError
 from ..legacy_publishing import publish_litezip
 from ..publishing import (
     discover_content_dir,
@@ -84,6 +85,19 @@ def publish(request):
                                         cv=err.current_version),
              }
         ]}
+    except IntegrityError as err:
+        if ('duplicate key value violates unique'
+                ' constraint "files_sha1_key"') in str(err):
+            request.response.status = 400
+            return {'messages': [
+                {'id': 4,
+                 'message': 'no changes',
+                 'error': 'the uploaded litezip would result in no changes'
+                          ' to the collection.xml after publication',
+                 }
+            ]}
+        else:
+            raise
 
     finish_event = events.LegacyPublicationFinished(
         id_mapping.values(),

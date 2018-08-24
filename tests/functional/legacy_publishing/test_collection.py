@@ -261,6 +261,13 @@ def test_publish_derived(
     )
     control_metadata = db_engines['common'].execute(stmt).fetchone()
 
+    # Make some change to the collection xml,
+    # because republishing an unchanged collection is no longer valid
+    with derived_collection.file.open('r+') as fb:
+        new_content = fb.read().replace('Derived copy of', 'Deerived copy of')
+        fb.seek(0)
+        fb.write(new_content)
+
     # TARGET
     with db_engines['common'].begin() as conn:
         now = conn.execute('SELECT CURRENT_TIMESTAMP as now').fetchone().now
