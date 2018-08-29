@@ -6,13 +6,17 @@ from pyramid.view import view_config
 
 from .. import events
 from ..errors import StaleVersion
+from sqlalchemy.exc import IntegrityError
 from ..legacy_publishing import publish_litezip
 from ..publishing import (
     discover_content_dir,
     expand_zip,
     persist_file_to_filesystem,
 )
-from ..utils import convert_version_to_legacy_version
+from ..utils import (
+    convert_version_tuple_to_version_string,
+    convert_version_to_legacy_version
+)
 
 
 @view_config(route_name='api.v3.publications', request_method=['POST'],
@@ -81,6 +85,19 @@ def publish(request):
                                         cv=err.current_version),
              }
         ]}
+    except IntegrityError as err:
+        if ('duplicate key value violates unique'
+                ' constraint "files_sha1_key"') in str(err):
+            request.response.status = 400
+            return {'messages': [
+                {'id': 4,
+                 'message': 'no changes',
+                 'error': 'the uploaded litezip would result in no changes'
+                          ' to the collection.xml after publication',
+                 }
+            ]}
+        else:
+            raise
 
     finish_event = events.LegacyPublicationFinished(
         id_mapping.values(),
@@ -90,11 +107,13 @@ def publish(request):
 
     resp_data = []
     for src_id, (id, ver) in id_mapping.items():
+        version_string = convert_version_tuple_to_version_string(ver)
         legacy_version = convert_version_to_legacy_version(ver)
         resp_data.append({
             'source_id': src_id,
             'id': id,
-            'version': legacy_version,
+            'version': version_string,
+            'legacy_version': legacy_version,
             'url': request.route_url('api.v1.versioned_content',
                                      id=id, ver=legacy_version),
         })

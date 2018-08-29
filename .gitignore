@@ -17,6 +17,7 @@ build/
 dist/
 .eggs/
 docs/_build
+var/
 
 # Coverage #
 ############

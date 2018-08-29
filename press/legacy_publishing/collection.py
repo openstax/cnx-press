@@ -31,19 +31,21 @@ def publish_legacy_book(model, metadata, submission, db_conn):
     result = db_conn.execute(
         t.modules.select()
         .where(t.modules.c.moduleid == metadata.id)
-        .order_by(t.modules.c.major_version.desc())
+        .order_by(t.modules.c.major_version.desc(),
+                  t.modules.c.minor_version.desc())
         .limit(1))
     # At this time, this code assumes an existing module
     existing_module = result.fetchone()
 
     # Verify that at least the current major version is the same
-    # TODO  store the full major.minor at "get" time and return it
-    # to press in the metadata, so we can be even more safe
+    # TODO: store the full major.minor at "get" time (or in the collxml)
+    # and compare it, so we can be even more safe
 
     if metadata.version != existing_module.version:
         raise StaleVersion(metadata.version, existing_module.version, model)
 
-    major_version = existing_module.major_version + 1
+    major_version = existing_module.major_version
+    minor_version = existing_module.minor_version + 1
 
     # Get existing abstract, if exists, otherwise add it
     result = db_conn.execute(
@@ -67,7 +69,9 @@ def publish_legacy_book(model, metadata, submission, db_conn):
     result = db_conn.execute(t.modules.insert().values(
         uuid=existing_module.uuid,
         moduleid=metadata.id,
+        # Pending collection compare code, only minor revs are allowed
         major_version=major_version,
+        minor_version=minor_version,
         portal_type='Collection',
         name=metadata.title,
         created=existing_module.created,

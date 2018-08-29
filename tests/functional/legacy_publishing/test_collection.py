@@ -66,9 +66,9 @@ def test_publish_revision(
     )
     result = db_engines['common'].execute(stmt).fetchone()
     assert result.uuid == control_metadata.uuid
-    assert result.major_version == 2
-    assert result.minor_version == 1
-    assert result.version == '1.2'
+    assert result.major_version == 1
+    assert result.minor_version == 2
+    assert result.version == '1.1'
     assert result.abstractid == control_metadata.abstractid
     assert result.created == parse_date(metadata.created)
     assert result.revised == now
@@ -261,6 +261,13 @@ def test_publish_derived(
     )
     control_metadata = db_engines['common'].execute(stmt).fetchone()
 
+    # Make some change to the collection xml,
+    # because republishing an unchanged collection is no longer valid
+    with derived_collection.file.open('r+') as fb:
+        new_content = fb.read().replace('Derived copy of', 'Deerived copy of')
+        fb.seek(0)
+        fb.write(new_content)
+
     # TARGET
     with db_engines['common'].begin() as conn:
         now = conn.execute('SELECT CURRENT_TIMESTAMP as now').fetchone().now
@@ -288,9 +295,9 @@ def test_publish_derived(
     )
     result = db_engines['common'].execute(stmt).fetchone()
     assert result.uuid == control_metadata.uuid
-    assert result.major_version == 2
-    assert result.minor_version == 1
-    assert result.version == '1.2'
+    assert result.major_version == 1
+    assert result.minor_version == 2
+    assert result.version == '1.1'
     assert result.abstract == derived_metadata.abstract
     assert result.created == parse_date(derived_metadata.created)
     assert result.revised == now

@@ -38,7 +38,7 @@ def test_publish_litezip(
 
     expected_id_map = {
         new_module.id: (new_module.id, (2, None)),
-        collection.id: (collection.id, (2, 1)),
+        collection.id: (collection.id, (1, 2)),
     }
     assert id_map == expected_id_map
 
@@ -53,7 +53,9 @@ def test_publish_litezip(
              "  concat_ws('.', m.major_version, m.minor_version)::text"
              ")::json "
              "FROM modules AS m "
-             "WHERE m.moduleid = :moduleid AND m.version = :version")
-        .bindparams(moduleid=collection.id, version='1.2'))
+             "WHERE m.moduleid = :moduleid "
+             "AND m.major_version = :major_version "
+             "AND m.minor_version = :minor_version")
+        .bindparams(moduleid=collection.id, major_version=1, minor_version=2))
     inserted_tree = db_engines['common'].execute(stmt).fetchone()[0]
     compare_legacy_tree_similarity(inserted_tree['contents'], tree)
