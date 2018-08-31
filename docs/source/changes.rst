@@ -2,6 +2,11 @@
 Change Log
 ==========
 
+5.0.0
+-----
+
+- Publish minor version of collection, rather than major
+
 4.1.1
 -----
 
