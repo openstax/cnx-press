@@ -4,7 +4,21 @@ from litezip import parse_collection
 from litezip.main import COLLECTION_NSMAP
 from lxml import etree
 
-from press.parsers import parse_collection_metadata
+from press.parsers import parse_collection_metadata, parse_collxml
+from press.models import Element
+
+
+def test_parse_collxml(litezip_valid_litezip):
+    with (litezip_valid_litezip / 'collection.xml').open() as origin:
+        expected = parse_collxml(origin)
+
+    assert isinstance(expected, Element)
+    assert expected.name == 'collxml'
+
+
+def test_markup_in_mod_titles_is_valid():
+    """Markup in <title>s does not break the parser.
+    """
 
 
 def test_parse_collection_metadata(litezip_valid_litezip):
