@@ -66,7 +66,7 @@ six==1.11.0
 
 SQLAlchemy==1.2.10
 
-structlog==18.1.0
+structlog==18.2.0
 
 swagger-spec-validator==2.3.1
 
