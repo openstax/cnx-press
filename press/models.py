@@ -27,7 +27,7 @@ Resource = namedtuple(
 )
 
 
-class Element:
+class CollectionElement:
     """Represents a collxml element parsed from a Collection XML file.
     It is iterable and it is comparable using `is_equal_to`.
     """
@@ -57,6 +57,9 @@ class Element:
     def __iter__(self):
         return iter(self.__children)
 
+    def __len__(self):
+        return len(self.__children)
+
     def traverse(self):
         yield self
 
@@ -67,12 +70,16 @@ class Element:
         return self.parent
 
     def is_equal_to(self, other):
-        """Equality at the Collection level is defined as two collections
-        having the same (type of) elements in the same order and all its
-        modules having the same title and 'version-at-this-collection-version'
-        metadata. The rest of the metadata is ignored.
+        """Equality is defined as two collections having the same
+        (type of) elements in the same order and all modules having
+        the same title.
         """
         if self.name == 'title' and other.name == 'title':
-            return self.text == other.text
+            # title tags may have nested tags within them,
+            # so consider the text in those as well.
+            return self._complete_title() == other._complete_title()
         else:
             return self.name == other.name
+
+    def _complete_title(self):
+        return ' '.join([node.text for node in self.traverse()])

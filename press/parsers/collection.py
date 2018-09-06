@@ -1,5 +1,5 @@
 from xml import sax
-from press.models import CollectionMetadata, Element
+from press.models import CollectionMetadata, CollectionElement
 from .common import make_cnx_xpath, make_elm_tree, parse_common_properties
 
 
@@ -33,15 +33,14 @@ class CollectionXmlHandler(sax.ContentHandler):
 
     def startElementNS(self, name, qname, attrs):
         uri, localname = name
-        self.next_node = Element(localname, attrs)
+        self.next_node = CollectionElement(localname, attrs)
         self.current_node.add_child(self.next_node)
         self.current_node = self.next_node
 
     def characters(self, content):
-        content = content.strip()
-
         if bool(content):
-            self.current_node.text += content
+            self.current_node.text = ' '.join([self.current_node.text.strip(),
+                                               content.strip()]).strip()
 
     def endElementNS(self, name, qname):
         self.current_node = self.current_node.parent
@@ -53,7 +52,7 @@ def parse_collxml(input_collxml):
     where collections and sub-collections (both branching points) contain
     subcollections and modules (leaf nodes).
     """
-    tree_root = Element('collxml', {})
+    tree_root = CollectionElement('collxml', {})
 
     parser = sax.make_parser()
     parser.setFeature(sax.handler.feature_namespaces, 1)

@@ -1,6 +1,3 @@
-from press.parsers import parse_collxml
-
-
 __all__ = (
     'convert_to_legacy_domain',
     'convert_version_tuple_to_version_string',
@@ -11,16 +8,10 @@ __all__ = (
 
 def requires_major_version_update(before, after):
     """Tests whether or not a collection changed.
-    If one did, it requires a major version update, so True will be returned.
+    If one did, it requires a major version update and True will be returned.
     """
-    with open(before, 'rb') as file1:
-        tree1 = parse_collxml(file1)
-
-    with open(after, 'rb') as file2:
-        tree2 = parse_collxml(file2)
-
-    for sub_tree_1, sub_tree_2 in zip(tree1.traverse(), tree2.traverse()):
-        if not sub_tree_1.is_equal_to(sub_tree_2):
+    for tree_before, tree_after in zip(before.traverse(), after.traverse()):
+        if not tree_before.is_equal_to(tree_after):
             return True
     return False
 

@@ -5,20 +5,42 @@ from litezip.main import COLLECTION_NSMAP
 from lxml import etree
 
 from press.parsers import parse_collection_metadata, parse_collxml
-from press.models import Element
+from press.models import CollectionElement
 
 
-def test_parse_collxml(litezip_valid_litezip):
-    with (litezip_valid_litezip / 'collection.xml').open() as origin:
+def test_parse_collxml(collxml_templates):
+    with (collxml_templates / 'original.xml').open() as origin:
         expected = parse_collxml(origin)
 
-    assert isinstance(expected, Element)
+    assert isinstance(expected, CollectionElement)
     assert expected.name == 'collxml'
 
 
-def test_markup_in_mod_titles_is_valid():
-    """Markup in <title>s does not break the parser.
+def test_markup_in_title_gets_parsed(collxml_templates):
+    """Modules with markup in title gets parsed as part of the title.
     """
+    titles_with_markup = [
+        'Introduction to Quartus and Circuit Diagram Design SOME MATH',
+        'Lab 1-1: 4-Bit Mux and all NAND/NOR Mux SOME STYLED TEXT',
+        'Lab 4-1 Interrupt Driven Programming in MSP430 Assembly '
+        'SOME DIV TAG SOME SPAN TAG',
+    ]
+
+    # TODO: ideally, the text that gets parsed should be the following
+    # (but it's tricky to do with a SAX parser):
+    # titles_with_markup = [
+    #     'Introduction to SOME MATH Quartus and Circuit Diagram Design',
+    #     'Lab 1-1: 4-Bit Mux and SOME STYLED TEXT all NAND/NOR Mux',
+    #     'Lab 4-1 Interrupt Driven SOME DIV TAG SOME SPAN TAG '
+    #     'Programming in MSP430 Assembly',
+    # ]
+
+    with (collxml_templates / 'markup_in_title.xml').open('r') as doc:
+        tree = parse_collxml(doc)
+
+    for title in titles_with_markup:
+        assert title in [node._complete_title() for node in tree.traverse()
+                         if node.name == 'title']
 
 
 def test_parse_collection_metadata(litezip_valid_litezip):
