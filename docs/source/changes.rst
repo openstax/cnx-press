@@ -2,6 +2,11 @@
 Change Log
 ==========
 
+5.0.1
+-----
+
+- Added Cache-Control headers disallowing caching
+
 5.0.0
 -----
 
