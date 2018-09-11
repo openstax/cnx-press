@@ -37,10 +37,7 @@ class CollectionElement:
         self.tail = ''
         self.parent = None
         self.__children = []
-        # programatically set attributes from data passed-in as a hash
-        for k, v in attrs.items():
-            uri, localname = k
-            setattr(self, localname, v)
+        self.attrib = dict(attrs)
 
     def __repr__(self):
         return 'CollectionElement({})'.format(self.tag)

@@ -33,7 +33,7 @@ class CollectionXmlHandler(sax.ContentHandler):
 
     def startElementNS(self, name, qname, attrs):
         uri, localname = name
-        self.next_node = CollectionElement(localname, attrs)
+        self.next_node = CollectionElement(localname, self._attrs_hash(attrs))
         self.current_node.add_child(self.next_node)
         self.current_node = self.next_node
 
@@ -43,6 +43,8 @@ class CollectionXmlHandler(sax.ContentHandler):
     def endElementNS(self, name, qname):
         self.current_node = self.current_node.parent
 
+    def _attrs_hash(self, attrs):
+        return {name: v for (uri, name), v in attrs.items()}
 
 def parse_collxml(input_collxml):
     """
