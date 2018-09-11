@@ -38,9 +38,7 @@ class CollectionXmlHandler(sax.ContentHandler):
         self.current_node = self.next_node
 
     def characters(self, content):
-        if bool(content):
-            self.current_node.text = ' '.join([self.current_node.text.strip(),
-                                               content.strip()]).strip()
+        self.current_node.insert_text(content)
 
     def endElementNS(self, name, qname):
         self.current_node = self.current_node.parent
