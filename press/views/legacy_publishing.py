@@ -121,11 +121,3 @@ def publish(request):
                                      id=id, ver=legacy_version),
         })
     return resp_data
-
-@forbidden_view_config()
-def forbidden_view(request):
-    if request.authenticated_userid is None:
-        response = HTTPUnauthorized()
-        response.headers.update(forget(request))
-        return response
-    return HTTPForbidden()

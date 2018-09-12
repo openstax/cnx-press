@@ -3,10 +3,37 @@ import warnings
 
 from pyramid.config import Configurator
 from pyramid.authentication import BasicAuthAuthenticationPolicy
-from pyramid.autorization import ACLAuthorizationPolicy
+from pyramid.authorization import ACLAuthorizationPolicy
 from pyramid.config.settings import asbool
 from sqlalchemy.exc import SAWarning
+from pyramid.security import Everyone, Authenticated, Allow
 
+
+import hashlib
+from base64 import decodestring as decode
+def check_password(pass_hash, password):
+    challenge_bytes = decode(pass_hash[6:])
+    digest = challenge_bytes[:20]
+    salt = challenge_bytes[20:]
+    hr = hashlib.sha1(password.encode('utf8'))
+    hr.update(salt)
+    return digest == hr.digest()
+
+class RootFactory(object):
+    """Application root object factory.
+    Everything is accessed from the root, so the acls defined here
+    are applied to all requests.
+    """
+
+    __acl__ = (
+        (Allow, Authenticated, 'view'),
+    )
+
+    def __init__(self, request):
+        self.request = request
+
+    def __getitem__(self, key):  # pragma: no cover
+        raise KeyError(key)
 
 def discover_set(settings, setting_name, env_var, default=None,
                  modifier=None):
@@ -39,20 +66,9 @@ def discover_set(settings, setting_name, env_var, default=None,
 def check_credentials(username, password, request):
     """Returns a sequence of principal identifiers for the user.
     """
-    # Find user by username from the DB, for example:
-    # user = User.find(username: username).first
-
-    # Check password against user's password, using bcript, ie:
-    # bcrypt.check_password(password, user.password_hash)
-
-    # if the user authenticated successfully, proceed to return principals,
-    # otherwise:
-    # raise HTTPForbidden # or something like that
-
-    # Return a sequence of principal identifiers for the user.
-    # return user.principals
-    # ie:
-    # ['group:publisher'] # which should have the permission to publish
+    _hash = b'{SSHA}Tf5uQqRItW5v4j0WDM5w3cgIwfKKATpX'
+    if check_password(_hash, password):
+        return [username]
 
 def configure(settings=None):
     """Configure the :mod:`pyramid.configure.Configurator` object"""
@@ -71,7 +87,7 @@ def configure(settings=None):
     settings['logging.level'] = settings['debug'] and 'DEBUG' or 'INFO'
 
     # Create the configuration object
-    config = Configurator(settings=settings)
+    config = Configurator(settings=settings, root_factory=RootFactory)
     config.include('.logging')
     config.include('.raven')
     config.include('.subscribers')
@@ -79,7 +95,7 @@ def configure(settings=None):
     config.include('.tasks')
     auth_policy = BasicAuthAuthenticationPolicy(check_credentials)
     config.set_authentication_policy(auth_policy)
-    config.set_authorication_policy(ACLAuthorizationPolicy())
+    config.set_authorization_policy(ACLAuthorizationPolicy())
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=SAWarning)
         config.include('cnxdb.contrib.pyramid')

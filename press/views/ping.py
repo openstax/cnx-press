@@ -7,3 +7,9 @@ from pyramid.view import view_config
 def ping(request):
     """A ping and ack view for checking the service is up and running."""
     return Response('pong')
+
+@view_config(route_name='auth-ping', permission='view')
+def authedping(request):
+    """A ping and ack view for checking the service is up and running."""
+    # import dpb; pdb.set_trace()
+    return Response('pong')
