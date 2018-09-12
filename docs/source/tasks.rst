@@ -26,7 +26,7 @@ For example::
       request = self.get_pyramid_request()
       request.registry.slack_client.send('#cnx-stream', 'msg')
 
-  @view_config(name='ping')
+  @view_config(name='ping', http_cache=0)
   def ping(request):
       request.task(msg_slack).delay('somebody pinged the site!')
       return 'pong'
