@@ -2,6 +2,8 @@ import os.path
 import warnings
 
 from pyramid.config import Configurator
+from pyramid.authentication import BasicAuthAuthenticationPolicy
+from pyramid.autorization import ACLAuthorizationPolicy
 from pyramid.config.settings import asbool
 from sqlalchemy.exc import SAWarning
 
@@ -34,6 +36,24 @@ def discover_set(settings, setting_name, env_var, default=None,
         settings.setdefault(setting_name, default)
 
 
+def check_credentials(username, password, request):
+    """Returns a sequence of principal identifiers for the user.
+    """
+    # Find user by username from the DB, for example:
+    # user = User.find(username: username).first
+
+    # Check password against user's password, using bcript, ie:
+    # bcrypt.check_password(password, user.password_hash)
+
+    # if the user authenticated successfully, proceed to return principals,
+    # otherwise:
+    # raise HTTPForbidden # or something like that
+
+    # Return a sequence of principal identifiers for the user.
+    # return user.principals
+    # ie:
+    # ['group:publisher'] # which should have the permission to publish
+
 def configure(settings=None):
     """Configure the :mod:`pyramid.configure.Configurator` object"""
     if settings is None:
@@ -57,7 +77,9 @@ def configure(settings=None):
     config.include('.subscribers')
     config.include('.views')
     config.include('.tasks')
-
+    auth_policy = BasicAuthAuthenticationPolicy(check_credentials)
+    config.set_authentication_policy(auth_policy)
+    config.set_authorication_policy(ACLAuthorizationPolicy())
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=SAWarning)
         config.include('cnxdb.contrib.pyramid')

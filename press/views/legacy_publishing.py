@@ -17,7 +17,10 @@ from ..utils import (
     convert_version_tuple_to_version_string,
     convert_version_to_legacy_version
 )
-
+# Security
+from pyramid.httpexceptions import HTTPUnauthorized
+from pyramid.security import forget
+from pyramid.view import forbidden_view_config
 
 @view_config(route_name='api.v3.publications', request_method=['POST'],
              renderer='json', http_cache=0)
@@ -118,3 +121,11 @@ def publish(request):
                                      id=id, ver=legacy_version),
         })
     return resp_data
+
+@forbidden_view_config()
+def forbidden_view(request):
+    if request.authenticated_userid is None:
+        response = HTTPUnauthorized()
+        response.headers.update(forget(request))
+        return response
+    return HTTPForbidden()
