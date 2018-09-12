@@ -105,3 +105,14 @@ class CollectionElement:
 
     def _complete_title(self):
         return self.alltext()
+
+
+class ComparableElement(CollectionElement, set):
+    def __init__(self, element_name, attrs):
+        super().__init__(element_name, attrs)
+
+    def __hash__():
+        return hash((self.tag, self.text, self.tail, frozenset(self.items())))
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)

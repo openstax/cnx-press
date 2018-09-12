@@ -14,6 +14,26 @@ def test_major_version_checker(collxml_templates):
     assert requires_major_version_update(tree, tree) is False
 
 
+def test_diffying_and_set_operations_works(collxml_templates):
+    """No changes in collxml returns an empty set.
+    """
+    with (collxml_templates / 'original.xml').open('r') as file:
+        tree = parse_collxml(file)
+    assert tree.difference(tree) == set()
+    assert len(tree.difference(tree)) == 0
+
+
+def test_diffying_extra_module(collxml_templates):
+    """An extra module returns a set with one item.
+    """
+    with (collxml_templates / 'original.xml').open('r') as file1, \
+         (collxml_templates / 'extra_module.xml').open('r') as file2:
+        tree1 = parse_collxml(file1)
+        tree2 = parse_collxml(file2)
+    import pdb; pdb.set_trace()
+    assert len(tree1.symmetric_difference(tree2)) == 1
+
+
 def test_a_change_in_title_req_major_change(collxml_templates):
     """A change in a module's title requires a major version update.
     """
