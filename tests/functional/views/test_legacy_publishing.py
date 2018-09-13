@@ -1,366 +1,432 @@
+import unittest
+from pyramid import testing
 from lxml import etree
 
 from litezip.main import COLLECTION_NSMAP
 
+class TestBypassingAuth():
+    def setup(self):
+        request = testing.DummyRequest()
+        request.context = testing.DummyResource()
+        # import pdb; pdb.set_trace()
+        self.config = testing.setUp(request=request)
+        self.config.testing_securitypolicy(userid='userid', permissive=True)
 
-def test_publishing_invalid_zip(tmpdir, webapp):
-    file = tmpdir.mkdir('test').join('foo.txt')
-    file.write('foo bar')
+    def test_publishing_invalid_zip(self, tmpdir, webapp):
+        file = tmpdir.mkdir('test').join('foo.txt')
+        file.write('foo bar')
 
-    publisher = 'user1'
-    message = 'test http publish'
+        publisher = 'user1'
+        message = 'test http publish'
 
-    # Submit a publication
-    with file.open('rb') as fb:
-        file_data = [('file', 'contents.zip', fb.read(),)]
-    form_data = {'publisher': publisher, 'message': message}
-    resp = webapp.post(
-        '/api/publish-litezip',
-        form_data,
-        upload_files=file_data,
-        expect_errors=True,
-    )
-    assert resp.status_code == 400
-    expected_msgs = [
-        {'id': 1,
-         'message': 'The given file is not a valid zip formatted file.'},
-    ]
-    assert resp.json['messages'] == expected_msgs
-
-
-def test_publishing_invalid_revision_litezip(
-        content_util, persist_util, webapp, db_engines, db_tables):
-    # Insert initial collection and modules.
-    collection, tree, modules = content_util.gen_collection()
-    modules = list([persist_util.insert_module(m) for m in modules])
-    collection, tree, modules = content_util.rebuild_collection(collection,
-                                                                tree)
-    collection = persist_util.insert_collection(collection)
-
-    # Insert a new module ...
-    new_module = content_util.gen_module(relative_to=collection)
-    new_module = persist_util.insert_module(new_module)
-    # ... remove second element from the tree ...
-    tree.pop(1)
-    # ... and append the new module to the tree.
-    tree.append(content_util.make_tree_node_from(new_module))
-    collection, tree, modules = content_util.rebuild_collection(collection,
-                                                                tree)
-    struct = tuple([collection, new_module])
-
-    # Modify the collection content to make it invalid.
-    with collection.file.open('rb') as fb:
-        xml = etree.parse(fb)
-        elm = xml.xpath('//col:metadata', namespaces=COLLECTION_NSMAP)[0]
-        # Add an invalid element.
-        elm.insert(
-            0,
-            etree.Element(
-                '{{{}}}wordlist'.format(COLLECTION_NSMAP['md']),
-                nsmap=COLLECTION_NSMAP))
-    with collection.file.open('wb') as fb:
-        # Write the modified xml back to file.
-        fb.write(etree.tostring(xml))
-    # Modify the module content to make it invalid.
-    with new_module.file.open('rb') as fb:
-        xml = etree.parse(fb)
-        query = xml.xpath('//md:keywordlist', namespaces=COLLECTION_NSMAP)
-        if query:
-            elm = query[0]
-            elm.getparent().remove(elm)
-        elm = xml.xpath('//c:metadata', namespaces=COLLECTION_NSMAP)[0]
-        # Add a valid element, but with empty (invalid) contents.
-        elm.insert(
-            0,
-            etree.Element(
-                '{{{}}}keywordlist'.format(COLLECTION_NSMAP['md']),
-                nsmap=COLLECTION_NSMAP))
-        # Add an invalid element.
-        elm.insert(
-            0,
-            etree.Element(
-                '{{{}}}wordlist'.format(COLLECTION_NSMAP['md']),
-                nsmap=COLLECTION_NSMAP))
-    with new_module.file.open('wb') as fb:
-        # Write the modified xml back to file.
-        fb.write(etree.tostring(xml))
-
-    # Compress to zip file as payload
-    file = content_util.mk_zipfile_from_litezip_struct(struct)
-
-    publisher = 'user1'
-    message = 'test http publish'
-
-    # Submit a publication
-    with file.open('rb') as fb:
-        file_data = [('file', 'contents.zip', fb.read(),)]
-    form_data = {'publisher': publisher, 'message': message}
-    resp = webapp.post(
-        '/api/publish-litezip',
-        form_data,
-        upload_files=file_data,
-        expect_errors=True,
-    )
-    assert resp.status_code == 400
-    expected_msgs = [
-        {'id': 2,
-         'message': 'validation issue',
-         'item': 'collection.xml',
-         'error': ('3:319 -- error: element "md:wordlist" not allowed'
-                   ' anywhere; expected element "md:abstract", "md:actors",'
-                   ' "md:ancillary", "md:content-id", "md:content-url",'
-                   ' "md:course-code", "md:created", "md:derived-from",'
-                   ' "md:education-levellist", "md:extended-attribution",'
-                   ' "md:homepage", "md:institution", "md:instructor",'
-                   ' "md:keywordlist", "md:language", "md:license",'
-                   ' "md:objectives", "md:repository", "md:revised",'
-                   ' "md:roles", "md:short-title", "md:subjectlist",'
-                   ' "md:subtitle", "md:title", "md:version" or'
-                   ' "md:version-history"'),
-         },
-        {'id': 2,
-         'message': 'validation issue',
-         'item': '{}/index.cnxml'.format(new_module.id),
-         'error': ('5:460 -- error: element "md:wordlist" not allowed'
-                   ' anywhere; expected element "md:abstract", "md:actors",'
-                   ' "md:content-id", "md:content-url", "md:course-code",'
-                   ' "md:created", "md:derived-from",'
-                   ' "md:education-levellist", "md:extended-attribution",'
-                   ' "md:homepage", "md:institution", "md:instructor",'
-                   ' "md:keywordlist", "md:language", "md:license",'
-                   ' "md:objectives", "md:repository", "md:revised",'
-                   ' "md:roles", "md:short-title", "md:subjectlist",'
-                   ' "md:subtitle", "md:title" or "md:version"'),
-         },
-        {'id': 2,
-         'message': 'validation issue',
-         'item': '{}/index.cnxml'.format(new_module.id),
-         'error': ('5:920 -- error: element "md:keywordlist" incomplete;'
-                   ' missing required element "md:keyword"'),
-         },
-    ]
-    assert resp.json['messages'] == expected_msgs
+        # Submit a publication
+        with file.open('rb') as fb:
+            file_data = [('file', 'contents.zip', fb.read(),)]
+        form_data = {'publisher': publisher, 'message': message}
+        resp = webapp.post(
+            '/api/publish-litezip',
+            form_data,
+            upload_files=file_data,
+            expect_errors=True,
+        )
+        assert resp.status_code == 400
+        expected_msgs = [
+            {'id': 1,
+             'message': 'The given file is not a valid zip formatted file.'},
+        ]
+        assert resp.json['messages'] == expected_msgs
 
 
-def test_publishing_revision_litezip(
-        content_util, persist_util, webapp, db_engines, db_tables):
-    # Insert initial collection and modules.
-    collection, tree, modules = content_util.gen_collection()
-    modules = list([persist_util.insert_module(m) for m in modules])
-    collection, tree, modules = content_util.rebuild_collection(collection,
-                                                                tree)
-    collection = persist_util.insert_collection(collection)
+    def test_publishing_invalid_revision_litezip(self,
+            content_util, persist_util, webapp, db_engines, db_tables):
+        request = testing.DummyRequest()
+        request.context = testing.DummyResource()
+        self.config.testing_securitypolicy(userid='bryan', permissive=True)
 
-    # Insert a new module ...
-    new_module = content_util.gen_module(relative_to=collection)
-    new_module = persist_util.insert_module(new_module)
-    # ... remove second element from the tree ...
-    tree.pop(1)
-    # ... and append the new module to the tree.
-    tree.append(content_util.make_tree_node_from(new_module))
-    collection, tree, modules = content_util.rebuild_collection(collection,
-                                                                tree)
-    struct = tuple([collection, new_module])
+        # Insert initial collection and modules.
+        collection, tree, modules = content_util.gen_collection()
+        modules = list([persist_util.insert_module(m) for m in modules])
+        collection, tree, modules = content_util.rebuild_collection(collection,
+                                                                    tree)
+        collection = persist_util.insert_collection(collection)
 
-    file = content_util.mk_zipfile_from_litezip_struct(struct)
+        # Insert a new module ...
+        new_module = content_util.gen_module(relative_to=collection)
+        new_module = persist_util.insert_module(new_module)
+        # ... remove second element from the tree ...
+        tree.pop(1)
+        # ... and append the new module to the tree.
+        tree.append(content_util.make_tree_node_from(new_module))
+        collection, tree, modules = content_util.rebuild_collection(collection,
+                                                                    tree)
+        struct = tuple([collection, new_module])
 
-    publisher = 'user1'
-    message = 'test http publish'
+        # Modify the collection content to make it invalid.
+        with collection.file.open('rb') as fb:
+            xml = etree.parse(fb)
+            elm = xml.xpath('//col:metadata', namespaces=COLLECTION_NSMAP)[0]
+            # Add an invalid element.
+            elm.insert(
+                0,
+                etree.Element(
+                    '{{{}}}wordlist'.format(COLLECTION_NSMAP['md']),
+                    nsmap=COLLECTION_NSMAP))
+        with collection.file.open('wb') as fb:
+            # Write the modified xml back to file.
+            fb.write(etree.tostring(xml))
+        # Modify the module content to make it invalid.
+        with new_module.file.open('rb') as fb:
+            xml = etree.parse(fb)
+            query = xml.xpath('//md:keywordlist', namespaces=COLLECTION_NSMAP)
+            if query:
+                elm = query[0]
+                elm.getparent().remove(elm)
+            elm = xml.xpath('//c:metadata', namespaces=COLLECTION_NSMAP)[0]
+            # Add a valid element, but with empty (invalid) contents.
+            elm.insert(
+                0,
+                etree.Element(
+                    '{{{}}}keywordlist'.format(COLLECTION_NSMAP['md']),
+                    nsmap=COLLECTION_NSMAP))
+            # Add an invalid element.
+            elm.insert(
+                0,
+                etree.Element(
+                    '{{{}}}wordlist'.format(COLLECTION_NSMAP['md']),
+                    nsmap=COLLECTION_NSMAP))
+        with new_module.file.open('wb') as fb:
+            # Write the modified xml back to file.
+            fb.write(etree.tostring(xml))
 
-    # Submit a publication
-    with file.open('rb') as fb:
-        file_data = [('file', 'contents.zip', fb.read(),)]
-    form_data = {'publisher': publisher, 'message': message}
-    resp = webapp.post(
-        '/api/publish-litezip',
-        form_data,
-        upload_files=file_data,
-    )
-    assert resp.status_code == 200
+        # Compress to zip file as payload
+        file = content_util.mk_zipfile_from_litezip_struct(struct)
 
-    # Check resulting data. (id mapping and urls)
-    t = db_tables
-    id_mapping = {x['source_id']: x for x in resp.json}
-    for model in struct:
-        assert model.id in id_mapping
-        publication_record = id_mapping[model.id]
-        assert publication_record['id'] == model.id
-        if model.id.startswith('col'):
-            version = '1.1'
-        else:
-            version = '1.2'
-        assert publication_record['legacy_version'] == version
-        url = publication_record['url']
-        # FIXME We should visit this URL rather than check it's parts.
-        assert '/content/{}/{}'.format(model.id, version) in url
+        publisher = 'user1'
+        message = 'test http publish'
 
-        # FIXME This functional test should not be directly communicating
-        #       with the database. Instead it should be using other http
-        #       routes to verify the contents.
-        # Check the content is actually in the database
-        #   and that the correct publisher and message was attributed.
-        # Checking for content details is out-of-scope for this test.
-        stmt = (
-            t.modules.select()
-            .where(t.modules.c.moduleid == model.id)
-            .order_by(t.modules.c.major_version.desc(),
-                      t.modules.c.minor_version.desc())
-            .limit(1))
-        result = db_engines['common'].execute(stmt).fetchone()
-        assert result.version == version
-        assert result.submitter == publisher
-        assert result.submitlog == message
-
-
-def test_publishing_overwrite_module_litezip(
-        content_util, persist_util, webapp, db_engines, db_tables):
-    # Insert initial collection and modules.
-    collection, tree, modules = content_util.gen_collection()
-    modules = list([persist_util.insert_module(m) for m in modules])
-    collection, tree, modules = content_util.rebuild_collection(collection,
-                                                                tree)
-    collection = persist_util.insert_collection(collection)
-
-    # Insert a new module ...
-    new_module = content_util.gen_module(relative_to=collection)
-    new_module = persist_util.insert_module(new_module)
-    new_module_id = new_module.id
-
-    # ... remove second element from the tree ...
-    tree.pop(1)
-    # ... and append the new module to the tree.
-    tree.append(content_util.make_tree_node_from(new_module))
-    collection, tree, modules = content_util.rebuild_collection(collection,
-                                                                tree)
-
-    struct = tuple([collection, new_module])
-
-    file = content_util.mk_zipfile_from_litezip_struct(struct)
-
-    publisher = 'user1'
-    message = 'test http publish'
-
-    # Submit a publication
-    with file.open('rb') as fb:
-        file_data = [('file', 'contents.zip', fb.read(),)]
-    form_data = {'publisher': publisher, 'message': message}
-    resp = webapp.post(
-        '/api/publish-litezip',
-        form_data,
-        upload_files=file_data,
-    )
-    assert resp.status_code == 200
-
-    # Submit a publication, again
-    with file.open('rb') as fb:
-        file_data = [('file', 'contents.zip', fb.read(),)]
-    form_data = {'publisher': publisher, 'message': message}
-    resp = webapp.post(
-        '/api/publish-litezip',
-        form_data,
-        upload_files=file_data,
-        expect_errors=True,
-    )
-    assert resp.status_code == 400
-    expected_msgs = [
-        {
-            "id": 3,
-            "message": "stale version",
-            "item": new_module_id,
-            "error": "checked out version is 1.1"
-                     " but currently published is 1.2"
-        }
-    ]
-    assert resp.json['messages'] == expected_msgs
+        # Submit a publication
+        with file.open('rb') as fb:
+            file_data = [('file', 'contents.zip', fb.read(),)]
+        form_data = {'publisher': publisher, 'message': message}
+        resp = webapp.post(
+            '/api/publish-litezip',
+            form_data,
+            upload_files=file_data,
+            expect_errors=True,
+        )
+        assert resp.status_code == 400
+        expected_msgs = [
+            {'id': 2,
+             'message': 'validation issue',
+             'item': 'collection.xml',
+             'error': ('3:319 -- error: element "md:wordlist" not allowed'
+                       ' anywhere; expected element "md:abstract", "md:actors",'
+                       ' "md:ancillary", "md:content-id", "md:content-url",'
+                       ' "md:course-code", "md:created", "md:derived-from",'
+                       ' "md:education-levellist", "md:extended-attribution",'
+                       ' "md:homepage", "md:institution", "md:instructor",'
+                       ' "md:keywordlist", "md:language", "md:license",'
+                       ' "md:objectives", "md:repository", "md:revised",'
+                       ' "md:roles", "md:short-title", "md:subjectlist",'
+                       ' "md:subtitle", "md:title", "md:version" or'
+                       ' "md:version-history"'),
+             },
+            {'id': 2,
+             'message': 'validation issue',
+             'item': '{}/index.cnxml'.format(new_module.id),
+             'error': ('5:460 -- error: element "md:wordlist" not allowed'
+                       ' anywhere; expected element "md:abstract", "md:actors",'
+                       ' "md:content-id", "md:content-url", "md:course-code",'
+                       ' "md:created", "md:derived-from",'
+                       ' "md:education-levellist", "md:extended-attribution",'
+                       ' "md:homepage", "md:institution", "md:instructor",'
+                       ' "md:keywordlist", "md:language", "md:license",'
+                       ' "md:objectives", "md:repository", "md:revised",'
+                       ' "md:roles", "md:short-title", "md:subjectlist",'
+                       ' "md:subtitle", "md:title" or "md:version"'),
+             },
+            {'id': 2,
+             'message': 'validation issue',
+             'item': '{}/index.cnxml'.format(new_module.id),
+             'error': ('5:920 -- error: element "md:keywordlist" incomplete;'
+                       ' missing required element "md:keyword"'),
+             },
+        ]
+        assert resp.json['messages'] == expected_msgs
 
 
-def test_publishing_overwrite_collection_litezip(
-        content_util, persist_util, webapp, db_engines, db_tables):
-    # Insert initial collection and modules.
-    collection, tree, modules = content_util.gen_collection()
-    modules = list([persist_util.insert_module(m) for m in modules])
-    collection, tree, modules = content_util.rebuild_collection(collection,
-                                                                tree)
-    collection = persist_util.insert_collection(collection)
+    def test_publishing_revision_litezip(self,
+            content_util, persist_util, webapp, db_engines, db_tables):
+        # Insert initial collection and modules.
 
-    # ... remove second element from the tree ...
-    tree.pop(1)
-    new_modules = [module for (i, module) in enumerate(modules) if i != 1]
+        collection, tree, modules = content_util.gen_collection()
+        modules = list([persist_util.insert_module(m) for m in modules])
+        collection, tree, modules = content_util.rebuild_collection(collection,
+                                                                    tree)
+        collection = persist_util.insert_collection(collection)
 
-    struct = tuple([collection, new_modules[0], ])
+        # Insert a new module ...
+        new_module = content_util.gen_module(relative_to=collection)
+        new_module = persist_util.insert_module(new_module)
+        # ... remove second element from the tree ...
+        tree.pop(1)
+        # ... and append the new module to the tree.
+        tree.append(content_util.make_tree_node_from(new_module))
+        collection, tree, modules = content_util.rebuild_collection(collection,
+                                                                    tree)
+        struct = tuple([collection, new_module])
 
-    file = content_util.mk_zipfile_from_litezip_struct(struct)
+        file = content_util.mk_zipfile_from_litezip_struct(struct)
 
-    publisher = 'user1'
-    message = 'test http publish'
+        publisher = 'user1'
+        message = 'test http publish'
 
-    # Submit a publication
-    with file.open('rb') as fb:
-        file_data = [('file', 'contents.zip', fb.read(),)]
-    form_data = {'publisher': publisher, 'message': message}
-    resp = webapp.post(
-        '/api/publish-litezip',
-        form_data,
-        upload_files=file_data,
-    )
-    assert resp.status_code == 200
+        # Submit a publication
+        with file.open('rb') as fb:
+            file_data = [('file', 'contents.zip', fb.read(),)]
+        form_data = {'publisher': publisher, 'message': message}
+        resp = webapp.post(
+            '/api/publish-litezip',
+            form_data,
+            upload_files=file_data,
+        )
+        assert resp.status_code == 200
 
-    # Submit a publication, again
-    with file.open('rb') as fb:
-        file_data = [('file', 'contents.zip', fb.read(),)]
-    form_data = {'publisher': publisher, 'message': message}
-    resp = webapp.post(
-        '/api/publish-litezip',
-        form_data,
-        upload_files=file_data,
-        expect_errors=True,
-    )
-    assert resp.status_code == 400
-    expected_msgs = [
-        {
-            "id": 3,
-            "message": "stale version",
-            "item": new_modules[0].id,
-            "error": "checked out version is 1.1"
-                     " but currently published is 1.2"
-        }
-    ]
-    assert resp.json['messages'] == expected_msgs
+        # Check resulting data. (id mapping and urls)
+        t = db_tables
+        id_mapping = {x['source_id']: x for x in resp.json}
+        for model in struct:
+            assert model.id in id_mapping
+            publication_record = id_mapping[model.id]
+            assert publication_record['id'] == model.id
+            if model.id.startswith('col'):
+                version = '1.1'
+            else:
+                version = '1.2'
+            assert publication_record['legacy_version'] == version
+            url = publication_record['url']
+            # FIXME We should visit this URL rather than check it's parts.
+            assert '/content/{}/{}'.format(model.id, version) in url
+
+            # FIXME This functional test should not be directly communicating
+            #       with the database. Instead it should be using other http
+            #       routes to verify the contents.
+            # Check the content is actually in the database
+            #   and that the correct publisher and message was attributed.
+            # Checking for content details is out-of-scope for this test.
+            stmt = (
+                t.modules.select()
+                .where(t.modules.c.moduleid == model.id)
+                .order_by(t.modules.c.major_version.desc(),
+                          t.modules.c.minor_version.desc())
+                .limit(1))
+            result = db_engines['common'].execute(stmt).fetchone()
+            assert result.version == version
+            assert result.submitter == publisher
+            assert result.submitlog == message
 
 
-def test_publishing_no_changes(
-        content_util, persist_util, webapp, db_engines, db_tables):
-    # Insert initial collection and modules.
-    collection, tree, modules = content_util.gen_collection()
-    modules = list([persist_util.insert_module(m) for m in modules])
-    collection, tree, modules = content_util.rebuild_collection(collection,
-                                                                tree)
-    collection = persist_util.insert_collection(collection)
+    def test_publishing_overwrite_module_litezip(self,
+            content_util, persist_util, webapp, db_engines, db_tables):
+        # Insert initial collection and modules.
+        collection, tree, modules = content_util.gen_collection()
+        modules = list([persist_util.insert_module(m) for m in modules])
+        collection, tree, modules = content_util.rebuild_collection(collection,
+                                                                    tree)
+        collection = persist_util.insert_collection(collection)
 
-    struct = tuple([collection, ])
+        # Insert a new module ...
+        new_module = content_util.gen_module(relative_to=collection)
+        new_module = persist_util.insert_module(new_module)
+        new_module_id = new_module.id
 
-    file = content_util.mk_zipfile_from_litezip_struct(struct)
+        # ... remove second element from the tree ...
+        tree.pop(1)
+        # ... and append the new module to the tree.
+        tree.append(content_util.make_tree_node_from(new_module))
+        collection, tree, modules = content_util.rebuild_collection(collection,
+                                                                    tree)
 
-    publisher = 'user1'
-    message = 'test http publish'
+        struct = tuple([collection, new_module])
 
-    # Submit a publication
-    with file.open('rb') as fb:
-        file_data = [('file', 'contents.zip', fb.read(),)]
-    form_data = {'publisher': publisher, 'message': message}
-    resp = webapp.post(
-        '/api/publish-litezip',
-        form_data,
-        upload_files=file_data,
-        expect_errors=True,
-    )
-    assert resp.status_code == 400
-    expected_msgs = [
-        {
-            "id": 4,
-            "message": "no changes",
-            "error": "the uploaded litezip would result in no changes"
-                     " to the collection.xml after publication"
-        }
-    ]
-    assert resp.json['messages'] == expected_msgs
+        file = content_util.mk_zipfile_from_litezip_struct(struct)
+
+        publisher = 'user1'
+        message = 'test http publish'
+
+        # Submit a publication
+        with file.open('rb') as fb:
+            file_data = [('file', 'contents.zip', fb.read(),)]
+        form_data = {'publisher': publisher, 'message': message}
+        resp = webapp.post(
+            '/api/publish-litezip',
+            form_data,
+            upload_files=file_data,
+        )
+        assert resp.status_code == 200
+
+        # Submit a publication, again
+        with file.open('rb') as fb:
+            file_data = [('file', 'contents.zip', fb.read(),)]
+        form_data = {'publisher': publisher, 'message': message}
+        resp = webapp.post(
+            '/api/publish-litezip',
+            form_data,
+            upload_files=file_data,
+            expect_errors=True,
+        )
+        assert resp.status_code == 400
+        expected_msgs = [
+            {
+                "id": 3,
+                "message": "stale version",
+                "item": new_module_id,
+                "error": "checked out version is 1.1"
+                         " but currently published is 1.2"
+            }
+        ]
+        assert resp.json['messages'] == expected_msgs
+
+
+    def test_publishing_overwrite_collection_litezip(self,
+            content_util, persist_util, webapp, db_engines, db_tables):
+        # Insert initial collection and modules.
+        collection, tree, modules = content_util.gen_collection()
+        modules = list([persist_util.insert_module(m) for m in modules])
+        collection, tree, modules = content_util.rebuild_collection(collection,
+                                                                    tree)
+        collection = persist_util.insert_collection(collection)
+
+        # ... remove second element from the tree ...
+        tree.pop(1)
+        new_modules = [module for (i, module) in enumerate(modules) if i != 1]
+
+        struct = tuple([collection, new_modules[0], ])
+
+        file = content_util.mk_zipfile_from_litezip_struct(struct)
+
+        publisher = 'user1'
+        message = 'test http publish'
+
+        # Submit a publication
+        with file.open('rb') as fb:
+            file_data = [('file', 'contents.zip', fb.read(),)]
+        form_data = {'publisher': publisher, 'message': message}
+        resp = webapp.post(
+            '/api/publish-litezip',
+            form_data,
+            upload_files=file_data,
+        )
+        assert resp.status_code == 200
+
+        # Submit a publication, again
+        with file.open('rb') as fb:
+            file_data = [('file', 'contents.zip', fb.read(),)]
+        form_data = {'publisher': publisher, 'message': message}
+        resp = webapp.post(
+            '/api/publish-litezip',
+            form_data,
+            upload_files=file_data,
+            expect_errors=True,
+        )
+        assert resp.status_code == 400
+        expected_msgs = [
+            {
+                "id": 3,
+                "message": "stale version",
+                "item": new_modules[0].id,
+                "error": "checked out version is 1.1"
+                         " but currently published is 1.2"
+            }
+        ]
+        assert resp.json['messages'] == expected_msgs
+
+
+    def test_publishing_no_changes(self,
+            content_util, persist_util, webapp, db_engines, db_tables):
+        # Insert initial collection and modules.
+        collection, tree, modules = content_util.gen_collection()
+        modules = list([persist_util.insert_module(m) for m in modules])
+        collection, tree, modules = content_util.rebuild_collection(collection,
+                                                                    tree)
+        collection = persist_util.insert_collection(collection)
+
+        struct = tuple([collection, ])
+
+        file = content_util.mk_zipfile_from_litezip_struct(struct)
+
+        publisher = 'user1'
+        message = 'test http publish'
+
+        # Submit a publication
+        with file.open('rb') as fb:
+            file_data = [('file', 'contents.zip', fb.read(),)]
+        form_data = {'publisher': publisher, 'message': message}
+        resp = webapp.post(
+            '/api/publish-litezip',
+            form_data,
+            upload_files=file_data,
+            expect_errors=True,
+        )
+        assert resp.status_code == 400
+        expected_msgs = [
+            {
+                "id": 4,
+                "message": "no changes",
+                "error": "the uploaded litezip would result in no changes"
+                         " to the collection.xml after publication"
+            }
+        ]
+        assert resp.json['messages'] == expected_msgs
+
+
+
+def view_fn(request):
+    return {'greeting':'hello'}
+
+class TestPublishAuth(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def test_publishing_invalid_zip(self):
+        request = testing.DummyRequest()
+        request.context = testing.DummyResource()
+        self.config.testing_securitypolicy(userid='bryan', permissive=False)
+
+        from press.views.legacy_publishing import publish
+        from press.views.ping import authedping
+        res = authedping(request)
+        response = view_fn(request)
+        # import pdb; pdb.set_trace()
+        self.assertEqual(response, {'greeting':'hello'})
+
+
+
+
+
+        file = tmpdir.mkdir('test').join('foo.txt')
+        file.write('foo bar')
+
+
+        publisher = 'user1'
+        message = 'test http publish'
+        # Submit a publication
+        with file.open('rb') as fb:
+            file_data = [('file', 'contents.zip', fb.read(),)]
+        form_data = {'publisher': publisher, 'message': message}
+        resp = webapp.post(
+            '/api/publish-litezip',
+            form_data,
+            upload_files=file_data,
+            expect_errors=True,
+        )
+
+        expected_msgs = [
+            {"id": 5,
+            "message": "Unauthorized",
+            "error": "Nothing to see here."},
+        ]
+        assert resp.status_code == 401
+        assert resp.json['messages'] == expected_msgs
+
+
