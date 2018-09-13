@@ -24,13 +24,26 @@ class RootFactory(object):
 def check_credentials(username, password, request):
     """Returns a sequence of principal identifiers for the user.
     """
-    # FIXME: fetch (maintainer) credentials from legacy DB
-    _hash = b'{SSHA}Tf5uQqRItW5v4j0WDM5w3cgIwfKKATpX'
-    if check_password(_hash, password):
-        return [username]
+    t = request.db_tables
+
+    with request.get_db_engine('common').begin() as db_conn:
+        result = db_conn.execute(
+            t.persons.select()
+            .where(t.persons.c.personid == username))
+        try:
+            user = result.fetchone()
+            _hash = user.passwd
+            if check_password(_hash, password):
+                if user.groups is not None:
+                    return [username] + user.groups
+                else:
+                    return [username]
+        except AttributeError:
+            pass
 
 
 def check_password(pass_hash, password):
+    """Check password against SSHA hashed password."""
     challenge_bytes = decode(pass_hash[6:])
     digest = challenge_bytes[:20]
     salt = challenge_bytes[20:]
