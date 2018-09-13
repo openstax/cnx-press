@@ -12,6 +12,7 @@ class RootFactory(object):
     """
     __acl__ = (
         (Allow, Authenticated, 'view'),
+        (Allow, 'Maintainers', 'publish'),
     )
 
     def __init__(self, request):

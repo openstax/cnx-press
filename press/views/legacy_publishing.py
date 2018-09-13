@@ -20,7 +20,7 @@ from ..utils import (
 
 
 @view_config(route_name='api.v3.publications', request_method=['POST'],
-             renderer='json', http_cache=0)
+             renderer='json', http_cache=0, permission='publish')
 def publish(request):
     uploaded_file = request.swagger_data['file']
     # TODO Check if the 'publisher' is an authenticated user.

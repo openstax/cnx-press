@@ -11,5 +11,5 @@ def ping(request):
 
 @view_config(route_name='auth-ping', permission='view')
 def authedping(request):
-    """A ping and ack view for checking the service is up and running."""
+    """Authenticated ping for testing the auth mechanism."""
     return Response('pong')
