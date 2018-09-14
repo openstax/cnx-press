@@ -27,7 +27,6 @@ def check_credentials(username, password, request):
     """
     t = request.db_tables
 
-    import pdb; pdb.set_trace()
     with request.get_db_engine('common').begin() as db_conn:
         result = db_conn.execute(
             t.persons.select()
