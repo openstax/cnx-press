@@ -2,6 +2,11 @@
 Change Log
 ==========
 
+6.0.0
+-----
+
+- Added authentication for publishing
+
 5.0.1
 -----
 

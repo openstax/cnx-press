@@ -4,6 +4,7 @@ import warnings
 from pyramid.config import Configurator
 from pyramid.config.settings import asbool
 from sqlalchemy.exc import SAWarning
+from .auth import RootFactory
 
 
 def discover_set(settings, setting_name, env_var, default=None,
@@ -51,13 +52,13 @@ def configure(settings=None):
     settings['logging.level'] = settings['debug'] and 'DEBUG' or 'INFO'
 
     # Create the configuration object
-    config = Configurator(settings=settings)
+    config = Configurator(settings=settings, root_factory=RootFactory)
     config.include('.logging')
     config.include('.raven')
     config.include('.subscribers')
     config.include('.views')
     config.include('.tasks')
-
+    config.include('.auth')
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=SAWarning)
         config.include('cnxdb.contrib.pyramid')

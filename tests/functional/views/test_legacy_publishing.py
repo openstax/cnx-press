@@ -3,7 +3,13 @@ from lxml import etree
 from litezip.main import COLLECTION_NSMAP
 
 
+a_username = 'user1'
+a_passwd = 'foobar'
+
+
 def test_publishing_invalid_zip(tmpdir, webapp):
+    webapp.authorization = ('Basic', (a_username, a_passwd))
+
     file = tmpdir.mkdir('test').join('foo.txt')
     file.write('foo bar')
 
@@ -28,8 +34,37 @@ def test_publishing_invalid_zip(tmpdir, webapp):
     assert resp.json['messages'] == expected_msgs
 
 
-def test_publishing_invalid_revision_litezip(
-        content_util, persist_util, webapp, db_engines, db_tables):
+def test_publishing_noauth_zip(tmpdir, webapp):
+
+    file = tmpdir.mkdir('test').join('foo.txt')
+    file.write('foo bar')
+
+    publisher = 'user1'
+    message = 'test http publish'
+
+    # Submit a publication
+    with file.open('rb') as fb:
+        file_data = [('file', 'contents.zip', fb.read(),)]
+    form_data = {'publisher': publisher, 'message': message}
+    resp = webapp.post(
+        '/api/publish-litezip',
+        form_data,
+        upload_files=file_data,
+        expect_errors=True,
+    )
+    assert resp.status_code == 401
+    expected_msgs = [
+        {'id': 5,
+         'message': 'Unauthorized',
+         'error': 'Nothing to see here.'}
+    ]
+    assert resp.json['messages'] == expected_msgs
+
+
+def test_publishing_invalid_revision_litezip(content_util, persist_util,
+                                             webapp, db_engines, db_tables):
+    webapp.authorization = ('Basic', (a_username, a_passwd))
+
     # Insert initial collection and modules.
     collection, tree, modules = content_util.gen_collection()
     modules = list([persist_util.insert_module(m) for m in modules])
@@ -144,7 +179,10 @@ def test_publishing_invalid_revision_litezip(
 
 def test_publishing_revision_litezip(
         content_util, persist_util, webapp, db_engines, db_tables):
+    webapp.authorization = ('Basic', (a_username, a_passwd))
+
     # Insert initial collection and modules.
+
     collection, tree, modules = content_util.gen_collection()
     modules = list([persist_util.insert_module(m) for m in modules])
     collection, tree, modules = content_util.rebuild_collection(collection,
@@ -214,6 +252,8 @@ def test_publishing_revision_litezip(
 
 def test_publishing_overwrite_module_litezip(
         content_util, persist_util, webapp, db_engines, db_tables):
+    webapp.authorization = ('Basic', (a_username, a_passwd))
+
     # Insert initial collection and modules.
     collection, tree, modules = content_util.gen_collection()
     modules = list([persist_util.insert_module(m) for m in modules])
@@ -276,6 +316,8 @@ def test_publishing_overwrite_module_litezip(
 
 def test_publishing_overwrite_collection_litezip(
         content_util, persist_util, webapp, db_engines, db_tables):
+    webapp.authorization = ('Basic', (a_username, a_passwd))
+
     # Insert initial collection and modules.
     collection, tree, modules = content_util.gen_collection()
     modules = list([persist_util.insert_module(m) for m in modules])
@@ -330,6 +372,8 @@ def test_publishing_overwrite_collection_litezip(
 
 def test_publishing_no_changes(
         content_util, persist_util, webapp, db_engines, db_tables):
+    webapp.authorization = ('Basic', (a_username, a_passwd))
+
     # Insert initial collection and modules.
     collection, tree, modules = content_util.gen_collection()
     modules = list([persist_util.insert_module(m) for m in modules])
@@ -361,6 +405,48 @@ def test_publishing_no_changes(
             "message": "no changes",
             "error": "the uploaded litezip would result in no changes"
                      " to the collection.xml after publication"
+        }
+    ]
+    assert resp.json['messages'] == expected_msgs
+
+
+def test_publishing_unauthenticated(content_util, persist_util,
+                                    webapp, db_engines, db_tables):
+    # TODO: Test that publishing returns 401 for unathenticated requests
+    #       and a proper `messages` json response along with it.
+
+    # (Below this line is duplicate code from test_publishing_no_changes.)
+
+    # Insert initial collection and modules.
+    collection, tree, modules = content_util.gen_collection()
+    modules = list([persist_util.insert_module(m) for m in modules])
+    collection, tree, modules = content_util.rebuild_collection(collection,
+                                                                tree)
+    collection = persist_util.insert_collection(collection)
+
+    struct = tuple([collection, ])
+
+    file = content_util.mk_zipfile_from_litezip_struct(struct)
+
+    publisher = 'user1'
+    message = 'test http publish'
+
+    # Submit a publication
+    with file.open('rb') as fb:
+        file_data = [('file', 'contents.zip', fb.read(),)]
+    form_data = {'publisher': publisher, 'message': message}
+    resp = webapp.post(
+        '/api/publish-litezip',
+        form_data,
+        upload_files=file_data,
+        expect_errors=True,
+    )
+    assert resp.status_code == 401
+    expected_msgs = [
+        {
+            "id": 5,
+            "message": "Unauthorized",
+            "error": "Nothing to see here."
         }
     ]
     assert resp.json['messages'] == expected_msgs
