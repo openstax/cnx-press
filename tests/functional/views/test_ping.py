@@ -10,9 +10,15 @@ def test_authenticated_ping_no_auth_denied(webapp):
     assert resp.status_code == 401
 
 
-def test_authenticated_ping_bad_auth_denied(webapp):
+def test_authenticated_ping_bad_pass_auth_denied(webapp):
     resp = webapp.get('/auth-ping', expect_errors=True)
     webapp.authorization = ('Basic', ('user1', 'notapassword'))
+    assert resp.status_code == 401
+
+
+def test_authenticated_ping_bad_user_auth_denied(webapp):
+    resp = webapp.get('/auth-ping', expect_errors=True)
+    webapp.authorization = ('Basic', ('notauser', 'foobar'))
     assert resp.status_code == 401
 
 
