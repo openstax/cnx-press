@@ -34,6 +34,33 @@ def test_publishing_invalid_zip(tmpdir, webapp):
     assert resp.json['messages'] == expected_msgs
 
 
+def test_publishing_noauth_zip(tmpdir, webapp):
+
+    file = tmpdir.mkdir('test').join('foo.txt')
+    file.write('foo bar')
+
+    publisher = 'user1'
+    message = 'test http publish'
+
+    # Submit a publication
+    with file.open('rb') as fb:
+        file_data = [('file', 'contents.zip', fb.read(),)]
+    form_data = {'publisher': publisher, 'message': message}
+    resp = webapp.post(
+        '/api/publish-litezip',
+        form_data,
+        upload_files=file_data,
+        expect_errors=True,
+    )
+    assert resp.status_code == 401
+    expected_msgs = [
+        {'id': 5,
+         'message': 'Unauthorized',
+         'error': 'Nothing to see here.'}
+    ]
+    assert resp.json['messages'] == expected_msgs
+
+
 def test_publishing_invalid_revision_litezip(content_util, persist_util, webapp, db_engines, db_tables):
     webapp.authorization = ('Basic', (a_username, a_passwd))
 
