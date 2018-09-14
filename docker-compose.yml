@@ -22,9 +22,9 @@ services:
     build:
       context: https://github.com/Connexions/cnx-db.git
       args:
-        gitcommithash: 8cafdfa
+        gitcommithash: 731299d
     ports:
-      - "5432:5432"
+      - "15432:5432"
     environment:
       - DB_URL=postgresql://rhaptos@/repository
       - DB_SUPER_URL=postgresql://rhaptos_admin@/repository
@@ -34,7 +34,7 @@ services:
       service: app
     command: gunicorn -b 0.0.0.0:6543 --access-logfile - --error-logfile - -n press --reload wsgi:app --timeout=180
     ports:
-      - "80:6543"
+      - "88:6543"
     links:
       - db
       - rabbitmq

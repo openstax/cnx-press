@@ -101,11 +101,15 @@ def app(env_vars):
 
 
 PERSONS = (
-    # personid, firstname, surname, fullname, email
-    ['user1', 'User', 'One', 'User One', 'user1@example.com'],
-    ['user2', 'User', 'Two', 'User Duo', 'user2@example.com'],
-    ['user3', 'User', 'Three', 'Usuario Tres', 'user3@example.com'],
-    ['user4', 'User', 'Four', 'User IIII', 'user4@example.com'],
+    # personid, firstname, surname, fullname, email, passwd, groups
+    ['user1', 'User', 'One', 'User One', 'user1@example.com',
+        b'{SSHA}Tf5uQqRItW5v4j0WDM5w3cgIwfKKATpX', ['Maintainers']],
+    ['user2', 'User', 'Two', 'User Duo', 'user2@example.com',
+        b'{SSHA}Tf5uQqRItW5v4j0WDM5w3cgIwfKKATpX', ['Maintainers']],
+    ['user3', 'User', 'Three', 'Usuario Tres', 'user3@example.com',
+        b'{SSHA}Tf5uQqRItW5v4j0WDM5w3cgIwfKKATpX', ['Maintainers']],
+    ['user4', 'User', 'Four', 'User IIII', 'user4@example.com',
+        b'{SSHA}Tf5uQqRItW5v4j0WDM5w3cgIwfKKATpX', ['Maintainers']],
 )
 
 
@@ -233,7 +237,8 @@ def testing(_init_database, db_engines, db_tables_session_scope):
     # Insert 'persons', because this application doesn't do people.
     # You either have a user before publishing or some other means of
     # creating a user exists.
-    column_names = ['personid', 'firstname', 'surname', 'fullname', 'email']
+    column_names = ['personid', 'firstname', 'surname', 'fullname', 'email',
+                    'passwd', 'groups']
     db_engines['common'].execute(
         t.persons.insert(),
         [dict(zip(column_names, x)) for x in PERSONS])

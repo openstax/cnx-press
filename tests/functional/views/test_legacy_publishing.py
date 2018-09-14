@@ -1,12 +1,10 @@
-import unittest
-from pyramid import testing
 from lxml import etree
 
 from litezip.main import COLLECTION_NSMAP
 
 
-a_username = 'bryan'
-a_passwd = '{SSHA}Tf5uQqRItW5v4j0WDM5w3cgIwfKKATpX'
+a_username = 'user1'
+a_passwd = 'foobar'
 
 
 def test_publishing_invalid_zip(tmpdir, webapp):
@@ -36,8 +34,7 @@ def test_publishing_invalid_zip(tmpdir, webapp):
     assert resp.json['messages'] == expected_msgs
 
 
-def test_publishing_invalid_revision_litezip(
-        persist_util, webapp, db_engines, db_tables):
+def test_publishing_invalid_revision_litezip(content_util, persist_util, webapp, db_engines, db_tables):
     webapp.authorization = ('Basic', (a_username, a_passwd))
 
     # Insert initial collection and modules.
@@ -385,8 +382,7 @@ def test_publishing_no_changes(
     assert resp.json['messages'] == expected_msgs
 
 
-def test_publishing_unauthenticated(content_util,
-    persist_util, webapp, db_engines, db_tables):
+def test_publishing_unauthenticated(content_util, persist_util, webapp, db_engines, db_tables):
     # TODO: Test that publishing returns 401 for unathenticated requests
     #       and a proper `messages` json response along with it.
 
