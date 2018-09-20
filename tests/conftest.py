@@ -103,13 +103,13 @@ def app(env_vars):
 PERSONS = (
     # personid, firstname, surname, fullname, email, passwd, groups
     ['user1', 'User', 'One', 'User One', 'user1@example.com',
-        b'{SSHA}Tf5uQqRItW5v4j0WDM5w3cgIwfKKATpX', ['Maintainers']],
+        b'{SSHA}Tf5uQqRItW5v4j0WDM5w3cgIwfKKATpX', ['Maintainer']],
     ['user2', 'User', 'Two', 'User Duo', 'user2@example.com',
-        b'{SSHA}Tf5uQqRItW5v4j0WDM5w3cgIwfKKATpX', ['Maintainers']],
+        b'{SSHA}Tf5uQqRItW5v4j0WDM5w3cgIwfKKATpX', ['Maintainer']],
     ['user3', 'User', 'Three', 'Usuario Tres', 'user3@example.com',
-        b'{SSHA}Tf5uQqRItW5v4j0WDM5w3cgIwfKKATpX', ['Maintainers']],
+        b'{SSHA}Tf5uQqRItW5v4j0WDM5w3cgIwfKKATpX', ['Maintainer']],
     ['user4', 'User', 'Four', 'User IIII', 'user4@example.com',
-        b'{SSHA}Tf5uQqRItW5v4j0WDM5w3cgIwfKKATpX', ['Maintainers']],
+        b'{SSHA}Tf5uQqRItW5v4j0WDM5w3cgIwfKKATpX', ['Maintainer']],
 )
 
 

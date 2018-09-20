@@ -2,6 +2,11 @@
 Change Log
 ==========
 
+6.0.1
+-----
+
+- Correct name of Maintainer role to match legacy
+
 6.0.0
 -----
 
