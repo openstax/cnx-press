@@ -57,7 +57,7 @@ def publish_litezip(struct, submission, db_conn):
 
     # Rebuild the Collection tree from the newly published Modules.
     with collection.file.open('wb') as fb:
-        fb.write(etree.tostring(xml))
+        fb.write(etree.tounicode(xml).encode('utf8'))
 
     # Publish the Collection.
     metadata = parse_collection_metadata(collection)
