@@ -1,5 +1,8 @@
 import hashlib
+import os
+
 from base64 import decodestring as decode
+from base64 import encodestring as encode
 from pyramid.authentication import BasicAuthAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
 from pyramid.security import Allow, Authenticated
@@ -51,6 +54,13 @@ def check_password(pass_hash, password):
     hr = hashlib.sha1(password.encode('utf8'))
     hr.update(salt)
     return digest == hr.digest()
+
+
+def make_secret(password):
+    salt = os.urandom(4)
+    h = hashlib.sha1(password.encode('utf8'))
+    h.update(salt)
+    return b"{SSHA}" + encode(h.digest() + salt)[:-1]
 
 
 def includeme(config):
