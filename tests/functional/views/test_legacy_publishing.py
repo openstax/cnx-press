@@ -95,7 +95,7 @@ def test_publishing_invalid_revision_litezip(content_util, persist_util,
                 nsmap=COLLECTION_NSMAP))
     with collection.file.open('wb') as fb:
         # Write the modified xml back to file.
-        fb.write(etree.tostring(xml))
+        fb.write(etree.tounicode(xml).encode('utf8'))
     # Modify the module content to make it invalid.
     with new_module.file.open('rb') as fb:
         xml = etree.parse(fb)
@@ -118,7 +118,7 @@ def test_publishing_invalid_revision_litezip(content_util, persist_util,
                 nsmap=COLLECTION_NSMAP))
     with new_module.file.open('wb') as fb:
         # Write the modified xml back to file.
-        fb.write(etree.tostring(xml))
+        fb.write(etree.tounicode(xml).encode('utf8'))
 
     # Compress to zip file as payload
     file = content_util.mk_zipfile_from_litezip_struct(struct)
