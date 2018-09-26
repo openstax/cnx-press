@@ -1,3 +1,4 @@
+from hashlib import sha1
 from pyramid.threadlocal import get_current_request
 from sqlalchemy.sql import text
 
@@ -126,8 +127,9 @@ def publish_legacy_book(model, metadata, submission, db_conn):
         try:
             # Try finding an existing file first
             fileid = db_conn.execute(
-                t.files.select()
-                .where(t.files.c.sha1 == resource.sha1)
+                text('SELECT fileid FROM '
+                     'files WHERE sha1 = :sha1')
+                .bindparams(sha1=resource.sha1)
             ).fetchone().fileid
         except AttributeError:
             # Insert it when it doesn't exist
@@ -170,11 +172,22 @@ def publish_legacy_book(model, metadata, submission, db_conn):
 
     # Insert module files (content and resources)
     with model.file.open('rb') as fb:
-        result = db_conn.execute(t.files.insert().values(
-            file=fb.read(),
-            media_type='text/xml',
-        ))
-    fileid = result.inserted_primary_key[0]
+        try:
+            # Try finding an existing file first
+            fileid = db_conn.execute(
+                text('SELECT fileid FROM '
+                     'files WHERE sha1 = :sha1')
+                .bindparams(sha1=sha1(fb.read()).hexdigest())
+            ).fetchone().fileid
+        except AttributeError:
+            # Insert it when it doesn't exist
+            fb.seek(0)
+            result = db_conn.execute(t.files.insert().values(
+                file=fb.read(),
+                media_type='text/xml',
+            ))
+            fileid = result.inserted_primary_key[0]
+
     result = db_conn.execute(t.module_files.insert().values(
         module_ident=ident,
         fileid=fileid,

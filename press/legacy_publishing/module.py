@@ -116,8 +116,9 @@ def publish_legacy_page(model, metadata, submission, db_conn):
         try:
             # Try finding an existing file first
             fileid = db_conn.execute(
-                t.files.select()
-                .where(t.files.c.sha1 == resource.sha1)
+                text('SELECT fileid FROM '
+                     'files WHERE sha1 = :sha1')
+                .bindparams(sha1=resource.sha1)
             ).fetchone().fileid
         except AttributeError:
             # Insert it when it doesn't exist

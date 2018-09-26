@@ -97,7 +97,7 @@ help-test :
 	@echo "    (see also setup.cfg's pytest configuration)"
 
 test :
-	docker-compose -f docker-compose.yml -f docker-compose.test.yml run --rm web bin/test $(TEST_EXTRA_ARGS) $(TEST)
+	docker-compose -f docker-compose.yml -f docker-compose.test.yml run --rm web bin/test $(filter-out $@, $(MAKECMDGOALS)) $(TEST_EXTRA_ARGS) $(TEST)
 
 # /Test
 
@@ -192,3 +192,11 @@ stop:
 	docker-compose stop
 
 # /Serve
+
+# ###
+#  Catch-all to avoid errors when passing args to make test
+# ###
+
+%:
+	@:
+# /Catch-all
