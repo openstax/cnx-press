@@ -1,5 +1,5 @@
 import hashlib
-from base64 import decodestring as decode
+from base64 import decodebytes as decode
 from pyramid.authentication import BasicAuthAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
 from pyramid.security import Allow, Authenticated
