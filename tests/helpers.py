@@ -36,7 +36,7 @@ def element_tree_from_model(model):
     yield xml
 
     with model.file.open('wb') as fb:
-        fb.write(etree.tostring(xml))
+        fb.write(etree.tounicode(xml).encode('utf8'))
 
 
 def compare_legacy_tree_similarity(db_tree, test_tree):

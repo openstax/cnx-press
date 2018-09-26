@@ -870,7 +870,7 @@ class _PersistUtil:
             elm = xml.xpath('//md:content-id', namespaces=COLLECTION_NSMAP)[0]
             elm.text = id
             with model.file.open('wb') as fb:
-                fb.write(etree.tostring(xml))
+                fb.write(etree.tounicode(xml).encode('utf8'))
 
             # Insert content files
             with model.file.open('rb') as fb:
@@ -921,7 +921,7 @@ class _PersistUtil:
             elm = xml.xpath('//md:content-id', namespaces=COLLECTION_NSMAP)[0]
             elm.text = id
             with model.file.open('wb') as fb:
-                fb.write(etree.tostring(xml))
+                fb.write(etree.tounicode(xml).encode('utf8'))
 
             # Insert content files
             with model.file.open('rb') as fb:

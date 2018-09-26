@@ -60,7 +60,7 @@ def replace_derived_from(model, derived_from_url):
         metadata_elm.append(derived_from_elm)
 
     with model.file.open('wb') as fb:
-        fb.write(etree.tostring(xml))
+        fb.write(etree.tounicode(xml).encode('utf8'))
 
 
 def replace_id_and_version(model, id, version):
@@ -82,4 +82,4 @@ def replace_id_and_version(model, id, version):
     elm = xml.xpath('//md:version', namespaces=COLLECTION_NSMAP)[0]
     elm.text = convert_version_to_legacy_version(version)
     with model.file.open('wb') as fb:
-        fb.write(etree.tostring(xml))
+        fb.write(etree.tounicode(xml).encode('utf8'))
