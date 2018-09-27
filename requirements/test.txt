@@ -1,8 +1,6 @@
 # The project's testing dependencies...
 -r ./main.txt
 
-atomicwrites==1.1.5
-
 beautifulsoup4==4.6.3
 
 certifi==2018.8.13
