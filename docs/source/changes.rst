@@ -2,6 +2,11 @@
 Change Log
 ==========
 
+7.0.0
+-----
+
+- Allow publishing of images and other resources
+
 6.0.1
 -----
 
