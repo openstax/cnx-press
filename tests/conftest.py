@@ -410,19 +410,23 @@ class _ContentUtil:
         template = jinja2.Template(COLLECTION_DOC)
         return template.render(metadata=metadata, tree=tree)
 
-    def gen_resource(self):
-        content = io.StringIO(' '.join([self.randtitle(), self.randtitle()]))
-        filename = '_'.join([self.randword(), self.randword()]) + '.txt'
+    def gen_resource(self, data=None, filename=None, media_type='text/plain'):
+        if data is None:
+            data = io.BytesIO(
+                ' '.join([self.randtitle(), self.randtitle()]).encode()
+            )
+        if filename is None:
+            filename = '_'.join([self.randword(), self.randword()]) + '.txt'
 
         hasher = hashlib.sha1()
-        hasher.update(content.read().encode('utf-8'))
+        hasher.update(data.read())
         sha1 = hasher.hexdigest()
-        content.seek(0)
+        data.seek(0)
 
         return self.Resource(
-            content,
+            data,
             filename,
-            'text/plain',
+            media_type,
             sha1,
         )
 
@@ -761,11 +765,12 @@ class _PersistUtil:
         if not exists:
             engine.execute(
                 t.files.insert().values(
-                    file=resource.data.read().encode('utf-8'),
+                    file=resource.data.read(),
                     sha1=resource.sha1,
                     media_type=resource.media_type,
                 )
             )
+        resource.data.seek(0)
 
         return resource
 

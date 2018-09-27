@@ -398,16 +398,7 @@ def test_publishing_no_changes(
         upload_files=file_data,
         expect_errors=True,
     )
-    assert resp.status_code == 400
-    expected_msgs = [
-        {
-            "id": 4,
-            "message": "no changes",
-            "error": "the uploaded litezip would result in no changes"
-                     " to the collection.xml after publication"
-        }
-    ]
-    assert resp.json['messages'] == expected_msgs
+    assert resp.status_code == 200
 
 
 def test_publishing_unauthenticated(content_util, persist_util,

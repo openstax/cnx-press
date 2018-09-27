@@ -48,6 +48,8 @@ pyramid-swagger==2.6.2
 
 python-dateutil==2.7.3
 
+python-magic==0.4.15
+
 pytz==2018.5
 
 PyYAML==3.13
