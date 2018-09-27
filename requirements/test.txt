@@ -1,8 +1,6 @@
 # The project's testing dependencies...
 -r ./main.txt
 
-attrs==18.1.0
-
 beautifulsoup4==4.6.3
 
 certifi==2018.8.13
@@ -19,6 +17,8 @@ MarkupSafe==1.0
 
 more-itertools==4.3.0
 
+pillow==5.2.0
+
 pluggy==0.7.1
 
 pretend==1.0.9
@@ -27,7 +27,7 @@ py==1.5.4
 
 pytest==3.8.1
 
-pytest-cov==2.5.1
+pytest-cov==2.6.0
 
 python-dateutil==2.7.3
 

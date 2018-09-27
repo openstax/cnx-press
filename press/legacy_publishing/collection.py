@@ -1,3 +1,4 @@
+from hashlib import sha1
 from pyramid.threadlocal import get_current_request
 from sqlalchemy.sql import text
 
@@ -121,7 +122,32 @@ def publish_legacy_book(model, metadata, submission, db_conn):
                         keywords=list(metadata.keywords)))
     db_conn.execute(stmt)
 
-    # TODO Insert resource files (cover image, recipe, etc.)
+    # Insert resource files (images, pdfs, etc.)
+    for resource in model.resources:
+        try:
+            # Try finding an existing file first
+            fileid = db_conn.execute(
+                text('SELECT fileid FROM '
+                     'files WHERE sha1 = :sha1')
+                .bindparams(sha1=resource.sha1)
+            ).fetchone().fileid
+        except AttributeError:
+            # Insert it when it doesn't exist
+            result = db_conn.execute(
+                t.files.insert().values(
+                    file=resource.data.read(),
+                    media_type=resource.media_type,
+                )
+            )
+            resource.data.seek(0)
+            fileid = result.inserted_primary_key[0]
+        result = db_conn.execute(
+            t.module_files.insert().values(
+                module_ident=ident,
+                fileid=fileid,
+                filename=resource.filename,
+            )
+        )
 
     # Copy over existing module_files entries
     stmt = text(
@@ -146,11 +172,22 @@ def publish_legacy_book(model, metadata, submission, db_conn):
 
     # Insert module files (content and resources)
     with model.file.open('rb') as fb:
-        result = db_conn.execute(t.files.insert().values(
-            file=fb.read(),
-            media_type='text/xml',
-        ))
-    fileid = result.inserted_primary_key[0]
+        try:
+            # Try finding an existing file first
+            fileid = db_conn.execute(
+                text('SELECT fileid FROM '
+                     'files WHERE sha1 = :sha1')
+                .bindparams(sha1=sha1(fb.read()).hexdigest())
+            ).fetchone().fileid
+        except AttributeError:
+            # Insert it when it doesn't exist
+            fb.seek(0)
+            result = db_conn.execute(t.files.insert().values(
+                file=fb.read(),
+                media_type='text/xml',
+            ))
+            fileid = result.inserted_primary_key[0]
+
     result = db_conn.execute(t.module_files.insert().values(
         module_ident=ident,
         fileid=fileid,
