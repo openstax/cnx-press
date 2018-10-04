@@ -1,6 +1,8 @@
 import io
 from collections import namedtuple
 
+from litezip import Collection, Module
+
 import magic
 
 from press.utils import produce_hashes_from_filepath
@@ -42,19 +44,36 @@ def convert_litezip_resources(litezip_struct):
     instances.
 
     """
+    new_litezip = []
     for model in litezip_struct:
-        for i, res_filepath in enumerate(model.resources):
-            if isinstance(res_filepath, Resource):
-                # It's actually already a Resource, so leave it as is.
-                continue
-            media_type = magic.from_file(str(res_filepath), mime=True)
-            sha1 = produce_hashes_from_filepath(res_filepath)['sha1']
-            with res_filepath.open('rb') as fb:
-                model.resources[i] = Resource(
-                    io.BytesIO(fb.read()),
-                    res_filepath.name,
-                    media_type,
-                    sha1,
-                )
-    # This function side-effect oriented, but still returns the given object
-    return litezip_struct
+        if model.resources:
+            new_resources = []
+            for res_filepath in model.resources:
+                if isinstance(res_filepath, Resource):
+                    # It's actually already a Resource, so leave it as is.
+                    new_resources.append(res_filepath)
+                    continue
+                media_type = magic.from_file(str(res_filepath), mime=True)
+                sha1 = produce_hashes_from_filepath(res_filepath)['sha1']
+                with res_filepath.open('rb') as fb:
+                    new_resources.append(Resource(
+                        io.BytesIO(fb.read()),
+                        res_filepath.name,
+                        media_type,
+                        sha1,
+                    ))
+            if isinstance(model, Collection):
+                new_litezip.append(Collection(
+                    model.id,
+                    model.file,
+                    tuple(new_resources)
+                ))
+            else:  # Module
+                new_litezip.append(Module(
+                    model.id,
+                    model.file,
+                    tuple(new_resources)
+                ))
+        else:
+            new_litezip.append(model)
+    return tuple(new_litezip)
