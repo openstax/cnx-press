@@ -13,7 +13,7 @@ import jinja2
 import pretend
 import pytest
 from cnxdb.init import init_db
-from litezip import Collection, Module
+from litezip import Collection, Module, Resource
 from litezip.main import COLLECTION_NSMAP
 from lxml import etree
 from pyramid import testing as pyramid_testing
@@ -286,7 +286,6 @@ class _ContentUtil:
         self.word_catalog = word_catalog
         self._created_dirs = []
         # Import during singleton creation
-        from press.models import Resource
         self.Resource = Resource
 
     def _clean_up(self):
