@@ -2,6 +2,11 @@
 Change Log
 ==========
 
+7.0.1
+-----
+
+- Move resource definitions into cnx-litezip
+
 7.0.0
 -----
 
