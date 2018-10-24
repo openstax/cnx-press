@@ -6,6 +6,7 @@ Change Log
 -----
 
 - Move resource definitions into cnx-litezip
+- correct content gen in tests
 
 7.0.0
 -----
