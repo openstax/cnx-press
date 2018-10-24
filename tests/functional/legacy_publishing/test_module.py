@@ -309,7 +309,7 @@ def test_publish_revision_with_new_resources(
     files = {x.filename: x for x in result}
     assert new_resource.filename in files
     assert files[new_resource.filename].sha1 == new_resource.sha1
-    assert files[new_resource.filename].file == new_resource.data.read()
+    assert files[new_resource.filename].file == new_resource.data.read_bytes()
 
 
 def test_publish_revision_that_overwrites_existing_resources(
@@ -342,8 +342,7 @@ def test_publish_revision_that_overwrites_existing_resources(
     control_files = {x.filename: x for x in control_data}
     replaced_file_record = control_files[replaced_resource.filename]
     assert replaced_file_record.sha1 == replaced_resource.sha1
-    assert replaced_file_record.file == replaced_resource.data.read()
-    new_resource.data.seek(0)
+    assert replaced_file_record.file == replaced_resource.data.read_bytes()
 
     # TARGET
     with db_engines['common'].begin() as conn:
@@ -363,4 +362,4 @@ def test_publish_revision_that_overwrites_existing_resources(
     files = {x.filename: x for x in result}
     assert new_resource.filename in files
     assert files[new_resource.filename].sha1 == new_resource.sha1
-    assert files[new_resource.filename].file == new_resource.data.read()
+    assert files[new_resource.filename].file == new_resource.data.read_bytes()
