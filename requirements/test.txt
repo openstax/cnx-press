@@ -23,7 +23,7 @@ pluggy==0.7.1
 
 pretend==1.0.9
 
-py==1.6.0
+py==1.7.0
 
 pytest==3.8.1
 
