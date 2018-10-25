@@ -4,7 +4,7 @@ amqp==2.3.2
 
 billiard==3.5.0.4
 
-bravado-core==5.0.6
+bravado-core==5.0.7
 
 celery==4.2.1
 
