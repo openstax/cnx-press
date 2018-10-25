@@ -1,5 +1,4 @@
 import hashlib
-import io
 import os
 import pathlib
 import random
@@ -277,7 +276,7 @@ class _ContentUtil:
 
     Module = Module
     Collection = Collection
-    Resource = None
+    Resource = Resource
 
     def __init__(self):
         with open(self._word_catalog_filepath, 'r') as fb:
@@ -409,21 +408,29 @@ class _ContentUtil:
         template = jinja2.Template(COLLECTION_DOC)
         return template.render(metadata=metadata, tree=tree)
 
-    def gen_resource(self, data=None, filename=None, media_type='text/plain'):
-        if data is None:
-            data = io.BytesIO(
-                ' '.join([self.randtitle(), self.randtitle()]).encode()
-            )
+    def gen_resource(self, data=None, filename=None,
+                     media_type='text/plain', relative_to=None):
         if filename is None:
             filename = '_'.join([self.randword(), self.randword()]) + '.txt'
 
-        hasher = hashlib.sha1()
-        hasher.update(data.read())
-        sha1 = hasher.hexdigest()
-        data.seek(0)
+        resource_dir = self._gen_dir(relative_to=relative_to)
+        resource_filepath = resource_dir / filename
+
+        if data is not None:
+            try:
+                data.save(resource_filepath)
+                data = resource_filepath.read_bytes()
+            except AttributeError:  # Assume it's bytes
+                resource_filepath.write_bytes(data)
+        else:
+            data = ' '.join([self.randtitle(),
+                             self.randtitle()]).encode('utf-8')
+            resource_filepath.write_bytes(data)
+
+        sha1 = hashlib.sha1(data).hexdigest()
 
         return self.Resource(
-            data,
+            resource_filepath,
             filename,
             media_type,
             sha1,
@@ -762,14 +769,14 @@ class _PersistUtil:
         ).fetchone()
 
         if not exists:
-            engine.execute(
-                t.files.insert().values(
-                    file=resource.data.read(),
-                    sha1=resource.sha1,
-                    media_type=resource.media_type,
+            with resource.data.open('rb') as fp:
+                engine.execute(
+                    t.files.insert().values(
+                        file=fp.read(),
+                        sha1=resource.sha1,
+                        media_type=resource.media_type,
+                    )
                 )
-            )
-        resource.data.seek(0)
 
         return resource
 

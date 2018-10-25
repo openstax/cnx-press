@@ -1,5 +1,3 @@
-import io
-
 from datetime import timedelta
 from dateutil.parser import parse as parse_date
 from litezip.main import COLLECTION_NSMAP
@@ -353,11 +351,8 @@ def test_publish_revision_with_new_resources(
 
     filename = 'book-cover.png'
     book_cover_img = generate_random_image_by_size(10)
-    book_cover_data = io.BytesIO()
-    book_cover_img.save(book_cover_data, 'PNG')
-    book_cover_data.seek(0)
     book_cover = content_util.gen_resource(
-        data=book_cover_data,
+        data=book_cover_img,
         filename=filename,
         media_type='image/png',
     )
@@ -395,7 +390,7 @@ def test_publish_revision_with_new_resources(
     files = {x.filename: x for x in result}
     assert book_cover.filename in files
     assert files[book_cover.filename].sha1 == book_cover.sha1
-    assert files[book_cover.filename].file == book_cover.data.read()
+    assert files[book_cover.filename].file == book_cover.data.read_bytes()
 
 
 def test_publish_revision_that_overwrites_existing_resources(
@@ -407,11 +402,8 @@ def test_publish_revision_that_overwrites_existing_resources(
     book_cover_filename = 'book-cover.png'
     book_cover_media_type = 'image/png'
     book_cover_img = generate_random_image_by_size(10)
-    book_cover_data = io.BytesIO()
-    book_cover_img.save(book_cover_data, 'PNG')
-    book_cover_data.seek(0)
     book_cover = content_util.gen_resource(
-        data=book_cover_data,
+        data=book_cover_img,
         filename=book_cover_filename,
         media_type=book_cover_media_type,
     )
@@ -428,11 +420,8 @@ def test_publish_revision_that_overwrites_existing_resources(
 
     # Overide the existing book-cover resource
     new_book_cover_img = generate_random_image_by_size(10)
-    new_book_cover_data = io.BytesIO()
-    new_book_cover_img.save(new_book_cover_data, 'PNG')
-    new_book_cover_data.seek(0)
     new_book_cover = content_util.gen_resource(
-        data=new_book_cover_data,
+        data=new_book_cover_img,
         filename=book_cover_filename,
         media_type=book_cover_media_type,
     )
@@ -454,8 +443,7 @@ def test_publish_revision_that_overwrites_existing_resources(
     control_files = {x.filename: x for x in control_data}
     replaced_file_record = control_files[book_cover_filename]
     assert replaced_file_record.sha1 == book_cover.sha1
-    assert replaced_file_record.file == book_cover.data.read()
-    book_cover.data.seek(0)
+    assert replaced_file_record.file == book_cover.data.read_bytes()
 
     # TARGET
     with db_engines['common'].begin() as conn:
@@ -475,4 +463,5 @@ def test_publish_revision_that_overwrites_existing_resources(
     files = {x.filename: x for x in result}
     assert new_book_cover.filename in files
     assert files[new_book_cover.filename].sha1 == new_book_cover.sha1
-    assert files[new_book_cover.filename].file == new_book_cover.data.read()
+    assert files[new_book_cover.filename].file == \
+        new_book_cover.data.read_bytes()

@@ -133,13 +133,13 @@ def publish_legacy_book(model, metadata, submission, db_conn):
             ).fetchone().fileid
         except AttributeError:
             # Insert it when it doesn't exist
-            result = db_conn.execute(
-                t.files.insert().values(
-                    file=resource.data.read(),
-                    media_type=resource.media_type,
+            with resource.data.open('rb') as fp:
+                result = db_conn.execute(
+                    t.files.insert().values(
+                        file=fp.read(),
+                        media_type=resource.media_type,
+                    )
                 )
-            )
-            resource.data.seek(0)
             fileid = result.inserted_primary_key[0]
         result = db_conn.execute(
             t.module_files.insert().values(
