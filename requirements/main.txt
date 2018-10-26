@@ -14,7 +14,7 @@ chardet==3.0.4
 
 # If this pinning changes, remember to also change the pinning of the
 # cnx-db docker container image.
-cnx-db==2.4.0
+cnx-db==2.6.0
 
 cnx-litezip==1.5.0
 
