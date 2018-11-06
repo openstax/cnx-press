@@ -13,3 +13,9 @@ def ping(request):
 def authedping(request):
     """Authenticated ping for testing the auth mechanism."""
     return Response('pong')
+
+
+@view_config(route_name='publish-ping', permission='publish')
+def publish_ping(request):
+    """Authenticated ping for testing the publish endpoint"""
+    return Response('pong')

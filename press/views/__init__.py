@@ -9,6 +9,7 @@ def includeme(config):
     add_route = config.add_route
     add_route('ping', '/ping')
     add_route('auth-ping', '/auth-ping')
+    add_route('publish-ping', '/publish-ping')
 
     add_route('api.v1.versioned_content', '/content/{id}/{ver}')
 
@@ -22,6 +23,7 @@ def includeme(config):
         '^/api-docs/?',
         '^/ping/?',
         '^/auth-ping/?',
+        '^/publish-ping/?',
     ]
     s['pyramid_swagger.schema_file'] = 'swagger.yaml'
     s['pyramid_swagger.schema_directory'] = str(here / 'api-docs')
