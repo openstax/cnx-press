@@ -2,6 +2,11 @@
 Change Log
 ==========
 
+7.1.0
+-----
+
+- Preemptively check credentials when publishing
+
 7.0.1
 -----
 
