@@ -1,11 +1,16 @@
 ==========
 Change Log
 ==========
+7.1.1
+-----
+
+- Dry out ping API and add swagger docs
+
 
 7.1.0
 -----
 
-- Preemptively check credentials when publishing
+- Preemptively check credentials when publishing via extending ping API
 
 7.0.1
 -----
