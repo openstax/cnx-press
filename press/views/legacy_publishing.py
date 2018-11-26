@@ -5,7 +5,7 @@ from litezip import parse_litezip, validate_litezip
 from pyramid.view import view_config
 
 from .. import events
-from ..errors import StaleVersion
+from ..errors import StaleVersion, Unchanged
 from ..legacy_publishing import publish_litezip
 from ..publishing import (
     discover_content_dir,
@@ -82,6 +82,16 @@ def publish(request):
                       ' but currently published'
                       ' is {cv}'.format(co=err.checked_out_version,
                                         cv=err.current_version),
+             }
+        ]}
+    except Unchanged:
+        request.response.status = 204  # maybe?  # TODO: change neb as well.
+        return {'messages': [  # nothing to publish
+            {'id': 4,
+             'message': 'nothing to publish',
+             'item': 'TODO',  # TODO: FIX ME
+             'error': 'None of the models changed, '
+                      'there is nothing to publish.'
              }
         ]}
 
