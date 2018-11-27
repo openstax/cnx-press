@@ -219,35 +219,32 @@ def test_publishing_revision_litezip(
     # Check resulting data. (id mapping and urls)
     t = db_tables
     id_mapping = {x['source_id']: x for x in resp.json}
-    for model in struct:
-        assert model.id in id_mapping
-        publication_record = id_mapping[model.id]
-        assert publication_record['id'] == model.id
-        if model.id.startswith('col'):
-            version = '1.1'
-        else:
-            version = '1.2'
-        assert publication_record['legacy_version'] == version
-        url = publication_record['url']
-        # FIXME We should visit this URL rather than check it's parts.
-        assert '/content/{}/{}'.format(model.id, version) in url
 
-        # FIXME This functional test should not be directly communicating
-        #       with the database. Instead it should be using other http
-        #       routes to verify the contents.
-        # Check the content is actually in the database
-        #   and that the correct publisher and message was attributed.
-        # Checking for content details is out-of-scope for this test.
-        stmt = (
-            t.modules.select()
-            .where(t.modules.c.moduleid == model.id)
-            .order_by(t.modules.c.major_version.desc(),
-                      t.modules.c.minor_version.desc())
-            .limit(1))
-        result = db_engines['common'].execute(stmt).fetchone()
-        assert result.version == version
-        assert result.submitter == publisher
-        assert result.submitlog == message
+    assert collection.id in id_mapping
+    publication_record = id_mapping[collection.id]
+    assert publication_record['id'] == collection.id
+    version = '1.1'
+    assert publication_record['legacy_version'] == version
+    url = publication_record['url']
+    # FIXME: We should visit this URL instead of checking its parts.
+    assert '/content/{}/{}'.format(collection.id, version) in url
+
+    # FIXME: This functional test should not be directly communicating
+    #        with the database. Instead, it should be using other http
+    #        routes to verify the contents.
+    # Check the content is actually in the database
+    #   and that the correct publisher and message was attributed.
+    # Checking for content details is out-of-scope for this test.
+    stmt = (
+        t.modules.select()
+        .where(t.modules.c.moduleid == collection.id)
+        .order_by(t.modules.c.major_version.desc(),
+                  t.modules.c.minor_version.desc())
+        .limit(1))
+    result = db_engines['common'].execute(stmt).fetchone()
+    assert result.version == version
+    assert result.submitter == publisher
+    assert result.submitlog == message
 
 
 def test_publishing_overwrite_module_litezip(
@@ -280,7 +277,7 @@ def test_publishing_overwrite_module_litezip(
     publisher = 'user1'
     message = 'test http publish'
 
-    # Submit a publication
+    # Submit a publication (version becomes 1.2)
     with file.open('rb') as fb:
         file_data = [('file', 'contents.zip', fb.read(),)]
     form_data = {'publisher': publisher, 'message': message}
@@ -291,7 +288,8 @@ def test_publishing_overwrite_module_litezip(
     )
     assert resp.status_code == 200
 
-    # Submit a publication, again
+    # Try to submit the publication again (version 1.1)
+    file = content_util.mk_zipfile_from_litezip_struct(tuple([collection]))
     with file.open('rb') as fb:
         file_data = [('file', 'contents.zip', fb.read(),)]
     form_data = {'publisher': publisher, 'message': message}
@@ -345,9 +343,10 @@ def test_publishing_overwrite_collection_litezip(
         form_data,
         upload_files=file_data,
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 202
 
-    # Submit a publication, again
+    # Submit a publication, again.
+    # Note that this increases the version for new_modules[0] to 1.2
     with file.open('rb') as fb:
         file_data = [('file', 'contents.zip', fb.read(),)]
     form_data = {'publisher': publisher, 'message': message}
@@ -355,19 +354,8 @@ def test_publishing_overwrite_collection_litezip(
         '/api/publish-litezip',
         form_data,
         upload_files=file_data,
-        expect_errors=True,
     )
-    assert resp.status_code == 400
-    expected_msgs = [
-        {
-            "id": 3,
-            "message": "stale version",
-            "item": new_modules[0].id,
-            "error": "checked out version is 1.1"
-                     " but currently published is 1.2"
-        }
-    ]
-    assert resp.json['messages'] == expected_msgs
+    assert resp.status_code == 202
 
 
 def test_publishing_no_changes(
@@ -396,9 +384,8 @@ def test_publishing_no_changes(
         '/api/publish-litezip',
         form_data,
         upload_files=file_data,
-        expect_errors=True,
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 202
 
 
 def test_publishing_unauthenticated(content_util, persist_util,

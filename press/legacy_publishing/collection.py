@@ -2,15 +2,15 @@ from hashlib import sha1
 from pyramid.threadlocal import get_current_request
 from sqlalchemy.sql import text
 
-from .utils import replace_id_and_version
-from ..errors import StaleVersion
+from .utils import replace_id_and_version, produce_hashes_from_filepath
+from ..errors import StaleVersion, Unchanged
 
 __all__ = (
     'publish_legacy_book',
 )
 
 
-def publish_legacy_book(model, metadata, submission, db_conn):
+def publish_legacy_book(model, metadata, submission, db_conn, changed=None):
     """Publish a Book (aka Collection) as the legacy (zope-based) system
     would.
 
@@ -30,10 +30,10 @@ def publish_legacy_book(model, metadata, submission, db_conn):
         raise NotImplementedError()
 
     result = db_conn.execute(
-        t.modules.select()
-        .where(t.modules.c.moduleid == metadata.id)
-        .order_by(t.modules.c.major_version.desc(),
-                  t.modules.c.minor_version.desc())
+        t.latest_modules.select()
+        .where(t.latest_modules.c.moduleid == metadata.id)
+        .order_by(t.latest_modules.c.major_version.desc(),
+                  t.latest_modules.c.minor_version.desc())
         .limit(1))
     # At this time, this code assumes an existing module
     existing_module = result.fetchone()
@@ -44,6 +44,23 @@ def publish_legacy_book(model, metadata, submission, db_conn):
 
     if metadata.version != existing_module.version:
         raise StaleVersion(metadata.version, existing_module.version, model)
+
+    shas = (db_conn.execute(
+            text("SELECT filename, sha1 FROM module_files"
+                 " JOIN files USING (fileid)"
+                 " WHERE module_ident = :mod_ident")
+            .bindparams(mod_ident=existing_module.module_ident))
+            ).fetchall()
+
+    existing_shas = {filename: sha for filename, sha in shas}
+
+    coll_sha1 = lambda : produce_hashes_from_filepath(model.file)['sha1']  # noqa : E731
+    if changed is False and coll_sha1() == existing_shas['collection.xml']:
+        for res in model.resources:
+            if res.sha1 != existing_shas[res.filename]:
+                break  # publish!
+        else:  # collxml and all resources are identical to already published
+            raise Unchanged(model)
 
     major_version = existing_module.major_version
     minor_version = existing_module.minor_version + 1

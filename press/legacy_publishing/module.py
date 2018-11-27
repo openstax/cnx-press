@@ -48,8 +48,8 @@ def publish_legacy_page(model, metadata, submission, db_conn):
 
     existing_shas = {filename: sha for filename, sha in shas}
 
-    sha1 = produce_hashes_from_filepath(model.file)['sha1']
-    if sha1 == existing_shas['index.cnxml']:
+    mod_sha1 = produce_hashes_from_filepath(model.file)['sha1']
+    if mod_sha1 == existing_shas['index.cnxml']:
         for res in model.resources:
             if res.sha1 != existing_shas[res.filename]:
                 break  # publish!

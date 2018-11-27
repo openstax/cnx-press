@@ -60,8 +60,8 @@ def publish_litezip(struct, submission, db_conn):
         except Unchanged:
             pass
 
-    changed = id_map != {}
-    if changed:
+    did_change = id_map != {}
+    if did_change:
         # Rebuild the Collection tree from the newly published Modules.
         with collection.file.open('wb') as fb:
             fb.write(etree.tounicode(xml).encode('utf8'))
@@ -69,8 +69,8 @@ def publish_litezip(struct, submission, db_conn):
     # Maybe publish the Collection.
     metadata = parse_collection_metadata(collection)
     old_id = collection.id
-    (id, version), ident = publish_legacy_book(collection, metadata,
-                                               submission, db_conn, changed)
+    (id, version), ident = publish_legacy_book(
+        collection, metadata, submission, db_conn, changed=did_change)
     id_map[old_id] = (id, version)
 
     return id_map

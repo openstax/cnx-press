@@ -85,15 +85,8 @@ def publish(request):
              }
         ]}
     except Unchanged:
-        request.response.status = 204  # maybe?  # TODO: change neb as well.
-        return {'messages': [  # nothing to publish
-            {'id': 4,
-             'message': 'nothing to publish',
-             'item': 'TODO',  # TODO: FIX ME
-             'error': 'None of the models changed, '
-                      'there is nothing to publish.'
-             }
-        ]}
+        request.response.status = 202  # maybe?  # TODO: change neb as well.
+        return None
 
     finish_event = events.LegacyPublicationFinished(
         id_mapping.values(),
