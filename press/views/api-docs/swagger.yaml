@@ -103,7 +103,7 @@ paths:
           schema:
             type: string
         '401':
-          description: requires authentication
+          description: requires permission to publish
           schema:
             $ref: '#/definitions/PublicationError'
       tags:
@@ -743,7 +743,7 @@ paths:
           schema:
             $ref: '#/definitions/Publication'
         '401':
-          description: requires authentication
+          description: requires permission to publish
           schema:
             $ref: '#/definitions/PublicationError'
         '400':
