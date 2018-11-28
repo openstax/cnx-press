@@ -51,7 +51,8 @@ def publish_legacy_page(model, metadata, submission, db_conn):
     mod_sha1 = produce_hashes_from_filepath(model.file)['sha1']
     if mod_sha1 == existing_shas['index.cnxml']:
         for res in model.resources:
-            if res.sha1 != existing_shas[res.filename]:
+            if (res.filename not in existing_shas or
+                    res.sha1 != existing_shas[res.filename]):
                 break  # publish!
         else:  # cnxml and all resources are identical to already published
             raise Unchanged(model)
