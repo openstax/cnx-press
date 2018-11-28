@@ -37,13 +37,9 @@ def test_publish_litezip(
         )
 
     expected_id_map = {
-        new_module.id: (new_module.id, (2, None)),
         collection.id: (collection.id, (1, 2)),
     }
     assert id_map == expected_id_map
-
-    # Update the tree to reflect the Module publication above.
-    tree[-1].version_at = '1.2'
 
     # Check the collection tree for accuracy. (This is not out of scope,
     # because the collection.xml document needs modified before insertion.)

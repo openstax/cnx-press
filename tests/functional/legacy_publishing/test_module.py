@@ -1,3 +1,5 @@
+import pytest
+
 from datetime import timedelta
 
 from dateutil.parser import parse as parse_date
@@ -9,6 +11,8 @@ from press.legacy_publishing.module import (
 from press.parsers import (
     parse_module_metadata,
 )
+
+from press.errors import Unchanged
 
 from tests.conftest import GOOGLE_ANALYTICS_CODE
 from tests.helpers import element_tree_from_model
@@ -30,6 +34,23 @@ def test_publish_revision(
     control_metadata = db_engines['common'].execute(stmt).fetchone()
 
     # TARGET
+    with pytest.raises(Unchanged), db_engines['common'].begin() as conn:
+        now = conn.execute('SELECT CURRENT_TIMESTAMP as now').fetchone().now
+        (id, version), ident = publish_legacy_page(
+            module,
+            metadata,
+            ('user1', 'test publish',),
+            conn,
+        )
+
+    # Change the module text, to make it publishable.
+    index_cnxml = module.file.read_text()
+    start_offset = index_cnxml.find('test document')
+    module.file.write_text(index_cnxml[:start_offset] +
+                           'TEST DOCUMENT' +
+                           index_cnxml[start_offset + 13:])
+
+    # TARGET - again
     with db_engines['common'].begin() as conn:
         now = conn.execute('SELECT CURRENT_TIMESTAMP as now').fetchone().now
         (id, version), ident = publish_legacy_page(
@@ -200,6 +221,13 @@ def test_publish_revision_that_is_derived(
         .where(db_tables.modules.c.moduleid == derived_metadata.id)
     )
     control_metadata = db_engines['common'].execute(stmt).fetchone()
+
+    # Change the module text, to make it publishable.
+    index_cnxml = derived_module.file.read_text()
+    start_offset = index_cnxml.find('test document')
+    derived_module.file.write_text(index_cnxml[:start_offset] +
+                                   'TEST DOCUMENT' +
+                                   index_cnxml[start_offset + 13:])
 
     # TARGET
     with db_engines['common'].begin() as conn:
