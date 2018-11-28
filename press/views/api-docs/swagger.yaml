@@ -97,6 +97,7 @@ paths:
       operationId: publishping
       produces:
         - text/plain
+        - application/json
       responses:
         '200':
           description: successful operation
