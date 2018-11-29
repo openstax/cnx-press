@@ -30,10 +30,10 @@ def publish_legacy_book(model, metadata, submission, db_conn, changed=None):
         raise NotImplementedError()
 
     result = db_conn.execute(
-        t.latest_modules.select()
-        .where(t.latest_modules.c.moduleid == metadata.id)
-        .order_by(t.latest_modules.c.major_version.desc(),
-                  t.latest_modules.c.minor_version.desc())
+        t.modules.select()
+        .where(t.modules.c.moduleid == metadata.id)
+        .order_by(t.modules.c.major_version.desc(),
+                  t.modules.c.minor_version.desc())
         .limit(1))
     # At this time, this code assumes an existing module
     existing_module = result.fetchone()
