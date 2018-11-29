@@ -289,7 +289,6 @@ def test_publishing_overwrite_module_litezip(
     assert resp.status_code == 200
 
     # Try to submit the publication again (version 1.1)
-    file = content_util.mk_zipfile_from_litezip_struct(tuple([collection]))
     with file.open('rb') as fb:
         file_data = [('file', 'contents.zip', fb.read(),)]
     form_data = {'publisher': publisher, 'message': message}
