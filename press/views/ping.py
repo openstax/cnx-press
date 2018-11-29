@@ -1,21 +1,16 @@
 # -*- coding: utf-8 -*-
-from pyramid.response import Response
 from pyramid.view import view_config
 
 
-@view_config(route_name='ping', http_cache=0)
+@view_config(renderer='string', route_name='ping', http_cache=0)
+@view_config(renderer='string', route_name='api-ping', http_cache=0)
+@view_config(renderer='string', route_name='auth-ping', http_cache=0,
+             permission='view')
+@view_config(renderer='string', route_name='publish-ping', http_cache=0,
+             permission='publish')
 def ping(request):
-    """A ping and ack view for checking the service is up and running."""
-    return Response('pong')
+    """A ping and ack view for checking the service is up and running.
 
-
-@view_config(route_name='auth-ping', http_cache=0, permission='view')
-def authedping(request):
-    """Authenticated ping for testing the auth mechanism."""
-    return Response('pong')
-
-
-@view_config(route_name='publish-ping', http_cache=0, permission='publish')
-def publish_ping(request):
-    """Authenticated ping for testing the publish endpoint"""
-    return Response('pong')
+    There are multiple views to accommodate multiple paths
+    and different permissions"""
+    return 'pong {path}'.format(path=request.path)

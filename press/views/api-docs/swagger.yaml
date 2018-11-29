@@ -43,6 +43,72 @@ tags:
       because they are meant only for use within the browser
       rather than as actual API usage.
 paths:
+  '/ping':
+    get:
+      summary: Verifies that press server is running
+      description: ''
+      operationId: ping
+      produces:
+        - text/plain
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            type: string
+      tags:
+        - system
+  '/api/ping':
+    get:
+      summary: Verifies that press server is running
+      description: ''
+      operationId: apiping
+      produces:
+        - text/plain
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            type: string
+      tags:
+        - system
+  '/api/auth-ping':
+    get:
+      summary: Verifies that authenticaton succeeds
+      description: ''
+      operationId: authping
+      produces:
+        - text/plain
+        - application/json
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            type: string
+        '401':
+          description: requires authentication
+          schema:
+            $ref: '#/definitions/PublicationError'
+      tags:
+        - system
+  '/api/publish-ping':
+    get:
+      summary: Verifies that authenticated user has publish permission
+      description: ''
+      operationId: publishping
+      produces:
+        - text/plain
+        - application/json
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            type: string
+        '401':
+          description: requires permission to publish
+          schema:
+            $ref: '#/definitions/PublicationError'
+      tags:
+        - system
   '/contents/{id}':
     get:
       summary: Retrieves content from the repository
@@ -677,6 +743,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/Publication'
+        '401':
+          description: requires permission to publish
+          schema:
+            $ref: '#/definitions/PublicationError'
         '400':
           description: error during publication
           schema:
