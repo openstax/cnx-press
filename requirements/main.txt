@@ -34,7 +34,7 @@ lxml==4.2.5
 
 msgpack-python==0.5.6
 
-PasteDeploy==1.5.2
+PasteDeploy==2.0.0
 
 plaster==1.0
 
