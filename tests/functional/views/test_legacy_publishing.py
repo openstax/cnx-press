@@ -213,8 +213,11 @@ def test_publishing_revision_litezip(
         '/api/publish-litezip',
         form_data,
         upload_files=file_data,
+        expect_errors=True,
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 400
+
+    """FIXME: uncomment this block of code.
 
     # Check resulting data. (id mapping and urls)
     t = db_tables
@@ -245,7 +248,7 @@ def test_publishing_revision_litezip(
     assert result.version == version
     assert result.submitter == publisher
     assert result.submitlog == message
-
+    """
 
 def test_publishing_overwrite_module_litezip(
         content_util, persist_util, webapp, db_engines, db_tables):
@@ -285,8 +288,11 @@ def test_publishing_overwrite_module_litezip(
         '/api/publish-litezip',
         form_data,
         upload_files=file_data,
+        expect_errors=True,
     )
-    assert resp.status_code == 200
+    # FIXME: uncomment.
+    # assert resp.status_code == 200
+    assert resp.status_code == 400
 
     # Try to submit the publication again (version 1.1)
     with file.open('rb') as fb:
@@ -301,11 +307,10 @@ def test_publishing_overwrite_module_litezip(
     assert resp.status_code == 400
     expected_msgs = [
         {
-            "id": 3,
-            "message": "stale version",
-            "item": new_module_id,
-            "error": "checked out version is 1.1"
-                     " but currently published is 1.2"
+            "id": 4,
+            "message": "collection changed",
+            "item": collection.id,
+            "error": 'modifying a collection is temporarily disallowed'
         }
     ]
     assert resp.json['messages'] == expected_msgs
@@ -341,8 +346,11 @@ def test_publishing_overwrite_collection_litezip(
         '/api/publish-litezip',
         form_data,
         upload_files=file_data,
+        expect_errors=True,
     )
-    assert resp.status_code == 202
+    # FIXME: uncomment.
+    # assert resp.status_code == 204
+    assert resp.status_code == 400 # no changes to collection.xml
 
     # Submit a publication, again.
     # Note that this increases the version for new_modules[0] to 1.2
@@ -353,8 +361,11 @@ def test_publishing_overwrite_collection_litezip(
         '/api/publish-litezip',
         form_data,
         upload_files=file_data,
+        expect_errors=True,
     )
-    assert resp.status_code == 202
+    # FIXME: uncomment.
+    # assert resp.status_code == 204
+    assert resp.status_code == 400 # no changes to collection.xml
 
 
 def test_publishing_no_changes(
@@ -384,8 +395,10 @@ def test_publishing_no_changes(
         form_data,
         upload_files=file_data,
     )
-    assert resp.status_code == 202
+    # FIXME: uncomment
+    # assert resp.status_code == 202
 
+    assert resp.status_code == 200
 
 def test_publishing_unauthenticated(content_util, persist_util,
                                     webapp, db_engines, db_tables):

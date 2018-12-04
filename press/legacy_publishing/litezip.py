@@ -4,6 +4,7 @@ from lxml import etree
 from litezip import Collection, Module
 
 from press.parsers import parse_collection_metadata, parse_module_metadata
+from press.errors import CollectionChanged
 
 from .collection import publish_legacy_book
 from .module import publish_legacy_page
@@ -16,7 +17,7 @@ __all__ = (
 )
 
 
-def publish_litezip(struct, submission, db_conn):
+def publish_litezip(struct, submission, db_conn, coll_changes_allowed=True):
     """Publish the contents of a litezip structured set of data.
 
     :param struct: a litezip struct from (probably from
@@ -33,6 +34,14 @@ def publish_litezip(struct, submission, db_conn):
         collection = [x for x in struct if isinstance(x, Collection)][0]
     except IndexError:  # pragma: no cover
         raise NotImplementedError('litezip without collection')
+
+    try:
+        module = [x for x in struct if isinstance(x, Module)][0]
+        metadata = parse_module_metadata(module)
+        publish_legacy_book(collection, metadata, submission, db_conn)
+    except IndexError:  # pragma: no cover
+        pass # if no modules, no problem.
+
     id_map = {}
 
     # Parse Collection tree to update the newly published Modules.

@@ -5,7 +5,7 @@ from litezip import parse_litezip, validate_litezip
 from pyramid.view import view_config
 
 from .. import events
-from ..errors import StaleVersion, Unchanged
+from ..errors import StaleVersion, Unchanged, CollectionChanged
 from ..legacy_publishing import publish_litezip
 from ..publishing import (
     discover_content_dir,
@@ -71,7 +71,7 @@ def publish(request):
     try:
         with request.get_db_engine('common').begin() as db_conn:
             id_mapping = publish_litezip(litezip_struct, (publisher, message),
-                                         db_conn)
+                                         db_conn, coll_changes_allowed=False)
     except StaleVersion as err:
         request.response.status = 400
         return {'messages': [
@@ -85,8 +85,17 @@ def publish(request):
              }
         ]}
     except Unchanged:
-        request.response.status = 202  # maybe?  # TODO: change neb as well.
+        request.response.status = 204  # maybe?  # TODO: change neb as well.
         return None
+    except CollectionChanged as err:
+        request.response.status = 400
+        return {'messages': [
+            {'id': 4,
+             'message': 'collection changed',
+             'item': err.collection.id,
+             'error': 'modifying a collection is temporarily disallowed'
+             }
+        ]}
 
     finish_event = events.LegacyPublicationFinished(
         id_mapping.values(),
