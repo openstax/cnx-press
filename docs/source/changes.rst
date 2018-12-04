@@ -7,6 +7,11 @@ Change Log
 - Dry out ping API and add swagger docs
 
 
+7.2.0
+-----
+- Prevent any changes to collection.xml files
+- Only publish changed modules
+
 7.1.0
 -----
 
