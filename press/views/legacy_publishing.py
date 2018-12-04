@@ -71,7 +71,7 @@ def publish(request):
     try:
         with request.get_db_engine('common').begin() as db_conn:
             id_mapping = publish_litezip(litezip_struct, (publisher, message),
-                                         db_conn, coll_changes_allowed=False)
+                                         db_conn)
     except StaleVersion as err:
         request.response.status = 400
         return {'messages': [

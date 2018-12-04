@@ -1,8 +1,3 @@
-from datetime import timedelta
-from dateutil.parser import parse as parse_date
-from litezip.main import COLLECTION_NSMAP
-from sqlalchemy.sql import text
-
 from press.errors import CollectionChanged
 from press.legacy_publishing.collection import (
     publish_legacy_book,
@@ -11,18 +6,9 @@ from press.parsers import (
     parse_collection_metadata,
 )
 
-from tests.conftest import GOOGLE_ANALYTICS_CODE
-from tests.helpers import (
-    compare_legacy_tree_similarity,
-    element_tree_from_model,
-)
-from tests.random_image import (
-    generate_random_image_by_size,
-)
-
 
 def test_prevent_any_changes_to_collections(
-    content_util, persist_util, app, db_engines, db_tables):
+        content_util, persist_util, app, db_engines, db_tables):
     # Insert initial collection and modules.
     resources = list([content_util.gen_resource() for x in range(0, 2)])
     collection, tree, modules = content_util.gen_collection(
@@ -34,13 +20,6 @@ def test_prevent_any_changes_to_collections(
     collection = persist_util.insert_collection(collection)
     metadata = parse_collection_metadata(collection)
 
-    # Collect control data for non-legacy metadata
-    stmt = (
-        db_tables.modules.select()
-        .where(db_tables.modules.c.moduleid == metadata.id)
-    )
-    control_metadata = db_engines['common'].execute(stmt).fetchone()
-
     # Insert a new module ...
     new_module = content_util.gen_module()
     new_module = persist_util.insert_module(new_module)
@@ -48,13 +27,10 @@ def test_prevent_any_changes_to_collections(
     tree.pop(1)
     # ... and append the new module to the tree.
     tree.append(content_util.make_tree_node_from(new_module))
-    collection, _, _ = content_util.rebuild_collection(collection,
-                                                                tree)
-
+    collection, _, _ = content_util.rebuild_collection(collection, tree)
 
     try:
         with db_engines['common'].begin() as conn:
-            now = conn.execute('SELECT CURRENT_TIMESTAMP as now').fetchone().now
             (id, version), ident = publish_legacy_book(
                 collection,
                 metadata,
@@ -64,6 +40,7 @@ def test_prevent_any_changes_to_collections(
     except CollectionChanged as err:
         # should fail because the collection changed.
         assert err.collection.id == collection.id
+
 
 """FIXME: uncomment.
 def test_publish_revision_base_case(

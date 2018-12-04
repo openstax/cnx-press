@@ -56,7 +56,8 @@ def publish_legacy_book(model, metadata, submission, db_conn, changed=None):
     existing_shas = {filename: sha for filename, sha in shas}
 
     # if the collection changed at all
-    if existing_shas.get('collection.xml') != produce_hashes_from_filepath(model.file)['sha1']:
+    existing_sha1 = existing_shas.get('collection.xml')
+    if existing_sha1 != produce_hashes_from_filepath(model.file)['sha1']:
         raise CollectionChanged(model)
     # OR if any of its resources changed
     for res in model.resources:

@@ -4,7 +4,6 @@ from lxml import etree
 from litezip import Collection, Module
 
 from press.parsers import parse_collection_metadata, parse_module_metadata
-from press.errors import CollectionChanged
 
 from .collection import publish_legacy_book
 from .module import publish_legacy_page
@@ -40,9 +39,9 @@ def publish_litezip(struct, submission, db_conn, coll_changes_allowed=True):
         metadata = parse_module_metadata(module)
         publish_legacy_book(collection, metadata, submission, db_conn)
     except IndexError:  # pragma: no cover
-        pass # if no modules, no problem.
+        pass  # if no modules, no problem.
 
-    id_map = {}
+    id_map = {}  # pragma: no cover
 
     # Parse Collection tree to update the newly published Modules.
     with collection.file.open('rb') as fb:

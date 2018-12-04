@@ -250,6 +250,7 @@ def test_publishing_revision_litezip(
     assert result.submitlog == message
     """
 
+
 def test_publishing_overwrite_module_litezip(
         content_util, persist_util, webapp, db_engines, db_tables):
     webapp.authorization = ('Basic', (a_username, a_passwd))
@@ -264,7 +265,6 @@ def test_publishing_overwrite_module_litezip(
     # Insert a new module ...
     new_module = content_util.gen_module(relative_to=collection)
     new_module = persist_util.insert_module(new_module)
-    new_module_id = new_module.id
 
     # ... remove second element from the tree ...
     tree.pop(1)
@@ -350,7 +350,7 @@ def test_publishing_overwrite_collection_litezip(
     )
     # FIXME: uncomment.
     # assert resp.status_code == 204
-    assert resp.status_code == 400 # no changes to collection.xml
+    assert resp.status_code == 400  # no changes to collection.xml
 
     # Submit a publication, again.
     # Note that this increases the version for new_modules[0] to 1.2
@@ -365,7 +365,7 @@ def test_publishing_overwrite_collection_litezip(
     )
     # FIXME: uncomment.
     # assert resp.status_code == 204
-    assert resp.status_code == 400 # no changes to collection.xml
+    assert resp.status_code == 400  # no changes to collection.xml
 
 
 def test_publishing_no_changes(
@@ -399,6 +399,7 @@ def test_publishing_no_changes(
     # assert resp.status_code == 202
 
     assert resp.status_code == 200
+
 
 def test_publishing_unauthenticated(content_util, persist_util,
                                     webapp, db_engines, db_tables):

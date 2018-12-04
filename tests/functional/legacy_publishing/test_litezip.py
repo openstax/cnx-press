@@ -1,12 +1,6 @@
-from sqlalchemy.sql import text
-
 from press.errors import CollectionChanged
 from press.legacy_publishing.litezip import (
     publish_litezip,
-)
-
-from tests.helpers import (
-    compare_legacy_tree_similarity,
 )
 
 
@@ -32,7 +26,7 @@ def test_publish_litezip(
 
     try:
         with db_engines['common'].begin() as conn:
-            id_map = publish_litezip(
+            publish_litezip(
                 struct,
                 ('user1', 'test publish',),
                 conn,
