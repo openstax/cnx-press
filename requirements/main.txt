@@ -82,6 +82,6 @@ vine==1.1.4
 
 WebOb==1.8.4
 
-zope.deprecation==4.3.0
+zope.deprecation==4.4.0
 
 zope.interface==4.6.0
