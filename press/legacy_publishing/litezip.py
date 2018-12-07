@@ -6,13 +6,14 @@ from litezip import Collection, Module
 from press.parsers import parse_collection_metadata, parse_module_metadata
 
 from press.exceptions import Unchanged
-from press.utils import convert_version_to_legacy_version
-from .collection import publish_legacy_book
-from .module import publish_legacy_page
+from .collection import publish_legacy_book, push_legacy_book
+from .module import publish_legacy_page, push_legacy_page
+from ..utils import convert_version_to_legacy_version
 
 
 __all__ = (
     'publish_litezip',
+    'push_litezip',
 )
 
 
@@ -76,3 +77,34 @@ def publish_litezip(struct, submission, db_conn):
     id_map[old_id] = (id, version)
 
     return id_map
+
+
+def push_litezip(struct, submission, db_conn):
+    """Push the contents of a litezip structured set of data.
+
+    This preserves all vesion numbers and ids
+    :param struct: a litezip struct from (probably from
+                   :func:`litezip.parse_litezip`)
+    :param submission: the userid of the authenticated copier
+    :type submission: tuple
+    :param db_conn: a database connection object
+    :type db_conn: :class:`sqlalchemy.engine.Connection`
+
+    """
+
+    ids = []
+    # :Push the Modules.
+    for module in [x for x in struct if isinstance(x, Module)]:
+        metadata = parse_module_metadata(module)
+        (id, version), ident = push_legacy_page(module, metadata,
+                                                submission, db_conn)
+        ids.append((id, version))
+
+    # Push the Collection.
+    for collection in [x for x in struct if isinstance(x, Collection)]:
+        metadata = parse_collection_metadata(collection)
+        (id, version), ident = push_legacy_book(collection, metadata,
+                                                submission, db_conn)
+        ids.append((id, version))
+
+    return ids

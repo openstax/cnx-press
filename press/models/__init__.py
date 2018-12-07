@@ -11,6 +11,7 @@ __all__ = (
 CollectionMetadata = namedtuple(
     'CollectionMetadata',
     ('id version created revised title '
+     'uuid doc_version doc_hash '
      'license_url language print_style '
      'authors maintainers licensors '
      'keywords subjects abstract'),
@@ -19,6 +20,7 @@ CollectionMetadata = namedtuple(
 ModuleMetadata = namedtuple(
     'ModuleMetadata',
     ('id version created revised title '
+     'uuid doc_version doc_hash '
      'license_url language '
      'authors maintainers licensors '
      'keywords subjects abstract'),

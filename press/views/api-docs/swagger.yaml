@@ -109,6 +109,25 @@ paths:
             $ref: '#/definitions/PublicationError'
       tags:
         - system
+  '/api/push-ping':
+    get:
+      summary: Verifies that authenticated user has push permission
+      description: ''
+      operationId: pushping
+      produces:
+        - text/plain
+        - application/json
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            type: string
+        '401':
+          description: requires permission to push
+          schema:
+            $ref: '#/definitions/PublicationError'
+      tags:
+        - system
   '/contents/{id}':
     get:
       summary: Retrieves content from the repository
@@ -768,6 +787,39 @@ paths:
           name: message
           type: string
           description: The publication message for this revision
+          required: true
+        - in: formData
+          name: file
+          type: file
+          description: The litezip file containing the content
+          required: true
+  '/api/push-litezip':
+    post:
+      summary: Copy content into repository
+      description: ''
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/Publication'
+        '401':
+          description: requires permission to push
+          schema:
+            $ref: '#/definitions/PublicationError'
+        '400':
+          description: error during push
+          schema:
+            $ref: '#/definitions/PublicationError'
+      consumes:
+        - application/x-www-form-urlencoded
+        - multipart/form-data
+      produces:
+        - application/json
+      parameters:
+        - in: formData
+          name: publisher
+          type: string
+          description: The user id of the publisher
           required: true
         - in: formData
           name: file

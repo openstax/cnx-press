@@ -8,6 +8,8 @@ from pyramid.view import view_config
              permission='view')
 @view_config(renderer='string', route_name='publish-ping', http_cache=0,
              permission='publish')
+@view_config(renderer='string', route_name='push-ping', http_cache=0,
+             permission='manage')
 def ping(request):
     """A ping and ack view for checking the service is up and running.
 

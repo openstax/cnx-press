@@ -13,6 +13,7 @@ class RootFactory(object):
     __acl__ = (
         (Allow, Authenticated, 'view'),
         (Allow, 'Maintainer', 'publish'),
+        (Allow, 'Manager', 'manage'),
     )
 
     def __init__(self, request):
@@ -35,10 +36,7 @@ def check_credentials(username, password, request):
             user = result.fetchone()
             _hash = user.passwd
             if check_password(_hash, password):
-                if user.groups is not None:
-                    return [username] + user.groups
-                else:
-                    return [username]
+                    return user.groups
         except AttributeError:
             pass
 

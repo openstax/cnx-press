@@ -14,6 +14,10 @@ class LegacyPublicationStarted:
         self.request = request
 
 
+class LegacyCopyStarted(LegacyPublicationStarted):
+    pass
+
+
 class LegacyPublicationFinished:
     """Happens when a legacy publication has finished
 
@@ -28,3 +32,7 @@ class LegacyPublicationFinished:
     def __init__(self, ids, request):
         self.ids = ids
         self.request = request
+
+
+class LegacyCopyFinished(LegacyPublicationFinished):
+    pass

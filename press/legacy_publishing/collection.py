@@ -242,3 +242,163 @@ def publish_legacy_book(model, metadata, submission, db_conn,
     ))
 
     return (id, version), ident
+
+
+def push_legacy_book(model, metadata, submission, db_conn):
+    """Push a Book (aka Collection) directly into the repository
+
+    :param model: collection
+    :type model: :class:`litezip.Collection`
+    :type metadata: :class:`press.models.CollectionMetadata`
+    :param submission: a two value tuple containing a userid
+                       and submit message
+    :type submission: tuple
+    :param db_conn: a database connection object
+    :type db_conn: :class:`sqlalchemy.engine.Connection`
+
+    """
+    t = get_current_request().db_tables
+
+    if model.id is None or metadata.id is None:  # pragma: no cover
+        raise NotImplementedError()
+
+    doc_ver = metadata.doc_version
+    major_version, minor_version = (doc_ver.split('.')
+                                    if '.' in doc_ver
+                                    else (doc_ver, None))
+
+    # Get existing abstract, if exists, otherwise add it
+    result = db_conn.execute(
+        t.abstracts.select()
+        .where(t.abstracts.c.abstract == metadata.abstract)
+    )
+    try:
+        abstractid = result.fetchone().abstractid
+    except AttributeError:  # NoneType
+        result = db_conn.execute(t.abstracts.insert()
+                                 .values(abstract=metadata.abstract))
+        abstractid = result.inserted_primary_key[0]
+
+    # Get the license identifier
+    result = db_conn.execute(
+        t.licenses.select()
+        .where(t.licenses.c.url == metadata.license_url))
+    licenseid = result.fetchone().licenseid
+
+    # Insert uuid, if it doesn't exist
+    exists = db_conn.execute(
+        t.document_controls.select()
+        .where(t.document_controls.c.uuid == metadata.uuid)).fetchone()
+    if exists is None:
+        db_conn.execute(
+            t.document_controls.insert()
+            .values(uuid=metadata.uuid, licenseid=licenseid))
+
+    # Insert the collection metadata
+    result = db_conn.execute(t.modules.insert().values(
+        uuid=metadata.uuid,
+        moduleid=metadata.id,
+        # Pending collection compare code, only minor revs are allowed
+        major_version=major_version,
+        minor_version=minor_version,
+        portal_type='Collection',
+        name=metadata.title,
+        created=metadata.created,
+        abstractid=abstractid,
+        licenseid=licenseid,
+        doctype='',
+        print_style=metadata.print_style,
+        submitter=submission[0],
+        submitlog=submission[1],
+        language=metadata.language,
+        authors=metadata.authors,
+        maintainers=metadata.maintainers,
+        licensors=metadata.licensors,
+        # Carry over parentage information
+        parent=None,
+        parentauthors=None,
+        google_analytics=None,
+    ).returning(
+        t.modules.c.module_ident,
+        t.modules.c.moduleid,
+        t.modules.c.major_version,
+        t.modules.c.minor_version,
+    ))
+    ident, id, major_version, minor_version = result.fetchone()
+    version = (major_version, minor_version,)
+
+    # Insert subjects metadata
+    stmt = (text('INSERT INTO moduletags '
+                 'SELECT :module_ident AS module_ident, tagid '
+                 'FROM tags WHERE tag = any(:subjects)')
+            .bindparams(module_ident=ident,
+                        subjects=list(metadata.subjects)))
+    result = db_conn.execute(stmt)
+
+    # Insert keywords metadata
+    stmt = (text('INSERT INTO keywords (word) '
+                 'SELECT iword AS word '
+                 'FROM unnest(:keywords ::text[]) AS iword '
+                 '     LEFT JOIN keywords AS kw ON (kw.word = iword) '
+                 'WHERE kw.keywordid IS NULL')
+            .bindparams(keywords=list(metadata.keywords)))
+    db_conn.execute(stmt)
+    stmt = (text('INSERT INTO modulekeywords '
+                 'SELECT :module_ident AS module_ident, keywordid '
+                 'FROM keywords WHERE word = any(:keywords)')
+            .bindparams(module_ident=ident,
+                        keywords=list(metadata.keywords)))
+    db_conn.execute(stmt)
+
+    # Insert resource files (images, pdfs, etc.)
+    for resource in model.resources:
+        try:
+            # Try finding an existing file first
+            fileid = db_conn.execute(
+                text('SELECT fileid FROM '
+                     'files WHERE sha1 = :sha1')
+                .bindparams(sha1=resource.sha1)
+            ).fetchone().fileid
+        except AttributeError:
+            # Insert it when it doesn't exist
+            with resource.data.open('rb') as fp:
+                result = db_conn.execute(
+                    t.files.insert().values(
+                        file=fp.read(),
+                        media_type=resource.media_type,
+                    )
+                )
+            fileid = result.inserted_primary_key[0]
+        result = db_conn.execute(
+            t.module_files.insert().values(
+                module_ident=ident,
+                fileid=fileid,
+                filename=resource.filename,
+            )
+        )
+
+    # Insert collection files (content and resources)
+    with model.file.open('rb') as fb:
+        try:
+            # Try finding an existing file first
+            fileid = db_conn.execute(
+                text('SELECT fileid FROM '
+                     'files WHERE sha1 = :sha1')
+                .bindparams(sha1=sha1(fb.read()).hexdigest())
+            ).fetchone().fileid
+        except AttributeError:
+            # Insert it when it doesn't exist
+            fb.seek(0)
+            result = db_conn.execute(t.files.insert().values(
+                file=fb.read(),
+                media_type='text/xml',
+            ))
+            fileid = result.inserted_primary_key[0]
+
+    result = db_conn.execute(t.module_files.insert().values(
+        module_ident=ident,
+        fileid=fileid,
+        filename='collection.xml',
+    ))
+
+    return (id, version), ident

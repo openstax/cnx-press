@@ -72,6 +72,9 @@ def parse_common_properties(elm_tree):
 
     props = {
         'id': _maybe(xpath('//md:content-id/text()')),
+        'uuid': _maybe(xpath('//md:document-uuid/text()')),
+        'doc_version': _maybe(xpath('//md:document-version/text()')),
+        'doc_hash': _maybe(xpath('//md:document-hash/text()')),
         'version': xpath('//md:version/text()')[0],
         'created': xpath('//md:created/text()')[0],
         'revised': xpath('//md:revised/text()')[0],

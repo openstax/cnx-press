@@ -11,6 +11,7 @@ def includeme(config):
     add_route('api-ping', '/api/ping')
     add_route('auth-ping', '/api/auth-ping')
     add_route('publish-ping', '/api/publish-ping')
+    add_route('push-ping', '/api/push-ping')
 
     add_route('api.v1.versioned_content', '/content/{id}/{ver}')
 
@@ -18,6 +19,7 @@ def includeme(config):
     add_route('api.v2.resources', '/resources/{hash}')
 
     add_route('api.v3.publications', '/api/publish-litezip')
+    add_route('api.v3.push', '/api/push-litezip')
 
     s = config.registry.settings
     s['pyramid_swagger.exclude_paths'] = [
