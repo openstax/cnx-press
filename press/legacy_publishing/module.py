@@ -1,8 +1,8 @@
 from pyramid.threadlocal import get_current_request
 from sqlalchemy.sql import text
 
-from .utils import replace_id_and_version
-from ..errors import StaleVersion
+from .utils import replace_id_and_version, produce_hashes_from_filepath
+from ..errors import StaleVersion, Unchanged
 
 __all__ = (
     'publish_legacy_page',
@@ -32,11 +32,30 @@ def publish_legacy_page(model, metadata, submission, db_conn):
         t.latest_modules.select()
         .where(t.latest_modules.c.moduleid == metadata.id)
     )
+
     # At this time, this code assumes an existing module
     existing_module = result.fetchone()
 
     if metadata.version != existing_module.version:
         raise StaleVersion(metadata.version, existing_module.version, model)
+
+    shas = (db_conn.execute(
+            text("SELECT filename, sha1 FROM module_files"
+                 " JOIN files USING (fileid)"
+                 " WHERE module_ident = :mod_ident")
+            .bindparams(mod_ident=existing_module.module_ident))
+            ).fetchall()
+
+    existing_shas = {filename: sha for filename, sha in shas}
+
+    mod_sha1 = produce_hashes_from_filepath(model.file)['sha1']
+    if mod_sha1 == existing_shas['index.cnxml']:
+        for res in model.resources:
+            if (res.filename not in existing_shas or
+                    res.sha1 != existing_shas[res.filename]):
+                break  # publish!
+        else:  # cnxml and all resources are identical to already published
+            raise Unchanged(model)
 
     major_version = existing_module.major_version + 1
 

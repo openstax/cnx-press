@@ -743,12 +743,14 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/Publication'
-        '401':
-          description: requires permission to publish
-          schema:
-            $ref: '#/definitions/PublicationError'
+        '202':
+          description: Nothing to publish
         '400':
           description: error during publication
+          schema:
+            $ref: '#/definitions/PublicationError'
+        '401':
+          description: requires permission to publish
           schema:
             $ref: '#/definitions/PublicationError'
       consumes:

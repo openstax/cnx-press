@@ -2,15 +2,16 @@ from hashlib import sha1
 from pyramid.threadlocal import get_current_request
 from sqlalchemy.sql import text
 
+from press.utils import produce_hashes_from_filepath
 from .utils import replace_id_and_version
-from ..errors import StaleVersion
+from ..errors import StaleVersion, CollectionChanged
 
 __all__ = (
     'publish_legacy_book',
 )
 
 
-def publish_legacy_book(model, metadata, submission, db_conn):
+def publish_legacy_book(model, metadata, submission, db_conn, changed=None):
     """Publish a Book (aka Collection) as the legacy (zope-based) system
     would.
 
@@ -44,6 +45,24 @@ def publish_legacy_book(model, metadata, submission, db_conn):
 
     if metadata.version != existing_module.version:
         raise StaleVersion(metadata.version, existing_module.version, model)
+
+    shas = (db_conn.execute(
+            text("SELECT filename, sha1 FROM module_files"
+                 " JOIN files USING (fileid)"
+                 " WHERE module_ident = :mod_ident")
+            .bindparams(mod_ident=existing_module.module_ident))
+            ).fetchall()
+
+    existing_shas = {filename: sha for filename, sha in shas}
+
+    # if the collection changed at all
+    existing_sha1 = existing_shas.get('collection.xml')
+    if existing_sha1 != produce_hashes_from_filepath(model.file)['sha1']:
+        raise CollectionChanged(model)
+    # OR if any of its resources changed
+    for res in model.resources:
+        if res.sha1 != existing_shas.get(res.filename):
+            raise CollectionChanged(model)
 
     major_version = existing_module.major_version
     minor_version = existing_module.minor_version + 1

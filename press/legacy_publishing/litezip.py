@@ -8,6 +8,7 @@ from press.parsers import parse_collection_metadata, parse_module_metadata
 from .collection import publish_legacy_book
 from .module import publish_legacy_page
 from ..utils import convert_version_to_legacy_version
+from ..errors import Unchanged
 
 
 __all__ = (
@@ -15,7 +16,7 @@ __all__ = (
 )
 
 
-def publish_litezip(struct, submission, db_conn):
+def publish_litezip(struct, submission, db_conn, coll_changes_allowed=True):
     """Publish the contents of a litezip structured set of data.
 
     :param struct: a litezip struct from (probably from
@@ -32,7 +33,15 @@ def publish_litezip(struct, submission, db_conn):
         collection = [x for x in struct if isinstance(x, Collection)][0]
     except IndexError:  # pragma: no cover
         raise NotImplementedError('litezip without collection')
-    id_map = {}
+
+    try:
+        module = [x for x in struct if isinstance(x, Module)][0]
+        metadata = parse_module_metadata(module)
+        publish_legacy_book(collection, metadata, submission, db_conn)
+    except IndexError:  # pragma: no cover
+        pass  # if no modules, no problem.
+
+    id_map = {}  # pragma: no cover
 
     # Parse Collection tree to update the newly published Modules.
     with collection.file.open('rb') as fb:
@@ -42,28 +51,34 @@ def publish_litezip(struct, submission, db_conn):
     for module in [x for x in struct if isinstance(x, Module)]:
         metadata = parse_module_metadata(module)
         old_id = module.id
-        (id, version), ident = publish_legacy_page(module, metadata,
-                                                   submission, db_conn)
-        id_map[old_id] = (id, version)
-        # Update the Collection tree
-        xpath = '//col:module[@document="{}"]'.format(old_id)
-        for elm in xml.xpath(xpath, namespaces=COLLECTION_NSMAP):
-            elm.attrib['document'] = id
-            version_attrib_name = (
-                '{{{}}}version-at-this-collection-version'
-                .format(COLLECTION_NSMAP['cnxorg']))
-            legacy_version = convert_version_to_legacy_version(version)
-            elm.attrib[version_attrib_name] = legacy_version
 
-    # Rebuild the Collection tree from the newly published Modules.
-    with collection.file.open('wb') as fb:
-        fb.write(etree.tounicode(xml).encode('utf8'))
+        try:
+            (id, version), ident = publish_legacy_page(module, metadata,
+                                                       submission, db_conn)
+            id_map[old_id] = (id, version)
+            # Update the Collection tree
+            xpath = '//col:module[@document="{}"]'.format(old_id)
+            for elm in xml.xpath(xpath, namespaces=COLLECTION_NSMAP):
+                elm.attrib['document'] = id
+                version_attrib_name = (
+                    '{{{}}}version-at-this-collection-version'
+                    .format(COLLECTION_NSMAP['cnxorg']))
+                legacy_version = convert_version_to_legacy_version(version)
+                elm.attrib[version_attrib_name] = legacy_version
+        except Unchanged:
+            pass
 
-    # Publish the Collection.
+    any_changes = id_map != {}
+    if any_changes:
+        # Rebuild the Collection tree from the newly published Modules.
+        with collection.file.open('wb') as fb:
+            fb.write(etree.tounicode(xml).encode('utf8'))
+
+    # Maybe publish the Collection.
     metadata = parse_collection_metadata(collection)
     old_id = collection.id
-    (id, version), ident = publish_legacy_book(collection, metadata,
-                                               submission, db_conn)
+    (id, version), ident = publish_legacy_book(
+        collection, metadata, submission, db_conn, changed=any_changes)
     id_map[old_id] = (id, version)
 
     return id_map
