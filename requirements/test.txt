@@ -33,7 +33,7 @@ python-dateutil==2.7.5
 
 recordclass==0.7
 
-requests==2.20.1
+requests==2.21.0
 
 requests-mock==1.5.2
 
