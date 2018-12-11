@@ -66,7 +66,7 @@ simplejson==3.16.0
 
 six==1.11.0
 
-SQLAlchemy==1.2.14
+SQLAlchemy==1.2.15
 
 structlog==18.1.0
 
