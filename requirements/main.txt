@@ -22,7 +22,7 @@ cnxml==2.2.0
 
 hupper==1.4.2
 
-idna==2.7
+idna==2.8
 
 jsonref==0.2
 
