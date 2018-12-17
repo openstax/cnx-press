@@ -18,11 +18,10 @@ services:
     image: rabbitmq:latest
 
   db:
-    # image: openstax/cnx-db:2.3.0
-    build:
-      context: https://github.com/Connexions/cnx-db.git
-      args:
-        gitcommithash: 731299d
+    image: openstax/cnx-db:latest
+    # For development usage, use something like the following
+    # build:
+    #   context: https://github.com/Connexions/cnx-db.git#master
     ports:
       - "15432:5432"
     environment:
