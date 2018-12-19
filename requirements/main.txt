@@ -54,7 +54,7 @@ pytz==2018.7
 
 PyYAML==3.13
 
-raven==6.9.0
+raven==6.10.0
 
 repoze.lru==0.7
 
