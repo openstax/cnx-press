@@ -43,7 +43,8 @@ def test_publish_litezip(
         )
 
     expected_id_map = {
-        collection.id: (collection.id, (1, 2)),
+        new_module.id: (new_module.id, (2, None)),
+        collection.id: (collection.id, (2, 1)),
     }
     assert id_map == expected_id_map
 
@@ -58,7 +59,7 @@ def test_publish_litezip(
              "WHERE m.moduleid = :moduleid "
              "AND m.major_version = :major_version "
              "AND m.minor_version = :minor_version")
-        .bindparams(moduleid=collection.id, major_version=1, minor_version=2))
+        .bindparams(moduleid=collection.id, major_version=2, minor_version=1))
     inserted_tree = db_engines['common'].execute(stmt).fetchone()[0]
     compare_legacy_tree_similarity(inserted_tree['contents'], tree)
     """

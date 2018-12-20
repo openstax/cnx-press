@@ -12,8 +12,95 @@ from ..utils import convert_version_to_legacy_version, \
 __all__ = (
     'replace_derived_from',
     'replace_id_and_version',
-    'produce_hashes_from_filepath',
+    'needs_major_rev',
+    'needs_minor_rev'
 )
+
+
+def needs_major_rev(pre, post):
+    """True if:
+    - Collection title changes (this does not include module title changes)
+    - Collection structure changes (adding, removing, moving)
+    """
+    removed = set(pre.iter('module')) - set(post.iter('module'))
+    added = set(post.iter('module')) - set(pre.iter('module'))
+
+    if len(removed) != 0 or len(added) != 0:
+        return True  # number of modules changed
+
+    if pre.find('title').alltext() != post.find('title').alltext():
+        return True  # collection's title changed
+
+    for this, other in zip(pre.find('content').iter(),
+                           post.find('content').iter()):
+        if this != other:
+            return True  # order changed
+
+    return False
+
+
+def needs_minor_rev(pre, post):
+    """True if:
+    1. Collection or module metadata changes
+        - abstract
+        - subject
+    2. Parameter changes
+    3. Collection or module actor changes
+    3. Collection or module role changes
+    """
+    if pre.find('abstract') != post.find('abstract'):
+        return True
+    if pre.find('subjectlist').alltext() != post.find('subjectlist').alltext():
+        return True
+
+    params_before = params_as_dict(pre.findall('param'))
+    params_after = params_as_dict(post.findall('param'))
+
+    if params_before != params_after:
+        return True
+
+    actors_before = actors_as_dict(pre.findall('person'))
+    actors_after = actors_as_dict(post.findall('person'))
+
+    if actors_before != actors_after:
+        return True
+
+    roles_before = roles_as_dict(pre.findall('role'))
+    roles_after = roles_as_dict(post.findall('role'))
+
+    if roles_before != roles_after:
+        return True
+
+    return False
+
+
+def params_as_dict(params):
+    params_dict = dict()
+
+    for p in params:
+        k = p.attrs['name']
+        v = p.attrs['value']
+        params_dict[k] = v
+    return params_dict
+
+
+def actors_as_dict(persons):
+    actors_dict = dict()
+
+    for p in persons:
+        actors_dict[p.firstname] = p.firstname.text
+        actors_dict[p.surname] = p.surname.text
+        actors_dict[p.fullname] = p.fullname.text
+    return actors_dict
+
+
+def roles_as_dict(roles):
+    authors_dict = dict()
+
+    for r in roles:
+        for k, v in r.attrs.items():
+            authors_dict[r.attrs['type']] = set(r.text.split(' '))
+    return authors_dict
 
 
 def replace_derived_from(model, derived_from_url):

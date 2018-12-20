@@ -63,7 +63,7 @@ def test_publish_revision_base_case(
     )
     control_metadata = db_engines['common'].execute(stmt).fetchone()
 
-    # Insert a new module ...
+    # Insert a new module (will cause a major version rev!)
     new_module = content_util.gen_module()
     new_module = persist_util.insert_module(new_module)
     # ... remove second element from the tree ...
@@ -91,9 +91,9 @@ def test_publish_revision_base_case(
     )
     result = db_engines['common'].execute(stmt).fetchone()
     assert result.uuid == control_metadata.uuid
-    assert result.major_version == 1
-    assert result.minor_version == 2
-    assert result.version == '1.1'
+    assert result.major_version == 2
+    assert result.minor_version == 1
+    assert result.version == '1.2'
     assert result.abstractid == control_metadata.abstractid
     assert result.created == parse_date(metadata.created)
     assert result.revised == now
@@ -317,9 +317,9 @@ def test_publish_derived(
     )
     result = db_engines['common'].execute(stmt).fetchone()
     assert result.uuid == control_metadata.uuid
-    assert result.major_version == 1
-    assert result.minor_version == 2
-    assert result.version == '1.1'
+    assert result.major_version == 2
+    assert result.minor_version == 1
+    assert result.version == '1.2'
     assert result.abstract == derived_metadata.abstract
     assert result.created == parse_date(derived_metadata.created)
     assert result.revised == now

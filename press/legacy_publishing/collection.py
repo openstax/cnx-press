@@ -4,7 +4,10 @@ from sqlalchemy.sql import text
 
 from press.exceptions import StaleVersion, CollectionChanged
 from press.utils import produce_hashes_from_filepath
-from .utils import replace_id_and_version
+from .utils import replace_id_and_version, needs_major_rev, needs_minor_rev
+from ..errors import StaleVersion, CollectionChanged
+
+from press.parsers import parse_collxml
 
 
 __all__ = (
@@ -40,6 +43,18 @@ def publish_legacy_book(model, metadata, submission, db_conn, changed=None):
     # At this time, this code assumes an existing module
     existing_module = result.fetchone()
 
+    file_sql = text('SELECT file '
+                    'FROM files f '
+                    'JOIN module_files mf ON f.fileid = mf.fileid '
+                    'WHERE filename = \'collection.xml\' '
+                    'AND module_ident = :ident'
+                    ).bindparams(ident=existing_module.module_ident)
+
+    existing_file = db_conn.execute(file_sql).fetchone()
+
+    pre = parse_collxml(existing_file.file)
+
+
     # Verify that at least the current major version is the same
     # TODO: store the full major.minor at "get" time (or in the collxml)
     # and compare it, so we can be even more safe
@@ -66,7 +81,15 @@ def publish_legacy_book(model, metadata, submission, db_conn, changed=None):
             raise CollectionChanged(model)
 
     major_version = existing_module.major_version
-    minor_version = existing_module.minor_version + 1
+    minor_version = existing_module.minor_version
+
+    with model.file.open('rb') as pf:
+        post_tree = parse_collxml(pf)
+
+    if needs_major_rev(pre, post_tree):
+        major_version += 1
+    elif needs_minor_rev(pre, post_tree):
+        minor_version += 1
 
     # Get existing abstract, if exists, otherwise add it
     result = db_conn.execute(

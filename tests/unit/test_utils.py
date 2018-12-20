@@ -1,6 +1,8 @@
 import hashlib
 from pathlib import Path
 
+from litezip.main import COLLECTION_NSMAP
+
 from press.utils import (
     convert_to_legacy_domain,
     convert_version_to_legacy_version,

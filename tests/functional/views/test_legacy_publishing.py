@@ -222,34 +222,33 @@ def test_publishing_revision_litezip(
     # Check resulting data. (id mapping and urls)
     t = db_tables
     id_mapping = {x['source_id']: x for x in resp.json}
+    for model in struct:
+        assert model.id in id_mapping
+        publication_record = id_mapping[model.id]
+        assert publication_record['id'] == model.id
+        version = '1.2'
+        assert publication_record['legacy_version'] == version
+        url = publication_record['url']
+        # FIXME We should visit this URL rather than check it's parts.
+        assert '/content/{}/{}'.format(model.id, version) in url
 
-    assert collection.id in id_mapping
-    publication_record = id_mapping[collection.id]
-    assert publication_record['id'] == collection.id
-    version = '1.1'
-    assert publication_record['legacy_version'] == version
-    url = publication_record['url']
-    # FIXME: We should visit this URL instead of checking its parts.
-    assert '/content/{}/{}'.format(collection.id, version) in url
-
-    # FIXME: This functional test should not be directly communicating
-    #        with the database. Instead, it should be using other http
-    #        routes to verify the contents.
-    # Check the content is actually in the database
-    #   and that the correct publisher and message was attributed.
-    # Checking for content details is out-of-scope for this test.
-    stmt = (
-        t.modules.select()
-        .where(t.modules.c.moduleid == collection.id)
-        .order_by(t.modules.c.major_version.desc(),
-                  t.modules.c.minor_version.desc())
-        .limit(1))
-    result = db_engines['common'].execute(stmt).fetchone()
-    assert result.version == version
-    assert result.submitter == publisher
-    assert result.submitlog == message
-    """
-
+        # FIXME This functional test should not be directly communicating
+        #       with the database. Instead it should be using other http
+        #       routes to verify the contents.
+        # Check the content is actually in the database
+        #   and that the correct publisher and message was attributed.
+        # Checking for content details is out-of-scope for this test.
+        stmt = (
+            t.modules.select()
+            .where(t.modules.c.moduleid == model.id)
+            .order_by(t.modules.c.major_version.desc(),
+                      t.modules.c.minor_version.desc())
+            .limit(1))
+        result = db_engines['common'].execute(stmt).fetchone()
+        assert result.version == version
+        assert result.submitter == publisher
+        assert result.submitlog == message
+"""
 
 def test_publishing_overwrite_module_litezip(
         content_util, persist_util, webapp, db_engines, db_tables):
