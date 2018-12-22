@@ -1,4 +1,4 @@
-from press.errors import CollectionChanged
+from press.exceptions import CollectionChanged
 from press.legacy_publishing.litezip import (
     publish_litezip,
 )

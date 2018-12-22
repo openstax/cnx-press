@@ -5,10 +5,10 @@ from litezip import Collection, Module
 
 from press.parsers import parse_collection_metadata, parse_module_metadata
 
+from press.exceptions import Unchanged
+from press.utils import convert_version_to_legacy_version
 from .collection import publish_legacy_book
 from .module import publish_legacy_page
-from ..utils import convert_version_to_legacy_version
-from ..errors import Unchanged
 
 
 __all__ = (

@@ -5,7 +5,7 @@ from litezip import parse_litezip, validate_litezip
 from pyramid.view import view_config
 
 from .. import events
-from ..errors import StaleVersion, Unchanged, CollectionChanged
+from ..exceptions import StaleVersion, Unchanged, CollectionChanged
 from ..legacy_publishing import publish_litezip
 from ..publishing import (
     discover_content_dir,
