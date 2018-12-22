@@ -4,7 +4,6 @@ import pathlib
 import random
 import shutil
 import tempfile
-import warnings
 import zipfile
 from copy import copy, deepcopy
 
@@ -129,10 +128,7 @@ GOOGLE_ANALYTICS_CODE = 'abc123'
 @pytest.fixture(scope='session')
 def db_tables_session_scope(db_engines):
     from cnxdb.contrib.pytest import db_tables
-    with warnings.catch_warnings():
-        # Ignore SQLAlchemy SAWarning about unsupported reflection elements.
-        warnings.simplefilter('ignore')
-        tables = db_tables(db_engines)
+    tables = db_tables(db_engines)
     return tables
 
 
