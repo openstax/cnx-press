@@ -4,6 +4,7 @@ import pathlib
 import random
 import shutil
 import tempfile
+import warnings
 import zipfile
 from copy import copy, deepcopy
 
@@ -128,7 +129,13 @@ GOOGLE_ANALYTICS_CODE = 'abc123'
 @pytest.fixture(scope='session')
 def db_tables_session_scope(db_engines):
     from cnxdb.contrib.pytest import db_tables
-    tables = db_tables(db_engines)
+    with warnings.catch_warnings():
+        # FIXME: This suppresses the warning for now...
+        #        RemovedInPytest4Warning: Fixture "db_tables" called directly.
+        #        Fixtures are not meant to be called directly, are created
+        #        automatically when test functions request them as parameters.
+        warnings.simplefilter('ignore')
+        tables = db_tables(db_engines)
     return tables
 
 
