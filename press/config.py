@@ -4,7 +4,9 @@ import warnings
 from pyramid.config import Configurator
 from pyramid.config.settings import asbool
 from sqlalchemy.exc import SAWarning
+
 from .auth import RootFactory
+from .exceptions import AppStartUpWarning
 
 
 def discover_set(settings, setting_name, env_var, default=None,
@@ -51,8 +53,9 @@ def initialize_sentry_integration():  # pragma: no cover
         dsn = os.environ['SENTRY_DSN']
     except KeyError:
         warnings.warn(
-            "Sentry is not configured because SENTRY_DSN"
-            "was not supplied."
+            "Sentry is not configured because SENTRY_DSN "
+            "was not supplied.",
+            AppStartUpWarning,
         )
     else:
         sentry_sdk.init(
