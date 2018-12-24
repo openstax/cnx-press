@@ -5,7 +5,6 @@ from press.utils import produce_hashes_from_filepath
 from press.exceptions import StaleVersion, Unchanged
 from .utils import replace_id_and_version
 
-
 __all__ = (
     'publish_legacy_page',
 )

@@ -229,7 +229,7 @@ def test_publishing_revision_litezip(
         version = '1.2'
         assert publication_record['legacy_version'] == version
         url = publication_record['url']
-        # FIXME We should visit this URL rather than check it's parts.
+        # FIXME We should visit this URL rather than check its parts.
         assert '/content/{}/{}'.format(model.id, version) in url
 
         # FIXME This functional test should not be directly communicating
@@ -249,6 +249,7 @@ def test_publishing_revision_litezip(
         assert result.submitter == publisher
         assert result.submitlog == message
 """
+
 
 def test_publishing_overwrite_module_litezip(
         content_util, persist_util, webapp, db_engines, db_tables):

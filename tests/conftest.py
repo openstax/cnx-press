@@ -40,12 +40,6 @@ def _maybe_set(env_var, value):
 
 
 @pytest.fixture(scope='session')
-def collxml_templates():
-    from pathlib import Path
-    return Path('')
-
-
-@pytest.fixture(scope='session')
 def keep_shared_directory():
     """Returns a True | False when based on the value of
     the ``KEEP_SHARED_DIR`` environment variable. Default is False

@@ -68,7 +68,7 @@ def publish_legacy_book(model, metadata, submission, db_conn, changed=None):
         if res.sha1 != existing_shas.get(res.filename):
             raise CollectionChanged(model)
 
-    # Decide - major or minor version rev
+    # Decide whether to major rev or minor rev
     file_sql = text('SELECT file '
                     'FROM files f '
                     'JOIN module_files mf ON f.fileid = mf.fileid '

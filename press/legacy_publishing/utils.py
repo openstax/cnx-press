@@ -5,9 +5,7 @@ from litezip import (
 from litezip.main import COLLECTION_NSMAP
 from lxml import etree
 
-from ..utils import convert_version_to_legacy_version, \
-    produce_hashes_from_filepath
-
+from ..utils import convert_version_to_legacy_version
 
 __all__ = (
     'replace_derived_from',

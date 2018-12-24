@@ -71,7 +71,7 @@ def test_parse_colletion_metdata_without_print_style(tmpdir,
         elm = xml.xpath('//col:param[@name="print-style"]',
                         namespaces=COLLECTION_NSMAP)[0]
         elm.getparent().remove(elm)
-        collection_file.write(etree.tostring(xml))
+        collection_file.write(etree.tounicode(xml).encode('utf8'))
     assert 'print-style' not in collection_file.read()
 
     # Test the parser doesn't error when a print-style is missing.
@@ -94,7 +94,7 @@ def test_parse_colletion_metdata_with_print_style(tmpdir,
         elm = xml.xpath('//col:param[@name="print-style"]',
                         namespaces=COLLECTION_NSMAP)[0]
         elm.attrib['value'] = specific_print_style
-        collection_file.write(etree.tostring(xml))
+        collection_file.write(etree.tounicode(xml).encode('utf8'))
 
     # Test the parser doesn't error when a print-style is missing.
     # given a Collection object,

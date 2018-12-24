@@ -107,7 +107,7 @@ def test_equality_behavior():
 
 
 def test_objectified_magic():
-    """Test the ability to get hold of a nested element by simply calling an
+    """Test the ability to access a nested element by simply calling an
     attribute on the tree/element.
     """
     title = PressElement('title', text='Collection Title')

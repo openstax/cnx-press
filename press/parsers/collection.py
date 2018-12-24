@@ -3,10 +3,6 @@ from press.models import CollectionMetadata, PressElement
 from .common import make_cnx_xpath, make_elm_tree, parse_common_properties
 
 
-def nsmap_reversed(nsmap):
-    return {y: x for x, y in nsmap.items()}
-
-
 def parse_collection_metadata(model):
     """Parse the metadata from the given object.
 
@@ -37,26 +33,24 @@ class CollectionXmlHandler(sax.ContentHandler):
 
     def startElementNS(self, name, qname, attrs):
         uri, localname = name
-        # nsmap = nsmap_reversed(COLLECTION_NSMAP)
-        # name_str = '{}:{}'.format(nsmap[uri], localname)
 
-        # TODO: pass in the URI and have the model map it to a namespace.
+        # TODO: pass in just the URI and have the model map it to a namespace.
         self.next_node = PressElement(localname,
                                       self._attrs_no_uri(attrs))
 
-        # self.next_node = PressElement(name_str, self._attrs_no_uri(attrs))
         self.current_node.add_child(self.next_node)
         self.current_node = self.next_node
 
     def characters(self, content):
-        # We have to create a new node so that the __hash__() is re-calculated
+        # we have to create a new node so that the hash is re-calculated,
+        # see docs for __hash__ method.
         new_node = self.current_node.insert_text(content)
         new_node.parent = self.current_node.parent
         new_node.children = self.current_node.children
-        # AND the parent needs to contain the new child element for the old one
+        # the parent needs to contain the new child element for the old one
         self.current_node.parent.children.pop()
         self.current_node.parent.children.append(new_node)
-        # And finally:
+        # and finally...
         self.current_node = new_node
 
     def endElementNS(self, name, qname):
@@ -78,12 +72,11 @@ def parse_collxml(input_collxml):
     parser.setFeature(sax.handler.feature_namespaces, 1)
     parser.setContentHandler(CollectionXmlHandler(tree_root))
 
-
-    # adds the ability to parse an obj that comes from the DB
+    # adds the ability to parse an object that comes from the database
     if isinstance(input_collxml, memoryview):
         import io
         input_collxml = io.BytesIO(input_collxml)
 
-    parser.parse(input_collxml)  # parse a file-like object
+    parser.parse(input_collxml)  # parses a file-like object
 
     return tree_root
