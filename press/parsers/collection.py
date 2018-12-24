@@ -84,7 +84,6 @@ def parse_collxml(input_collxml):
         import io
         input_collxml = io.BytesIO(input_collxml)
 
-
     parser.parse(input_collxml)  # parse a file-like object
 
     return tree_root

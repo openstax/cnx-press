@@ -43,18 +43,6 @@ def publish_legacy_book(model, metadata, submission, db_conn, changed=None):
     # At this time, this code assumes an existing module
     existing_module = result.fetchone()
 
-    file_sql = text('SELECT file '
-                    'FROM files f '
-                    'JOIN module_files mf ON f.fileid = mf.fileid '
-                    'WHERE filename = \'collection.xml\' '
-                    'AND module_ident = :ident'
-                    ).bindparams(ident=existing_module.module_ident)
-
-    existing_file = db_conn.execute(file_sql).fetchone()
-
-    pre = parse_collxml(existing_file.file)
-
-
     # Verify that at least the current major version is the same
     # TODO: store the full major.minor at "get" time (or in the collxml)
     # and compare it, so we can be even more safe
@@ -79,6 +67,18 @@ def publish_legacy_book(model, metadata, submission, db_conn, changed=None):
     for res in model.resources:
         if res.sha1 != existing_shas.get(res.filename):
             raise CollectionChanged(model)
+
+    # Decide - major or minor version rev
+    file_sql = text('SELECT file '
+                    'FROM files f '
+                    'JOIN module_files mf ON f.fileid = mf.fileid '
+                    'WHERE filename = \'collection.xml\' '
+                    'AND module_ident = :ident'
+                    ).bindparams(ident=existing_module.module_ident)
+
+    existing_file = db_conn.execute(file_sql).fetchone()
+
+    pre = parse_collxml(existing_file.file)
 
     major_version = existing_module.major_version
     minor_version = existing_module.minor_version

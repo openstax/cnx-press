@@ -1,22 +1,7 @@
+from litezip.main import COLLECTION_NSMAP
 from press.models import PressElement
 from press.parsers import parse_collxml
-
-
-def test_dested_text_in_coll_title_gets_parsed(collxml_templates):
-    # Modules with markup in `title` gets parsed as part of the title.
-    titles_with_markup = [
-        'Introduction to SOME MATH Quartus and Circuit Diagram Design',
-        'Lab 1-1: 4-Bit Mux and SOME STYLED TEXT all NAND/NOR Mux',
-        'Lab 4-1 Interrupt Driven SOME SOME SPAN TAG DIV TAG '
-        'Programming in MSP430 Assembly',
-    ]
-
-    with (collxml_templates / 'markup_in_title.xml').open('r') as doc:
-        tree = parse_collxml(doc)
-
-    for title in titles_with_markup:
-        assert title in [node.alltext() for node in tree.iter()
-                         if node.tag == 'title']
+from tests.helpers import element_tree_from_model
 
 
 def gen_press_element_tree():
@@ -46,31 +31,30 @@ def test_string_representation():
     assert str(PressElement('tagname', text='Yes')) == '<tagname>Yes</tagname>'
 
 
-def test_find_method(collxml_templates):
+def test_find_method(content_util):
     """Test that you can look at only part of the tree like `content` tag,
     and be able to differentiate between the coll's title and modules' titles
     """
-    # I need a tree to work with
-    with (collxml_templates / 'original.xml').open('r') as doc:
-        root = parse_collxml(doc)
+    expected = "The Collection's Title"
+    collection, tree, _ = content_util.gen_collection()
 
-    actual = root.find('content')
+    with element_tree_from_model(collection) as x:
+        el = x.xpath('//col:metadata/md:title', namespaces=COLLECTION_NSMAP)[0]
+        el.text = expected  # TARGET
 
-    assert actual.tag == 'content'
-    assert actual.children[0].tag == 'module'
-    assert actual.children[0].attr('document') == 'm42303'
+    tree = parse_collxml(collection.file.open('rb'))
+    actual = tree.find('title')  # the first title is the collection's.
+
+    assert actual.text == expected
 
 
-def test_finding_an_element(collxml_templates):
-    with (collxml_templates / 'original.xml').open('r') as doc:
-        tree = parse_collxml(doc)
-    expected = 'Intro to Computational Engineering: Elec 220 Labs'
+def test_finding_by_path(content_util):
+    expected = 'http://cnx.org/content'
 
-    title = tree.find_by_path('collection/metadata/title').text
-    assert title == expected
+    collection, tree, _ = content_util.gen_collection()
+    tree = parse_collxml(collection.file.open('rb'))
 
-    # FIXME: should be able to call title on metadata
-    title = tree.collection.metadata['title'].text
+    title = tree.find_by_path('collection/metadata/repository').text
     assert title == expected
 
 
@@ -87,23 +71,23 @@ def test_tree_behavior(content_util):
 
 
 def test_iterator_behavior():
-    """Test that you can iterate through the tree depth-first.
+    """You can iterate through the tree depth-first.
     """
     actual = gen_press_element_tree()
 
-    col_children = ['<collection></collection>',
-                    '<mod1></mod1>',
-                    '<mod2></mod2>',
-                    '<mod3></mod3>',
-                    '<mod3--1></mod3--1>', '<mod3--2></mod3--2>',
-                    '<mod4></mod4>']
+    expected = ['<collection></collection>',
+                '<mod1></mod1>',
+                '<mod2></mod2>',
+                '<mod3></mod3>',
+                '<mod3--1></mod3--1>', '<mod3--2></mod3--2>',
+                '<mod4></mod4>']
 
-    for actual, ex in zip(actual.iter(), col_children):
+    for actual, ex in zip(actual.iter(), expected):
         assert str(actual) == ex
 
 
 def test_equality_behavior():
-    """Test that a tree can be compared against another, with the == operator
+    """A Node can be compared against another using the == operator
     (or another as a last resort).
     """
     attrs = {'someattribrute': '_the_value_'}
@@ -113,7 +97,7 @@ def test_equality_behavior():
     # this would fail if we hadn't defined __hash__ and __eq__
     assert a == b
 
-    """Modules with a different `document` attribute do not equal each other
+    """Modules with a different ``document`` attribute do not equal
     """
     attrs = {'document': 'm00004'}
     a = PressElement('md', text='TxT', tail='TaiL', attrs=attrs)

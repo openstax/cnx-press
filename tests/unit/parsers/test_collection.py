@@ -8,12 +8,13 @@ from press.parsers import parse_collection_metadata, parse_collxml
 from press.models import PressElement
 
 
-def test_parse_collxml(collxml_templates):
-    with (collxml_templates / 'original.xml').open() as origin:
-        tree = parse_collxml(origin)
-    assert len(tuple(tree.iter())) == 83
-    assert isinstance(tree, PressElement)
-    assert tree.tag == 'root'
+def test_parse_collxml(content_util):
+    collection, _, _ = content_util.gen_collection()
+    output = parse_collxml(collection.file.open('rb'))
+
+    assert isinstance(output, PressElement)
+    assert len(output.findall()) > 100  # just a smoke test, arbitrary #.
+    assert output.tag == 'root'  # what the root tag is called.
 
 
 def test_parse_collection_metadata(litezip_valid_litezip):
@@ -70,7 +71,7 @@ def test_parse_colletion_metdata_without_print_style(tmpdir,
         elm = xml.xpath('//col:param[@name="print-style"]',
                         namespaces=COLLECTION_NSMAP)[0]
         elm.getparent().remove(elm)
-        collection_file.write(etree.tounicode(xml).encode('utf8'))
+        collection_file.write(etree.tostring(xml))
     assert 'print-style' not in collection_file.read()
 
     # Test the parser doesn't error when a print-style is missing.
@@ -93,7 +94,7 @@ def test_parse_colletion_metdata_with_print_style(tmpdir,
         elm = xml.xpath('//col:param[@name="print-style"]',
                         namespaces=COLLECTION_NSMAP)[0]
         elm.attrib['value'] = specific_print_style
-        collection_file.write(etree.tounicode(xml).encode('utf8'))
+        collection_file.write(etree.tostring(xml))
 
     # Test the parser doesn't error when a print-style is missing.
     # given a Collection object,

@@ -33,18 +33,16 @@ with (TEMPLATE_DIR / 'collection.xml').open('r') as fb:
     COLLECTION_DOC = fb.read()
 
 
-COLLXML_TEMPLATE_DIR = pathlib.Path(__file__).parent / '_collxml_templates'
-
-
-@pytest.fixture(scope='session')
-def collxml_templates():
-    return COLLXML_TEMPLATE_DIR
-
-
 def _maybe_set(env_var, value):
     """Only set the env_var if it doesn't already contain a value."""
     os.environ.setdefault(env_var, value)
     return os.environ[env_var]
+
+
+@pytest.fixture(scope='session')
+def collxml_templates():
+    from pathlib import Path
+    return Path('')
 
 
 @pytest.fixture(scope='session')

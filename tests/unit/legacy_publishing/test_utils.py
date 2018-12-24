@@ -7,10 +7,9 @@ from press.legacy_publishing.utils import (
     needs_minor_rev,
 )
 from press.parsers import parse_collxml
+from tests.helpers import gen_element
 
-#########################################
-#  Test feature: major version revision #
-#########################################
+
 class TestMinorVersionRev():
     def test_when_collection_title_changes(self, content_util):
         collection, tree, modules = content_util.gen_collection()
@@ -97,10 +96,6 @@ class TestMinorVersionRev():
         assert mods_len_before > mods_len_after
 
 
-
-#########################################
-#  Test feature: minor version revision #
-#########################################
 class TestMajorVersionRev():
     def test_when_md_abstr_changes(self, content_util):
         # metadata other than that which causes major rev or that which we ignore.
@@ -241,13 +236,6 @@ class TestMajorVersionRev():
         assert needs_minor_rev(tree_before, tree_after)
 
         """Test that changing the order of the actors doesn't matter."""
-        def gen_element(prefix, tag, text):
-            elem = etree.Element(
-                '{{{}}}{}'.format(COLLECTION_NSMAP[prefix], tag),
-                nsmap=COLLECTION_NSMAP)
-            elem.text = text
-            return elem
-
         collection, tree, _ = content_util.gen_collection()
         with collection.file.open('rb') as f1, collection.file.open('rb') as f2:
             tree_before = parse_collxml(f1)
