@@ -86,6 +86,7 @@ def publish_legacy_book(model, metadata, submission, db_conn, changed=None):
 
     if needs_major_rev(pre, post_tree):
         major_version += 1
+        minor_version = 1
     elif needs_minor_rev(pre, post_tree):
         minor_version += 1
 
