@@ -34,6 +34,12 @@ def publish_litezip(struct, submission, db_conn):
     except IndexError:  # pragma: no cover
         raise NotImplementedError('litezip without collection')
 
+    try:
+        metadata = parse_collection_metadata(collection)
+        publish_legacy_book(collection, metadata, submission, db_conn)
+    except IndexError:  # pragma: no cover
+        pass  # if no modules, no problem.
+
     id_map = {}  # pragma: no cover
 
     # Parse Collection tree to update the newly published Modules.
@@ -59,7 +65,7 @@ def publish_litezip(struct, submission, db_conn):
                 legacy_version = convert_version_to_legacy_version(version)
                 elm.attrib[version_attrib_name] = legacy_version
         except Unchanged:
-            pass
+            pass  # only publish content that has changed.
 
     any_changes = id_map != {}
     if any_changes:

@@ -1,6 +1,3 @@
-from press.errors import AttributeDoesNotExist
-
-
 class PressElement:
     """Represents a collxml element parsed from a Collection XML file.
     """
@@ -61,7 +58,7 @@ class PressElement:
         if item:  # see: __bool__
             return item
         else:
-            raise AttributeDoesNotExist()
+            raise AttributeError
 
     """Make its length be the length of its children."""
     def __len__(self):
