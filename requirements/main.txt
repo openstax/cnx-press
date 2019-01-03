@@ -30,7 +30,7 @@ jsonschema==2.6.0
 
 kombu==4.2.2
 
-lxml==4.2.5
+lxml==4.2.6
 
 msgpack-python==0.5.6
 
