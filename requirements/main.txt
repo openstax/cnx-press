@@ -28,7 +28,7 @@ jsonref==0.2
 
 jsonschema==2.6.0
 
-kombu==4.2.2
+kombu==4.2.2.post1
 
 lxml==4.2.5
 
