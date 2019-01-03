@@ -280,6 +280,13 @@ def test_publishing_overwrite_module_litezip(
 
     struct = tuple([collection, new_module])
 
+    # Change the module text, to make it publishable.
+    index_cnxml = new_module.file.read_text()
+    start_offset = index_cnxml.find('test document')
+    new_module.file.write_text(index_cnxml[:start_offset] +
+                               'TEST DOCUMENT' +
+                               index_cnxml[start_offset + 13:])
+
     file = content_util.mk_zipfile_from_litezip_struct(struct)
 
     publisher = 'user1'
