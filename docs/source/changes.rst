@@ -2,11 +2,13 @@
 Change Log
 ==========
 
-7.3.0
+8.0.0
 -----
 
 - Update Sentry integration to use the Sentry SDK rather than the Raven client
   with custom integration code.
+- Create a collection xml parser
+- Add the ability to detect when to major rev and when to minor rev
 
 7.2.0
 -----
