@@ -34,7 +34,8 @@ class CollectionXmlHandler(sax.ContentHandler):
     def startElementNS(self, name, qname, attrs):
         uri, localname = name
 
-        # TODO: pass in just the URI and have the model map it to a namespace.
+        # TODO: we could improve this by passing in just the URI and have the
+        #       model map it to a namespace.
         self.next_node = PressElement(localname,
                                       self._attrs_no_uri(attrs))
 

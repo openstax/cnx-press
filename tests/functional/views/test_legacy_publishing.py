@@ -352,10 +352,10 @@ def test_publishing_overwrite_collection_litezip(
         upload_files=file_data,
         expect_errors=False,
     )
-    assert 202 == resp.status_code  # 202 Unchanged
+    assert 202 == resp.status_code
 
     # Submit a publication, again.
-    # Note that this increases the version for new_modules[0] to 1.2
+    # Note that this increases the version to 1.2
     with file.open('rb') as fb:
         file_data = [('file', 'contents.zip', fb.read(),)]
     form_data = {'publisher': publisher, 'message': message}
@@ -365,7 +365,7 @@ def test_publishing_overwrite_collection_litezip(
         upload_files=file_data,
         expect_errors=True,
     )
-    assert 202 == resp.status_code  # 202 Unchanged
+    assert 202 == resp.status_code
 
 
 def test_publishing_no_changes(

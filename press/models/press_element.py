@@ -3,7 +3,6 @@ from press.errors import AttributeDoesNotExist
 
 class PressElement:
     """Represents a collxml element parsed from a Collection XML file.
-    It is iterable and it is comparable using `is_equal_to`.
     """
     def __init__(self, tag, attrs=None, text='', tail=''):
         self.tag = tag  # TODO: prevent whitespace in tag name / VALIDATE tag
@@ -24,8 +23,8 @@ class PressElement:
         return hash(self) == hash(other)
 
     """Represent a tag as it would appear in the source collxml file,
-    with the exception that this also includes the trailing text (`tail`)
-    prepended with `...` (ellipsis).
+    with the exception that this also includes the trailing text (``tail``)
+    prepended with ``...`` (ellipsis).
     """
     def __repr__(self):
         text = self.text or ''
@@ -48,22 +47,18 @@ class PressElement:
         tags = [c.tag for c in self.children]
 
         for child in self.children:
-            if tags.count(name) > 1:  # more than 1 child w/ same name
-                # ch[child.tag] = [c for c in self.children]
+            if tags.count(name) > 1:  # more than 1 child with the same name
                 ch[child.tag] = [c for c in self.children if c.tag == name]
             else:
                 ch[child.tag] = child
-        # TODO: the default value returned when attr does not exist is kind of
-        #       important; perhaps we can improve the error msg by returning
-        #       something other than None
+        # FIXME: perhaps we can improve error messaging by returning
+        #        something other than None
         default = None
         return ch.get(name, default)
 
-    # BRYAN - NOTE: Hm... what if this element is used in a for loop?
-    # https://docs.python.org/3/reference/datamodel.html#object.__getitem__
     def __getattr__(self, name):
         item = self.__getitem__(name)
-        if item:  # See: __bool__
+        if item:  # see: __bool__
             return item
         else:
             raise AttributeDoesNotExist()
@@ -72,12 +67,11 @@ class PressElement:
     def __len__(self):
         return len(self.children)
 
-    """Ahhh, Python"""
-    # See: https://docs.python.org/3/reference/datamodel.html#object.__bool__
+    # https://docs.python.org/3/reference/datamodel.html#object.__bool__
     def __bool__(self):
         return True
 
-    """Make it iterable, see also #iter()"""
+    """Make it iterable, see also ``iter()``"""
     def __iter__(self):
         return iter(self.children)
 
@@ -120,7 +114,7 @@ class PressElement:
 
     def insert_text(self, content):
         content = content.strip()
-        if self.text and content:  # if already has text, it's a tail.
+        if self.text and content:  # if it's already got text, it's a tail.
             return PressElement(self.tag, attrs=self.attrs, text=self.text,
                                 tail=content)
         else:
@@ -147,6 +141,5 @@ class PressElement:
             return None
 
     def attr(self, attr_name):
-        # get an attribute
         default = None
         return self.attrs.get(attr_name, default)
