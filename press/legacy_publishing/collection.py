@@ -2,10 +2,9 @@ from hashlib import sha1
 from pyramid.threadlocal import get_current_request
 from sqlalchemy.sql import text
 
-from press.exceptions import StaleVersion, CollectionChanged
-from press.utils import produce_hashes_from_filepath
-from .utils import replace_id_and_version, needs_major_rev, needs_minor_rev
-from ..errors import StaleVersion, CollectionChanged
+from press.exceptions import StaleVersion, Unchanged
+from .utils import replace_id_and_version, needs_major_rev, needs_minor_rev, \
+    produce_hashes_from_filepath
 
 from press.parsers import parse_collxml
 
@@ -59,14 +58,13 @@ def publish_legacy_book(model, metadata, submission, db_conn, changed=None):
 
     existing_shas = {filename: sha for filename, sha in shas}
 
-    # if the collection changed at all
-    existing_sha1 = existing_shas.get('collection.xml')
-    if existing_sha1 != produce_hashes_from_filepath(model.file)['sha1']:
-        raise CollectionChanged(model)
-    # OR if any of its resources changed
-    for res in model.resources:
-        if res.sha1 != existing_shas.get(res.filename):
-            raise CollectionChanged(model)
+    if changed is False and existing_shas['collection.xml'] \
+            == produce_hashes_from_filepath(model.file)['sha1']:
+        for res in model.resources:
+            if res.sha1 != existing_shas[res.filename]:
+                break  # publish!
+        else:  # collxml and all resources are identical to already published
+            raise Unchanged(model)
 
     # Decide whether to major rev or minor rev
     file_sql = text('SELECT file '

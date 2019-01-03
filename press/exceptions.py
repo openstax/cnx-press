@@ -22,11 +22,5 @@ class Unchanged(Exception):
         self.model = model
 
 
-class CollectionChanged(Exception):
-    """Raised when checked out version is older than published version"""
-    def __init__(self, collection):
-        self.collection = collection
-
-
 class AttributeDoesNotExist(Exception):
     pass

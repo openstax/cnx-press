@@ -111,10 +111,6 @@ class PressElement:
                     break
         return found
 
-    def content_tree(self):
-        # Just a utility method, consider moving out of the model itself.
-        return self.find('content')
-
     """Make it a tree"""
     def add_child(self, child):
         # Works like append for XML ElementTree-s

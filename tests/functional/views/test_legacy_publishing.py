@@ -196,6 +196,14 @@ def test_publishing_revision_litezip(
     tree.pop(1)
     # ... and append the new module to the tree.
     tree.append(content_util.make_tree_node_from(new_module))
+
+    # Change the module text, to make it publishable.
+    index_cnxml = new_module.file.read_text()
+    start_offset = index_cnxml.find('test document')
+    new_module.file.write_text(index_cnxml[:start_offset] +
+                               'TEST DOCUMENT' +
+                               index_cnxml[start_offset + 13:])
+
     collection, tree, modules = content_util.rebuild_collection(collection,
                                                                 tree)
     struct = tuple([collection, new_module])
@@ -215,9 +223,7 @@ def test_publishing_revision_litezip(
         upload_files=file_data,
         expect_errors=True,
     )
-    assert resp.status_code == 400
-
-    """FIXME: uncomment this block of code.
+    assert resp.status_code == 200
 
     # Check resulting data. (id mapping and urls)
     t = db_tables
@@ -248,7 +254,6 @@ def test_publishing_revision_litezip(
         assert result.version == version
         assert result.submitter == publisher
         assert result.submitlog == message
-"""
 
 
 def test_publishing_overwrite_module_litezip(
@@ -290,9 +295,7 @@ def test_publishing_overwrite_module_litezip(
         upload_files=file_data,
         expect_errors=True,
     )
-    # FIXME: uncomment.
-    # assert resp.status_code == 200
-    assert resp.status_code == 400
+    assert 200 == resp.status_code
 
     # Try to submit the publication again (version 1.1)
     with file.open('rb') as fb:
@@ -304,16 +307,17 @@ def test_publishing_overwrite_module_litezip(
         upload_files=file_data,
         expect_errors=True,
     )
-    assert resp.status_code == 400
+    assert 400 == resp.status_code
     expected_msgs = [
         {
-            "id": 4,
-            "message": "collection changed",
+            "id": 3,
+            "message": "stale version",
             "item": collection.id,
-            "error": 'modifying a collection is temporarily disallowed'
+            "error": "checked out version is 1.1"
+                     " but currently published is 1.2"
         }
     ]
-    assert resp.json['messages'] == expected_msgs
+    assert expected_msgs == resp.json['messages']
 
 
 def test_publishing_overwrite_collection_litezip(
@@ -346,11 +350,9 @@ def test_publishing_overwrite_collection_litezip(
         '/api/publish-litezip',
         form_data,
         upload_files=file_data,
-        expect_errors=True,
+        expect_errors=False,
     )
-    # FIXME: uncomment.
-    # assert resp.status_code == 204
-    assert resp.status_code == 400  # no changes to collection.xml
+    assert 202 == resp.status_code  # 202 Unchanged
 
     # Submit a publication, again.
     # Note that this increases the version for new_modules[0] to 1.2
@@ -363,9 +365,7 @@ def test_publishing_overwrite_collection_litezip(
         upload_files=file_data,
         expect_errors=True,
     )
-    # FIXME: uncomment.
-    # assert resp.status_code == 204
-    assert resp.status_code == 400  # no changes to collection.xml
+    assert 202 == resp.status_code  # 202 Unchanged
 
 
 def test_publishing_no_changes(
@@ -395,10 +395,8 @@ def test_publishing_no_changes(
         form_data,
         upload_files=file_data,
     )
-    # FIXME: uncomment
-    # assert resp.status_code == 202
 
-    assert resp.status_code == 200
+    assert resp.status_code == 202
 
 
 def test_publishing_unauthenticated(content_util, persist_util,

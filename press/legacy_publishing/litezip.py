@@ -16,7 +16,7 @@ __all__ = (
 )
 
 
-def publish_litezip(struct, submission, db_conn, coll_changes_allowed=True):
+def publish_litezip(struct, submission, db_conn):
     """Publish the contents of a litezip structured set of data.
 
     :param struct: a litezip struct from (probably from
@@ -33,13 +33,6 @@ def publish_litezip(struct, submission, db_conn, coll_changes_allowed=True):
         collection = [x for x in struct if isinstance(x, Collection)][0]
     except IndexError:  # pragma: no cover
         raise NotImplementedError('litezip without collection')
-
-    try:
-        module = [x for x in struct if isinstance(x, Module)][0]
-        metadata = parse_module_metadata(module)
-        publish_legacy_book(collection, metadata, submission, db_conn)
-    except IndexError:  # pragma: no cover
-        pass  # if no modules, no problem.
 
     id_map = {}  # pragma: no cover
 

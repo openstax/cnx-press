@@ -1,6 +1,9 @@
-from press.exceptions import CollectionChanged
+from sqlalchemy.sql import text
 from press.legacy_publishing.litezip import (
     publish_litezip,
+)
+from tests.helpers import (
+    compare_legacy_tree_similarity,
 )
 
 
@@ -20,21 +23,18 @@ def test_publish_litezip(
     tree.pop(1)
     # ... and append the new module to the tree.
     tree.append(content_util.make_tree_node_from(new_module))
+
+    # Change the module text, to make it publishable.
+    index_cnxml = new_module.file.read_text()
+    start_offset = index_cnxml.find('test document')
+    new_module.file.write_text(index_cnxml[:start_offset] +
+                               'TEST DOCUMENT' +
+                               index_cnxml[start_offset + 13:])
+
     collection, tree, modules = content_util.rebuild_collection(collection,
                                                                 tree)
     struct = tuple([collection, new_module])
 
-    try:
-        with db_engines['common'].begin() as conn:
-            publish_litezip(
-                struct,
-                ('user1', 'test publish',),
-                conn,
-            )
-    except CollectionChanged as err:
-        assert err.collection.id == collection.id
-
-    """FIXME: uncomment.
     with db_engines['common'].begin() as conn:
         id_map = publish_litezip(
             struct,
@@ -46,7 +46,10 @@ def test_publish_litezip(
         new_module.id: (new_module.id, (2, None)),
         collection.id: (collection.id, (2, 1)),
     }
-    assert id_map == expected_id_map
+    assert expected_id_map == id_map
+
+    # Update the tree to reflect the Module publication above.
+    tree[-1].version_at = '1.2'
 
     # Check the collection tree for accuracy. (This is not out of scope,
     # because the collection.xml document needs modified before insertion.)
@@ -62,4 +65,3 @@ def test_publish_litezip(
         .bindparams(moduleid=collection.id, major_version=2, minor_version=1))
     inserted_tree = db_engines['common'].execute(stmt).fetchone()[0]
     compare_legacy_tree_similarity(inserted_tree['contents'], tree)
-    """
