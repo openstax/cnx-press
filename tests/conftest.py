@@ -603,9 +603,9 @@ class _ContentUtil:
 
     def flatten_collection_tree_to_nodes(self, tree):
         """Given a collection tree, flatten it to end nodes (module items)."""
-        for node in tree['contents']:
-            if 'contents' in node:
-                yield from self.flatten_collection_tree_to_nodes(node)
+        for node in tree:
+            if hasattr(node, 'contents'):
+                yield from self.flatten_collection_tree_to_nodes(node.contents)
             else:
                 yield node
 

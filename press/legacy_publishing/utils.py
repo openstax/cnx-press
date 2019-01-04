@@ -46,7 +46,8 @@ def needs_minor_rev(pre, post):
         - subject
     2. Parameter changes
     3. Collection or module actor changes
-    3. Collection or module role changes
+    4. Collection or module role changes
+    5. Module version changes
     """
     if pre.find('abstract') != post.find('abstract'):
         return True
@@ -69,6 +70,12 @@ def needs_minor_rev(pre, post):
     roles_after = roles_as_dict(post.findall('role'))
 
     if roles_before != roles_after:
+        return True
+
+    pre_versions = versions_as_set(pre.findall('module'))
+    post_versions = versions_as_set(post.findall('module'))
+
+    if pre_versions != post_versions:
         return True
 
     return False
@@ -101,6 +108,12 @@ def roles_as_dict(roles):
         for k, v in r.attrs.items():
             authors_dict[r.attrs['type']] = set(r.text.split(' '))
     return authors_dict
+
+
+def versions_as_set(modules):
+    return set((m.attr('document'),
+                m.attr('version-at-this-collection-version'))
+               for m in modules)
 
 
 def replace_derived_from(model, derived_from_url):
