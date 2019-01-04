@@ -14,7 +14,8 @@ __all__ = (
 )
 
 
-def publish_legacy_book(model, metadata, submission, db_conn, changed=None):
+def publish_legacy_book(model, metadata, submission, db_conn,
+                        collxml_changed=None):
     """Publish a Book (aka Collection) as the legacy (zope-based) system
     would.
 
@@ -49,22 +50,25 @@ def publish_legacy_book(model, metadata, submission, db_conn, changed=None):
     if metadata.version != existing_module.version:
         raise StaleVersion(metadata.version, existing_module.version, model)
 
-    shas = (db_conn.execute(
-            text("SELECT filename, sha1 FROM module_files"
-                 " JOIN files USING (fileid)"
-                 " WHERE module_ident = :mod_ident")
-            .bindparams(mod_ident=existing_module.module_ident))
-            ).fetchall()
+    if not collxml_changed:
+        # Check if any files in the collection changed
+        shas = (db_conn.execute(
+                text("SELECT filename, sha1 FROM module_files"
+                     " JOIN files USING (fileid)"
+                     " WHERE module_ident = :mod_ident")
+                .bindparams(mod_ident=existing_module.module_ident))
+                ).fetchall()
 
-    existing_shas = {filename: sha for filename, sha in shas}
+        existing_shas = {filename: sha for filename, sha in shas}
 
-    if changed is False and existing_shas['collection.xml'] \
-            == produce_hashes_from_filepath(model.file)['sha1']:
-        for res in model.resources:
-            if res.sha1 != existing_shas[res.filename]:
-                break  # publish!
-        else:  # collxml and all resources are identical to already published
-            raise Unchanged(model)
+        if existing_shas['collection.xml'] \
+                == produce_hashes_from_filepath(model.file)['sha1']:
+            for res in model.resources:
+                if res.sha1 != existing_shas.get(res.filename):
+                    break  # publish!
+            else:
+                # collxml and all resources are identical to already published
+                raise Unchanged(model)
 
     # Decide whether to major rev or minor rev
     file_sql = text('SELECT file '

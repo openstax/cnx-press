@@ -34,12 +34,6 @@ def publish_litezip(struct, submission, db_conn):
     except IndexError:  # pragma: no cover
         raise NotImplementedError('litezip without collection')
 
-    try:
-        metadata = parse_collection_metadata(collection)
-        publish_legacy_book(collection, metadata, submission, db_conn)
-    except IndexError:  # pragma: no cover
-        pass  # if no modules, no problem.
-
     id_map = {}  # pragma: no cover
 
     # Parse Collection tree to update the newly published Modules.
@@ -67,8 +61,8 @@ def publish_litezip(struct, submission, db_conn):
         except Unchanged:
             pass  # only publish content that has changed.
 
-    any_changes = id_map != {}
-    if any_changes:
+    collxml_changed = bool(id_map)
+    if id_map:
         # Rebuild the Collection tree from the newly published Modules.
         with collection.file.open('wb') as fb:
             fb.write(etree.tounicode(xml).encode('utf8'))
@@ -77,7 +71,8 @@ def publish_litezip(struct, submission, db_conn):
     metadata = parse_collection_metadata(collection)
     old_id = collection.id
     (id, version), ident = publish_legacy_book(
-        collection, metadata, submission, db_conn, changed=any_changes)
+        collection, metadata, submission, db_conn,
+        collxml_changed=collxml_changed)
     id_map[old_id] = (id, version)
 
     return id_map

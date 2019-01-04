@@ -319,7 +319,7 @@ def test_publishing_overwrite_module_litezip(
         {
             "id": 3,
             "message": "stale version",
-            "item": collection.id,
+            "item": new_module.id,
             "error": "checked out version is 1.1"
                      " but currently published is 1.2"
         }
