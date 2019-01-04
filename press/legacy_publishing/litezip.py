@@ -16,7 +16,7 @@ __all__ = (
 )
 
 
-def publish_litezip(struct, submission, db_conn, coll_changes_allowed=True):
+def publish_litezip(struct, submission, db_conn):
     """Publish the contents of a litezip structured set of data.
 
     :param struct: a litezip struct from (probably from
@@ -33,13 +33,6 @@ def publish_litezip(struct, submission, db_conn, coll_changes_allowed=True):
         collection = [x for x in struct if isinstance(x, Collection)][0]
     except IndexError:  # pragma: no cover
         raise NotImplementedError('litezip without collection')
-
-    try:
-        module = [x for x in struct if isinstance(x, Module)][0]
-        metadata = parse_module_metadata(module)
-        publish_legacy_book(collection, metadata, submission, db_conn)
-    except IndexError:  # pragma: no cover
-        pass  # if no modules, no problem.
 
     id_map = {}  # pragma: no cover
 
@@ -66,7 +59,7 @@ def publish_litezip(struct, submission, db_conn, coll_changes_allowed=True):
                 legacy_version = convert_version_to_legacy_version(version)
                 elm.attrib[version_attrib_name] = legacy_version
         except Unchanged:
-            pass
+            pass  # only publish content that has changed.
 
     any_changes = id_map != {}
     if any_changes:
@@ -78,7 +71,7 @@ def publish_litezip(struct, submission, db_conn, coll_changes_allowed=True):
     metadata = parse_collection_metadata(collection)
     old_id = collection.id
     (id, version), ident = publish_legacy_book(
-        collection, metadata, submission, db_conn, changed=any_changes)
+        collection, metadata, submission, db_conn)
     id_map[old_id] = (id, version)
 
     return id_map
