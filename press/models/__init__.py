@@ -1,11 +1,12 @@
 from collections import namedtuple
 
+from .press_element import PressElement
 
 __all__ = (
     'CollectionMetadata',
     'ModuleMetadata',
+    'PressElement',
 )
-
 
 CollectionMetadata = namedtuple(
     'CollectionMetadata',
