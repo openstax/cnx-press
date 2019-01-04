@@ -93,6 +93,8 @@ def publish_legacy_book(model, metadata, submission, db_conn,
         minor_version = 1
     elif needs_minor_rev(pre, post_tree):
         minor_version += 1
+    else:
+        raise Unchanged(model)
 
     # Get existing abstract, if exists, otherwise add it
     result = db_conn.execute(

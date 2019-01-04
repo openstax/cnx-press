@@ -2,6 +2,7 @@ from datetime import timedelta
 from dateutil.parser import parse as parse_date
 from litezip.main import COLLECTION_NSMAP
 from sqlalchemy.sql import text
+import pytest
 
 from press.legacy_publishing.collection import (
     publish_legacy_book,
@@ -9,6 +10,7 @@ from press.legacy_publishing.collection import (
 from press.parsers import (
     parse_collection_metadata,
 )
+from press.exceptions import Unchanged
 
 from tests.conftest import GOOGLE_ANALYTICS_CODE
 from tests.helpers import (
@@ -372,6 +374,11 @@ def test_publish_revision_with_new_resources(
     control_files = {x.filename: x for x in control_data}
     assert book_cover.filename not in control_files
 
+    # make it publishable
+    with element_tree_from_model(collection) as xml:
+        elem = xml.xpath('//md:title', namespaces=COLLECTION_NSMAP)[0]
+        elem.text = 'a different collection title'
+
     # TARGET
     with db_engines['common'].begin() as conn:
         (id, version), ident = publish_legacy_book(
@@ -449,6 +456,11 @@ def test_publish_revision_that_overwrites_existing_resources(
 
     assert replaced_file_record.file == book_cover.data.read_bytes()
 
+    # make it publishable
+    with element_tree_from_model(collection) as xml:
+        elem = xml.xpath('//md:title', namespaces=COLLECTION_NSMAP)[0]
+        elem.text = 'a different collection title'
+
     # TARGET
     with db_engines['common'].begin() as conn:
         (id, version), ident = publish_legacy_book(
@@ -469,3 +481,32 @@ def test_publish_revision_that_overwrites_existing_resources(
     assert files[new_book_cover.filename].sha1 == new_book_cover.sha1
     assert files[new_book_cover.filename].file == \
         new_book_cover.data.read_bytes()
+
+
+def test_publish_with_no_major_or_minor_rev_changes(
+        content_util, persist_util, app, db_engines, db_tables):
+    """MAKING CHANGES other than those which cause a major or minor version rev
+     DO cause Unchanged to be raised.
+    """
+    resources = list([content_util.gen_resource() for x in range(0, 2)])
+    collection, tree, modules = content_util.gen_collection(
+        resources=resources
+    )
+    modules = list([persist_util.insert_module(m) for m in modules])
+    collection, tree, modules = content_util.rebuild_collection(collection,
+                                                                tree)
+    collection = persist_util.insert_collection(collection)
+    metadata = parse_collection_metadata(collection)
+
+    # TARGET
+    with element_tree_from_model(collection) as xml:
+        elem = xml.xpath('//md:created', namespaces=COLLECTION_NSMAP)[0]
+        elem.text = 'something different'
+
+    with pytest.raises(Unchanged), db_engines['common'].begin() as conn:
+        (id, version), ident = publish_legacy_book(
+            collection,
+            metadata,
+            ('user1', 'test publish',),
+            conn,
+        )
