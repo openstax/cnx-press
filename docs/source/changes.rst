@@ -2,6 +2,12 @@
 Change Log
 ==========
 
+7.3.0
+-----
+
+- Update Sentry integration to use the Sentry SDK rather than the Raven client
+  with custom integration code.
+
 7.2.0
 -----
 

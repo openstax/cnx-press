@@ -12,7 +12,7 @@ from press.parsers import (
     parse_module_metadata,
 )
 
-from press.errors import Unchanged
+from press.exceptions import Unchanged
 
 from tests.conftest import GOOGLE_ANALYTICS_CODE
 from tests.helpers import element_tree_from_model

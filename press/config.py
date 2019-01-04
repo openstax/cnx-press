@@ -4,7 +4,9 @@ import warnings
 from pyramid.config import Configurator
 from pyramid.config.settings import asbool
 from sqlalchemy.exc import SAWarning
+
 from .auth import RootFactory
+from .exceptions import AppStartUpWarning
 
 
 def discover_set(settings, setting_name, env_var, default=None,
@@ -35,6 +37,33 @@ def discover_set(settings, setting_name, env_var, default=None,
         settings.setdefault(setting_name, default)
 
 
+def initialize_sentry_integration():  # pragma: no cover
+    """\
+    Used to optionally initialize the Sentry service with this app.
+    See https://docs.sentry.io/platforms/python/pyramid/
+
+    """
+    # This function is not under coverage because it is boilerplate
+    # from the Sentry documentation.
+    import sentry_sdk
+    from sentry_sdk.integrations.pyramid import PyramidIntegration
+    from sentry_sdk.integrations.celery import CeleryIntegration
+
+    try:
+        dsn = os.environ['SENTRY_DSN']
+    except KeyError:
+        warnings.warn(
+            "Sentry is not configured because SENTRY_DSN "
+            "was not supplied.",
+            AppStartUpWarning,
+        )
+    else:
+        sentry_sdk.init(
+            dsn=dsn,
+            integrations=[PyramidIntegration(), CeleryIntegration()],
+        )
+
+
 def configure(settings=None):
     """Configure the :mod:`pyramid.configure.Configurator` object"""
     if settings is None:
@@ -45,7 +74,7 @@ def configure(settings=None):
     assert os.path.exists(settings['shared_directory'])  # required
     # TODO check permissions for write access
 
-    discover_set(settings, 'sentry.dsn', 'SENTRY_DSN')
+    initialize_sentry_integration()
     discover_set(settings, 'celery.broker', 'AMQP_URL')
 
     discover_set(settings, 'debug', 'DEBUG', False, asbool)
@@ -54,7 +83,6 @@ def configure(settings=None):
     # Create the configuration object
     config = Configurator(settings=settings, root_factory=RootFactory)
     config.include('.logging')
-    config.include('.raven')
     config.include('.subscribers')
     config.include('.views')
     config.include('.tasks')

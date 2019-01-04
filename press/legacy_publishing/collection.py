@@ -2,9 +2,10 @@ from hashlib import sha1
 from pyramid.threadlocal import get_current_request
 from sqlalchemy.sql import text
 
+from press.exceptions import StaleVersion, CollectionChanged
 from press.utils import produce_hashes_from_filepath
 from .utils import replace_id_and_version
-from ..errors import StaleVersion, CollectionChanged
+
 
 __all__ = (
     'publish_legacy_book',
