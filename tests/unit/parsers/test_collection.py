@@ -4,7 +4,17 @@ from litezip import parse_collection
 from litezip.main import COLLECTION_NSMAP
 from lxml import etree
 
-from press.parsers import parse_collection_metadata
+from press.parsers import parse_collection_metadata, parse_collxml
+from press.models import PressElement
+
+
+def test_parse_collxml(content_util):
+    collection, _, _ = content_util.gen_collection()
+    output = parse_collxml(collection.file.open('rb'))
+
+    assert isinstance(output, PressElement)
+    assert len(output.findall()) > 100  # just a smoke test, arbitrary #.
+    assert output.tag == 'root'  # what the root tag is called.
 
 
 def test_parse_collection_metadata(litezip_valid_litezip):

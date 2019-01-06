@@ -1,4 +1,7 @@
+from litezip.main import COLLECTION_NSMAP
 from press.models import PressElement
+from press.parsers import parse_collxml
+from tests.helpers import element_tree_from_model
 
 
 def gen_press_element_tree():
@@ -26,6 +29,33 @@ def test_string_representation():
     assert repr(PressElement('tagname')) == '<tagname></tagname>'
     assert str(PressElement('tagname')) == '<tagname></tagname>'
     assert str(PressElement('tagname', text='Yes')) == '<tagname>Yes</tagname>'
+
+
+def test_find_method(content_util):
+    """Test that you can look at only part of the tree like `content` tag,
+    and be able to differentiate between the coll's title and modules' titles
+    """
+    expected = "The Collection's Title"
+    collection, tree, _ = content_util.gen_collection()
+
+    with element_tree_from_model(collection) as x:
+        el = x.xpath('//col:metadata/md:title', namespaces=COLLECTION_NSMAP)[0]
+        el.text = expected  # TARGET
+
+    tree = parse_collxml(collection.file.open('rb'))
+    actual = tree.find('title')  # the first title is the collection's.
+
+    assert actual.text == expected
+
+
+def test_finding_by_path(content_util):
+    expected = 'http://cnx.org/content'
+
+    collection, tree, _ = content_util.gen_collection()
+    tree = parse_collxml(collection.file.open('rb'))
+
+    title = tree.find_by_path('collection/metadata/repository').text
+    assert title == expected
 
 
 def test_tree_behavior(content_util):
