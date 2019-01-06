@@ -74,3 +74,12 @@ def retryable_timeout_request_mock_callback(func):
     wrapper.tries = {}
 
     return wrapper
+
+
+def gen_element(namespace, tag, text, tail=None):
+    from litezip.main import COLLECTION_NSMAP
+    elem = etree.Element(
+        '{{{}}}{}'.format(COLLECTION_NSMAP[namespace], tag),
+        nsmap=COLLECTION_NSMAP)
+    elem.text = text
+    return elem
