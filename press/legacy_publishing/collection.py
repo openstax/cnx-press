@@ -15,7 +15,7 @@ __all__ = (
 
 
 def publish_legacy_book(model, metadata, submission, db_conn,
-                        collxml_changed=None):
+                        modules_changed=None):
     """Publish a Book (aka Collection) as the legacy (zope-based) system
     would.
 
@@ -50,7 +50,7 @@ def publish_legacy_book(model, metadata, submission, db_conn,
     if metadata.version != existing_module.version:
         raise StaleVersion(metadata.version, existing_module.version, model)
 
-    if not collxml_changed:
+    if not modules_changed:
         # Check if any files in the collection changed
         shas = (db_conn.execute(
                 text("SELECT filename, sha1 FROM module_files"
