@@ -2,8 +2,10 @@ from hashlib import sha1
 from pyramid.threadlocal import get_current_request
 from sqlalchemy.sql import text
 
-from press.exceptions import StaleVersion
-from .utils import replace_id_and_version
+from press.exceptions import StaleVersion, Unchanged
+from press.parsers import parse_collxml
+from .utils import replace_id_and_version, needs_major_rev, needs_minor_rev, \
+    produce_hashes_from_filepath
 
 
 __all__ = (
@@ -11,7 +13,8 @@ __all__ = (
 )
 
 
-def publish_legacy_book(model, metadata, submission, db_conn):
+def publish_legacy_book(model, metadata, submission, db_conn,
+                        modules_changed=None):
     """Publish a Book (aka Collection) as the legacy (zope-based) system
     would.
 
@@ -46,8 +49,51 @@ def publish_legacy_book(model, metadata, submission, db_conn):
     if metadata.version != existing_module.version:
         raise StaleVersion(metadata.version, existing_module.version, model)
 
+    if not modules_changed:
+        # Check if any files in the collection changed
+        shas = (db_conn.execute(
+                text("SELECT filename, sha1 FROM module_files"
+                     " JOIN files USING (fileid)"
+                     " WHERE module_ident = :mod_ident")
+                .bindparams(mod_ident=existing_module.module_ident))
+                ).fetchall()
+
+        existing_shas = {filename: sha for filename, sha in shas}
+
+        if existing_shas['collection.xml'] \
+                == produce_hashes_from_filepath(model.file)['sha1']:
+            for res in model.resources:
+                if res.sha1 != existing_shas.get(res.filename):
+                    break  # publish!
+            else:
+                # collxml and all resources are identical to already published
+                raise Unchanged(model)
+
+    # Decide whether to major rev or minor rev
+    file_sql = text('SELECT file '
+                    'FROM files f '
+                    'JOIN module_files mf ON f.fileid = mf.fileid '
+                    'WHERE filename = \'collection.xml\' '
+                    'AND module_ident = :ident'
+                    ).bindparams(ident=existing_module.module_ident)
+
+    existing_file = db_conn.execute(file_sql).fetchone()
+
+    pre = parse_collxml(existing_file.file)
+
     major_version = existing_module.major_version
-    minor_version = existing_module.minor_version + 1
+    minor_version = existing_module.minor_version
+
+    with model.file.open('rb') as pf:
+        post_tree = parse_collxml(pf)
+
+    if needs_major_rev(pre, post_tree):
+        major_version += 1
+        minor_version = 1
+    elif needs_minor_rev(pre, post_tree):
+        minor_version += 1
+    else:
+        raise Unchanged(model)
 
     # Get existing abstract, if exists, otherwise add it
     result = db_conn.execute(
