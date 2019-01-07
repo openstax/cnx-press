@@ -196,6 +196,14 @@ def test_publishing_revision_litezip(
     tree.pop(1)
     # ... and append the new module to the tree.
     tree.append(content_util.make_tree_node_from(new_module))
+
+    # Change the module text, to make it publishable.
+    index_cnxml = new_module.file.read_text()
+    start_offset = index_cnxml.find('test document')
+    new_module.file.write_text(index_cnxml[:start_offset] +
+                               'TEST DOCUMENT' +
+                               index_cnxml[start_offset + 13:])
+
     collection, tree, modules = content_util.rebuild_collection(collection,
                                                                 tree)
     struct = tuple([collection, new_module])
@@ -220,32 +228,32 @@ def test_publishing_revision_litezip(
     # Check resulting data. (id mapping and urls)
     t = db_tables
     id_mapping = {x['source_id']: x for x in resp.json}
+    for model in struct:
+        assert model.id in id_mapping
+        publication_record = id_mapping[model.id]
+        assert publication_record['id'] == model.id
+        version = '1.2'
+        assert publication_record['legacy_version'] == version
+        url = publication_record['url']
+        # FIXME We should visit this URL rather than check its parts.
+        assert '/content/{}/{}'.format(model.id, version) in url
 
-    assert collection.id in id_mapping
-    publication_record = id_mapping[collection.id]
-    assert publication_record['id'] == collection.id
-    version = '1.1'
-    assert publication_record['legacy_version'] == version
-    url = publication_record['url']
-    # FIXME: We should visit this URL instead of checking its parts.
-    assert '/content/{}/{}'.format(collection.id, version) in url
-
-    # FIXME: This functional test should not be directly communicating
-    #        with the database. Instead, it should be using other http
-    #        routes to verify the contents.
-    # Check the content is actually in the database
-    #   and that the correct publisher and message was attributed.
-    # Checking for content details is out-of-scope for this test.
-    stmt = (
-        t.modules.select()
-        .where(t.modules.c.moduleid == collection.id)
-        .order_by(t.modules.c.major_version.desc(),
-                  t.modules.c.minor_version.desc())
-        .limit(1))
-    result = db_engines['common'].execute(stmt).fetchone()
-    assert result.version == version
-    assert result.submitter == publisher
-    assert result.submitlog == message
+        # FIXME This functional test should not be directly communicating
+        #       with the database. Instead it should be using other http
+        #       routes to verify the contents.
+        # Check the content is actually in the database
+        #   and that the correct publisher and message was attributed.
+        # Checking for content details is out-of-scope for this test.
+        stmt = (
+            t.modules.select()
+            .where(t.modules.c.moduleid == model.id)
+            .order_by(t.modules.c.major_version.desc(),
+                      t.modules.c.minor_version.desc())
+            .limit(1))
+        result = db_engines['common'].execute(stmt).fetchone()
+        assert result.version == version
+        assert result.submitter == publisher
+        assert result.submitlog == message
 
 
 def test_publishing_overwrite_module_litezip(
@@ -271,6 +279,13 @@ def test_publishing_overwrite_module_litezip(
                                                                 tree)
 
     struct = tuple([collection, new_module])
+
+    # Change the module text, to make it publishable.
+    index_cnxml = new_module.file.read_text()
+    start_offset = index_cnxml.find('test document')
+    new_module.file.write_text(index_cnxml[:start_offset] +
+                               'TEST DOCUMENT' +
+                               index_cnxml[start_offset + 13:])
 
     file = content_util.mk_zipfile_from_litezip_struct(struct)
 
@@ -299,18 +314,17 @@ def test_publishing_overwrite_module_litezip(
         upload_files=file_data,
         expect_errors=True,
     )
-    # FIXME: expect stale version error
-#    assert resp.status_code == 400
-#    expected_msgs = [
-#        {
-#            "id": 4,
-#            "message": "collection changed",
-#            "item": collection.id,
-#            "error": 'modifying a collection is temporarily disallowed'
-#        }
-#    ]
-#    assert resp.json['messages'] == expected_msgs
-    assert resp.status_code == 200
+    assert resp.status_code == 400
+    expected_msgs = [
+        {
+            "id": 3,
+            "message": "stale version",
+            "item": new_module.id,
+            "error": "checked out version is 1.1"
+                     " but currently published is 1.2"
+        }
+    ]
+    assert expected_msgs == resp.json['messages']
 
 
 def test_publishing_overwrite_collection_litezip(
@@ -343,12 +357,12 @@ def test_publishing_overwrite_collection_litezip(
         '/api/publish-litezip',
         form_data,
         upload_files=file_data,
-        expect_errors=True,
+        expect_errors=False,
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 202
 
     # Submit a publication, again.
-    # Note that this increases the version for new_modules[0] to 1.2
+    # Note that this increases the version to 1.2
     with file.open('rb') as fb:
         file_data = [('file', 'contents.zip', fb.read(),)]
     form_data = {'publisher': publisher, 'message': message}
@@ -358,7 +372,7 @@ def test_publishing_overwrite_collection_litezip(
         upload_files=file_data,
         expect_errors=True,
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 202
 
 
 def test_publishing_no_changes(
@@ -388,10 +402,8 @@ def test_publishing_no_changes(
         form_data,
         upload_files=file_data,
     )
-    # FIXME: uncomment
-    # assert resp.status_code == 202
 
-    assert resp.status_code == 200
+    assert resp.status_code == 202
 
 
 def test_publishing_unauthenticated(content_util, persist_util,

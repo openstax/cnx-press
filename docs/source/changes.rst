@@ -7,6 +7,7 @@ Change Log
 
 - Undo temporary policy to disallow changes to collection.xml files
 - Create a collection xml parser
+- Add the ability to detect when to major rev and when to minor rev
 
 7.3.0
 -----
