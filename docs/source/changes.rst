@@ -2,6 +2,11 @@
 Change Log
 ==========
 
+8.0.0
+-----
+
+- Undo temporary policy to disallow changes to collection.xml files
+
 7.3.0
 -----
 
