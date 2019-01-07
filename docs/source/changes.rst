@@ -6,6 +6,7 @@ Change Log
 -----
 
 - Undo temporary policy to disallow changes to collection.xml files
+- Create a collection xml parser
 
 7.3.0
 -----
