@@ -50,7 +50,7 @@ python-dateutil==2.7.5
 
 python-magic==0.4.15
 
-pytz==2018.7
+pytz==2018.9
 
 PyYAML==3.13
 
