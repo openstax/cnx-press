@@ -19,7 +19,7 @@ more-itertools==4.3.0
 
 pillow==5.4.1
 
-pluggy==0.8.0
+pluggy==0.8.1
 
 pretend==1.0.9
 
