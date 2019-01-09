@@ -2,6 +2,12 @@
 Change Log
 ==========
 
+8.0.1
+-----
+
+- Fix Sentry integration to not depend on the sentry-sdk package. This ensures
+  the intergration is strictly optional.
+
 8.0.0
 -----
 

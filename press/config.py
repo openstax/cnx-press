@@ -45,9 +45,14 @@ def initialize_sentry_integration():  # pragma: no cover
     """
     # This function is not under coverage because it is boilerplate
     # from the Sentry documentation.
-    import sentry_sdk
-    from sentry_sdk.integrations.pyramid import PyramidIntegration
-    from sentry_sdk.integrations.celery import CeleryIntegration
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.pyramid import PyramidIntegration
+        from sentry_sdk.integrations.celery import CeleryIntegration
+    except ImportError:
+        # This is an optional feature to be used when the dependency
+        # and configuration are available.
+        return  # bail out early
 
     try:
         dsn = os.environ['SENTRY_DSN']
