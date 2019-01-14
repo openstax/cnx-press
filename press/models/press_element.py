@@ -1,6 +1,10 @@
 class PressElement:
     """Represents a collxml element parsed from a Collection XML file.
     """
+    class Empty:
+        def alltext():
+            return ''
+
     def __init__(self, tag, attrs=None, text='', tail=''):
         self.tag = tag  # TODO: prevent whitespace in tag name / VALIDATE tag
         self.text = text
@@ -86,7 +90,7 @@ class PressElement:
         try:
             return tuple(self.iter(tag))[0]
         except IndexError:
-            return None  # not found
+            return self.Empty  # not found
 
     def findall(self, tag=None):
         return tuple(self.iter(tag))

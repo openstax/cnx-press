@@ -2,6 +2,11 @@
 Change Log
 ==========
 
+8.0.2
+-----
+
+- Fix #347 Subjectlist should not be required for publish
+
 8.0.1
 -----
 
