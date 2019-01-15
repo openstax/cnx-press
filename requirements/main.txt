@@ -70,7 +70,7 @@ SQLAlchemy==1.2.15
 
 structlog==18.1.0
 
-swagger-spec-validator==2.4.1
+swagger-spec-validator==2.4.2
 
 translationstring==1.3
 
