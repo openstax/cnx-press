@@ -122,6 +122,17 @@ class TestMinorVersionRev():
             tree_before = parse_collxml(f)
             xml = etree.parse(f2)
 
+        # subjectlist is optional and some collections in the database don't
+        # have subjectlist, so make sure the code can handle it
+        coll = tree_before.children[0]
+        # remove subjectlist from the collection
+        for c in coll.children:
+            if c.tag == 'metadata':
+                for i, mc in enumerate(c.children):
+                    if mc.tag == 'subjectlist':
+                        del c.children[i]
+                        break
+
         subj = xml.xpath('//md:subject', namespaces=COLLECTION_NSMAP)[0]
         original_subj = subj.text
         subj.text = 'Some other subject'

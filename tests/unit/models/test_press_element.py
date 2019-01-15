@@ -124,3 +124,8 @@ def test_objectified_magic():
                 => title
     """
     assert collection.metadata.anothertag.title.text == 'Collection Title'
+
+
+# https://github.com/openstax/cnx-press/issues/347
+def test_alltext_when_element_not_found():
+    assert PressElement('sometag').find('nonExistentTag123').alltext() == ''
