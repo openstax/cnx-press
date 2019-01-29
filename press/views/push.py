@@ -11,6 +11,10 @@ from ..publishing import (
     expand_zip,
     persist_file_to_filesystem,
 )
+from ..utils import (
+    convert_version_tuple_to_version_string,
+    convert_version_to_legacy_version
+)
 
 
 @view_config(route_name='api.v3.push', request_method=['POST'],
@@ -58,5 +62,16 @@ def push(request):
     )
     request.registry.notify(finish_event)
 
-    resp_data = ['copied']
+    resp_data = []
+    for id, ver in ids:
+        version_string = convert_version_tuple_to_version_string(ver)
+        legacy_version = convert_version_to_legacy_version(ver)
+        resp_data.append({
+            'source_id': id,
+            'id': id,
+            'version': version_string,
+            'legacy_version': legacy_version,
+            'url': request.route_url('api.v1.versioned_content',
+                                     id=id, ver=legacy_version),
+        })
     return resp_data
