@@ -1,0 +1,73 @@
+resources:
+
+  - name: source-code
+    type: git
+    source:
+      uri: https://github.com/openstax/cnx-press.git
+      branch: feature/concourse-ci
+
+  - name: press-image
+    type: docker-image
+    source:
+      # FIXME: using personal repo here so that I don't accidentally overwrite openstax/cnx-press:latest.
+      repository: pumazi/cnx-press
+      username: ((docker-hub-username))
+      password: ((docker-hub-password))
+
+
+
+
+jobs:
+  - name: build-and-publish-container
+    public: true
+    plan:
+      - get: source-code
+      - put: press-image
+        params:
+          build: source-code
+          tag_file: source-code/.git/short_ref
+                
+  # - name: run-unit-and-integration-tests
+  - name: wip
+    public: true
+    plan:
+      - get: source-code
+      - task: run-tests
+        privileged: true
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              # TODO: install automake in the container so we can use `make test`
+              repository: pumazi/dcind
+              tag: latest
+          inputs:
+            - name: source-code
+            - name: press-image
+          run:
+            # TODO: Pass the built image through to this container for use.
+            #       Only publish externally after the tests have passed.
+            #       This is to address the time it takes to both upload and download
+            #       when the source is available right here.
+            path: entrypoint.sh
+            args:
+              - bash
+              - -ceau
+              - |
+                docker load < press-image/image
+                # XXX debug
+                docker image ls
+                cd source-code
+                # Specify the built container to use
+                # Note: Use `git show-ref --hash=7 HEAD` to locally mock this behavior
+                export PRESS_CONTAINER_TAG=$(cat .git/short_ref)
+                # Print out the compose-file for clarity and debugging
+                docker-compose config
+                # Startup the stack for integration testing
+                docker-compose up -d
+                # Run the tests
+                docker-compose run --rm web bin/test
+
+  # - name: deploy-to-staging-area
+  # - name: publish-release
