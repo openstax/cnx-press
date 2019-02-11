@@ -89,15 +89,12 @@ TEST_EXTRA_ARGS =
 
 help-test :
 	@echo "${_SHORT_DESC_TEST}"
-	@echo "Usage: make test [<VAR>=<val>, ...]"
+	@echo "Usage: make test [...]"
 	@echo ""
-	@echo "Where <VAR> could be:"  # alphbetical please
-	@echo "  * TEST -- specify the test to run (default: '$(TEST)')"
-	@echo "  * TEST_EXTRA_ARGS -- extra arguments to give pytest (default: '$(TEST_EXTRA_ARGS)')"
-	@echo "    (see also setup.cfg's pytest configuration)"
+	@echo "where [...] are options to pass through to 'pytest'"
 
 test :
-	docker-compose -f docker-compose.yml -f docker-compose.test.yml run --rm web bin/test $(filter-out $@, $(MAKECMDGOALS)) $(TEST_EXTRA_ARGS) $(TEST)
+	docker-compose -f docker-compose.yml -f docker-compose.test.yml run --rm web bin/test $(filter-out $@, $(MAKECMDGOALS))
 
 # /Test
 
