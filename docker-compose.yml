@@ -1,18 +1,26 @@
-version: '2'
+version: '3.7'
 # If you have modifications, put those in docker-compose.override.yml
 # See also, https://docs.docker.com/compose/extends/#multiple-compose-files
+
+x-app-defaults: &app-defaults
+  # Assign the `PRESS_CONTAINER_TAG` environment variable to use a specific container image.
+  # See hub.docker.com/u/openstax/cnx-press or your local registry for available tags.
+  image: "openstax/cnx-press:${PRESS_CONTAINER_TAG:-latest}"
+  volumes:
+    - ./docs:/app/docs:z
+    - ./press:/app/press:z
+    - ./tests:/app/tests:z
+    - ./htmlcov:/app/htmlcov:z
+    - ./var:/app/var:z
+    - ./bin:/app/bin:z
+  environment:
+    - SHARED_DIR=/app/var
+    - DB_URL=postgresql://rhaptos@db/repository
+    - DB_SUPER_URL=postgresql://rhaptos_admin@db/repository
+    - AMQP_URL=amqp://guest@rabbitmq:5672//
+
+
 services:
-  # Our services:
-  app:
-    build: .
-    volumes:
-      - ./docs:/app/docs:z
-      - ./press:/app/press:z
-      - ./tests:/app/tests:z
-      - ./htmlcov:/app/htmlcov:z
-      - ./var:/app/var:z
-    environment:
-      - SHARED_DIR=/app/var
 
   rabbitmq:
     image: rabbitmq:latest
@@ -29,30 +37,11 @@ services:
       - DB_SUPER_URL=postgresql://rhaptos_admin@/repository
 
   web:
-    extends:
-      service: app
+    <<: *app-defaults
     command: gunicorn -b 0.0.0.0:6543 --access-logfile - --error-logfile - -n press --reload wsgi:app --timeout=180
     ports:
       - "88:6543"
-    links:
-      - db
-      - rabbitmq
-      - worker
-    environment:
-      - SHARED_DIR=/app/var
-      - DB_URL=postgresql://rhaptos@db/repository
-      - DB_SUPER_URL=postgresql://rhaptos_admin@db/repository
-      - AMQP_URL=amqp://guest@rabbitmq:5672//
 
   worker:
-    extends:
-      service: app
+    <<: *app-defaults
     command: celery -A press worker --beat --loglevel debug
-    links:
-      - db
-      - rabbitmq
-    environment:
-      - SHARED_DIR=/app/var
-      - DB_URL=postgresql://rhaptos@db/repository
-      - DB_SUPER_URL=postgresql://rhaptos_admin@db/repository
-      - AMQP_URL=amqp://guest@rabbitmq:5672//

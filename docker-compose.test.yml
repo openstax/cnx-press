@@ -1,10 +1,15 @@
-version: '2'
+version: '3.7'
 # extends docker-compose.yml
 # use `docker-compose -f docker-compose.yml -f docker-compose.test.yml ...`
-services:
-  web:
-    volumes:
-      - ./bin:/app/bin:z
+
+x-app-for-testing: &app-for-testing
+    build: .
     environment:
       - DB_URL=postgresql://rhaptos@db/testing
       - DB_SUPER_URL=postgresql://rhaptos_admin@db/testing
+
+services:
+  web:
+    <<: *app-for-testing
+  worker:
+    <<: *app-for-testing
