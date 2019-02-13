@@ -9,12 +9,20 @@ resources:
   - name: press-image
     type: docker-image
     source:
-      # FIXME: using personal repo here so that I don't accidentally overwrite openstax/cnx-press:latest.
-      repository: pumazi/cnx-press
+      repository: openstax/cnx-press
       username: ((docker-hub-username))
       password: ((docker-hub-password))
 
+  - name: dcind-image
+    type: docker-image
+    source:
+      repository: pumazi/dcind
+      tag: latest
 
+  - name: tag-docker-image
+    type: docker-image
+    source:
+      repository: pumazi/concourse-tag-docker-image-resource
 
 
 jobs:
@@ -26,25 +34,37 @@ jobs:
         params:
           build: source-code
           tag_file: source-code/.git/short_ref
-                
-  # - name: run-unit-and-integration-tests
-  - name: wip
+          rootfs: true
+          # FIXME: Ideally, we don't want to tag as latest, nor do we want to
+          #        tag at this point in the process. Only push to a symbolic
+          #        tag when you've verified the build; so likely only after
+          #        all the tests have run.
+          tag_as_latest: true
+
+  - name: run-unit-and-integration-tests
     public: true
     plan:
       - get: source-code
+      - get: press-image
+        passed: [build-and-publish-container]
+        # This isn't actually used, but needed to make this job depend on the
+        # previous job. The issue is that we'd like to pull a specific
+        # version, but we aren't able to say that as part of the 'get' step.
+        # That information is defined and locked in the resource definition.
+      - get: dcind-image
       - task: run-tests
         privileged: true
+        image: dcind-image
         config:
           platform: linux
-          image_resource:
-            type: docker-image
-            source:
-              # TODO: install automake in the container so we can use `make test`
-              repository: pumazi/dcind
-              tag: latest
+          # image_resource:
+          #   type: docker-image
+          #   source:
+          #     # TODO: install automake in the container so we can use `make test`
+          #     repository: pumazi/dcind
+          #     tag: latest
           inputs:
             - name: source-code
-            - name: press-image
           run:
             # TODO: Pass the built image through to this container for use.
             #       Only publish externally after the tests have passed.
@@ -55,9 +75,6 @@ jobs:
               - bash
               - -ceau
               - |
-                docker load < press-image/image
-                # XXX debug
-                docker image ls
                 cd source-code
                 # Specify the built container to use
                 # Note: Use `git show-ref --hash=7 HEAD` to locally mock this behavior
@@ -71,3 +88,9 @@ jobs:
 
   # - name: deploy-to-staging-area
   # - name: publish-release
+  #   public: true
+  #   plan:
+  #     # TODO: Push the symbolic tag (e.g. latest, dev, stable, etc) for the built image
+  #     #       See also the fixme in 'build-and-publish-container'
+  #     # TODO: notify slack
+  #     # TODO: notify github
