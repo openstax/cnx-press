@@ -19,10 +19,16 @@ resources:
       repository: pumazi/dcind
       tag: latest
 
-  - name: tag-docker-image
-    type: docker-image
-    source:
-      repository: pumazi/concourse-tag-docker-image-resource
+  # - name: tag-docker-image
+  #   type: docker-image
+  #   source:
+  #     repository: pumazi/concourse-tag-docker-image-resource
+
+  # - name: cnx-automation
+  #   type: docker-image
+  #   source:
+  #     repository: openstax/cnx-automation
+  #     tag: latest
 
 
 jobs:
@@ -87,6 +93,24 @@ jobs:
                 docker-compose run --rm web bin/test
 
   # - name: deploy-to-staging-area
+  #   public: true
+  #   plan:
+  #     - get: source-code
+  #     - task: deploy
+  #       image: dcind-image
+  #       inputs:
+  #         - source-code
+  #       run:
+  #         path: source-code/.ci/bin/deploy
+
+  # - name: run-ui-tests-on-deploy
+  #   public: true
+  #   plan:
+  #     - task:
+  #       image: cnx-automation
+  #       run:
+  #         path: tox
+
   # - name: publish-release
   #   public: true
   #   plan:
