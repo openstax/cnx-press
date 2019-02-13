@@ -92,16 +92,26 @@ jobs:
                 # Run the tests
                 docker-compose run --rm web bin/test
 
-  # - name: deploy-to-staging-area
-  #   public: true
-  #   plan:
-  #     - get: source-code
-  #     - task: deploy
-  #       image: dcind-image
-  #       inputs:
-  #         - source-code
-  #       run:
-  #         path: source-code/.ci/bin/deploy
+  - name: deploy-to-staging-area
+    public: true
+    plan:
+      - get: source-code
+      - task: deploy
+        image: dcind-image
+        inputs:
+          - source-code
+        run:
+          path: docker
+          args:
+            - -H
+            - cc1.cnx.org
+            - service
+            - update
+            - --label-add
+            - "git.commit-hash=$(cat source-code/.git/short_ref)"
+            - --image
+            - "openstax/cnx-press:$(cat source-code/.git/short_ref)"
+            - staging_press
 
   # - name: run-ui-tests-on-deploy
   #   public: true
