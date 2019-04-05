@@ -11,8 +11,6 @@ services:
 before_install:
   # Stop the local postgres service
   - sudo service postgresql stop
-  # Install python3 venv to enable the linting venv
-  - sudo apt-get install python3.6-venv
   # Create the virtual env and lint the codebase
   - make lint VENV_EXTRA_ARGS="--system-site-packages"
 script:
