@@ -1,11 +1,11 @@
 CNX Content Manager Press
 =========================
 
-.. image:: https://travis-ci.org/Connexions/cnx-press.svg
-   :target: https://travis-ci.org/Connexions/cnx-press
+.. image:: https://travis-ci.org/openstax/cnx-press.svg
+   :target: https://travis-ci.org/openstax/cnx-press
 
-.. image:: https://img.shields.io/codecov/c/github/Connexions/cnx-press.svg
-   :target: https://codecov.io/gh/Connexions/cnx-press
+.. image:: https://img.shields.io/codecov/c/github/openstax/cnx-press.svg
+   :target: https://codecov.io/gh/openstax/cnx-press
 
 .. image:: https://badge.fury.io/py/cnx-press.svg
    :target: http://badge.fury.io/py/cnx-press
