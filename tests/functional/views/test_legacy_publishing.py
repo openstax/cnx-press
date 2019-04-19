@@ -2,6 +2,7 @@ from lxml import etree
 
 from litezip.main import COLLECTION_NSMAP
 
+from tests.helpers import element_tree_from_model
 
 a_username = 'user1'
 a_passwd = 'foobar'
@@ -385,6 +386,46 @@ def test_publishing_no_changes(
     collection, tree, modules = content_util.rebuild_collection(collection,
                                                                 tree)
     collection = persist_util.insert_collection(collection)
+
+    struct = tuple([collection, ])
+
+    file = content_util.mk_zipfile_from_litezip_struct(struct)
+
+    publisher = 'user1'
+    message = 'test http publish'
+
+    # Submit a publication
+    with file.open('rb') as fb:
+        file_data = [('file', 'contents.zip', fb.read(),)]
+    form_data = {'publisher': publisher, 'message': message}
+    resp = webapp.post(
+        '/api/publish-litezip',
+        form_data,
+        upload_files=file_data,
+    )
+
+    assert resp.status_code == 202
+
+
+def test_publishing_no_significant_changes(
+        content_util, persist_util, webapp, db_engines, db_tables):
+    """Publishing a collection WITH CHANGES but none of which cause
+     a version rev (aka. not signicant changes) produce the same result
+     as if having no changes at all.
+     """
+    webapp.authorization = ('Basic', (a_username, a_passwd))
+
+    # Insert initial collection and modules.
+    collection, tree, modules = content_util.gen_collection()
+    modules = list([persist_util.insert_module(m) for m in modules])
+    collection, tree, modules = content_util.rebuild_collection(collection,
+                                                                tree)
+    collection = persist_util.insert_collection(collection)
+
+    # TARGET
+    with element_tree_from_model(collection) as xml:
+        elem = xml.xpath('//md:created', namespaces=COLLECTION_NSMAP)[0]
+        elem.text = 'something different'
 
     struct = tuple([collection, ])
 
