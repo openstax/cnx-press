@@ -483,18 +483,19 @@ def test_publish_revision_that_overwrites_existing_resources(
         new_book_cover.data.read_bytes()
 
 
-def test_publish_with_no_major_or_minor_rev_changes(
+def test_publish_with_no_significant_changes_raises_unchanged(
         content_util, persist_util, app, db_engines, db_tables):
     """MAKING CHANGES other than those which cause a major or minor version rev
-     DO cause Unchanged to be raised.
+     DOES cause `Unchanged` to be raised.
+
+    NOTE: If this test ever fails in the future for no apparent reason, feel
+    free to delete it because there is an existing view test which ultimately
+    tests the same outcome, in
+    test_legacy_publishing.py#test_publishing_no_significant_changes
+
+    See: https://github.com/openstax/cnx/issues/325
     """
-    resources = list([content_util.gen_resource() for x in range(0, 2)])
-    collection, tree, modules = content_util.gen_collection(
-        resources=resources
-    )
-    modules = list([persist_util.insert_module(m) for m in modules])
-    collection, tree, modules = content_util.rebuild_collection(collection,
-                                                                tree)
+    collection, tree, modules = content_util.gen_collection()
     collection = persist_util.insert_collection(collection)
     metadata = parse_collection_metadata(collection)
 
@@ -503,10 +504,11 @@ def test_publish_with_no_major_or_minor_rev_changes(
         elem = xml.xpath('//md:created', namespaces=COLLECTION_NSMAP)[0]
         elem.text = 'something different'
 
-    with pytest.raises(Unchanged), db_engines['common'].begin() as conn:
-        (id, version), ident = publish_legacy_book(
-            collection,
-            metadata,
-            ('user1', 'test publish',),
-            conn,
-        )
+    with pytest.raises(Unchanged):
+        with db_engines['common'].begin() as conn:
+            (id, version), ident = publish_legacy_book(
+                collection,
+                metadata,
+                ('user1', 'test publish',),
+                conn,
+            )

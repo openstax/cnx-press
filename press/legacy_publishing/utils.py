@@ -31,8 +31,8 @@ def needs_major_rev(pre, post):
     if pre.find('title').alltext() != post.find('title').alltext():
         return True  # collection's title changed
 
-    for this, other in zip(pre.find('content').iter(),
-                           post.find('content').iter()):
+    for this, other in zip(pre.find('content').iter('module'),
+                           post.find('content').iter('module')):
         if this != other:
             return True  # order changed
 
