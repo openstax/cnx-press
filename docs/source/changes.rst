@@ -2,6 +2,13 @@
 Change Log
 ==========
 
+8.1.0
+-----
+
+- Upgrade pinnings of various third-party dependencies
+- Fix Travis-CI build configuration (#449)
+- Fix intermittent test failures when no rev-ing changes (#452)
+
 8.0.2
 -----
 
