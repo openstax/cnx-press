@@ -2,7 +2,7 @@
 -r ./main.txt
 
 # Make sure to run `make docs` when this is updated to verify the build.
-Sphinx==1.8.4
+Sphinx==2.1.1
 
 # FIXME Pointing at a personal branch with specific changes.
 #       These changes have been submitted upstream (unaguil/sphinx-swaggerdoc).
