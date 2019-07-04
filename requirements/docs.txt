@@ -8,5 +8,5 @@ Sphinx==2.1.2
 #       These changes have been submitted upstream (unaguil/sphinx-swaggerdoc).
 ##sphinx-swaggerdoc[yaml]
 -e git+https://github.com/pumazi/sphinx-swaggerdoc.git@for-use#egg=sphinx-swaggerdoc
-PyYAML==3.13
+PyYAML==5.1.1
 # /FIXME
