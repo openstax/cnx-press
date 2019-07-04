@@ -35,7 +35,7 @@ recordclass==0.11.1
 
 requests==2.22.0
 
-requests-mock==1.5.2
+requests-mock==1.6.0
 
 six==1.12.0
 
