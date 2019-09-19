@@ -38,7 +38,7 @@ PasteDeploy==2.0.1
 
 plaster==1.0
 
-plaster-pastedeploy==0.6
+plaster-pastedeploy==0.7
 
 psycopg2==2.7.7
 
