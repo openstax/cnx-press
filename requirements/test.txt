@@ -27,7 +27,7 @@ py==1.8.0
 
 pytest==4.0.2
 
-pytest-cov==2.6.1
+pytest-cov==2.7.1
 
 python-dateutil==2.8.0
 
