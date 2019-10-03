@@ -1,6 +1,6 @@
 # The project's dependencies...
 
-amqp==2.5.1
+amqp==2.5.2
 
 billiard==3.6.1.0
 
@@ -28,7 +28,7 @@ jsonref==0.2
 
 jsonschema==3.0.2
 
-kombu==4.6.4
+kombu==4.6.5
 
 lxml==4.4.1
 
@@ -60,7 +60,7 @@ requests==2.22.0
 
 rhaptos.cnxmlutils==1.7.3
 
-sentry-sdk==0.12.2
+sentry-sdk==0.12.3
 
 simplejson==3.16.0
 
