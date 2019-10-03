@@ -1,6 +1,6 @@
 # The project's dependencies...
 
-amqp==2.5.1
+amqp==2.5.2
 
 billiard==3.6.1.0
 
