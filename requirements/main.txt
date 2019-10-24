@@ -40,7 +40,7 @@ plaster==1.0
 
 plaster-pastedeploy==0.7
 
-psycopg2==2.8.3
+psycopg2==2.8.4
 
 pyramid==1.10.4
 
