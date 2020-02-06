@@ -2,7 +2,7 @@
 
 amqp==2.5.2
 
-billiard==3.6.1.0
+billiard==3.6.2.0
 
 bravado-core==5.14.0
 
