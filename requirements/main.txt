@@ -84,4 +84,4 @@ WebOb==1.8.6
 
 zope.deprecation==4.4.0
 
-zope.interface==4.6.0
+zope.interface==4.7.1
