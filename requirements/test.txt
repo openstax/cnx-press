@@ -45,4 +45,4 @@ waitress==1.4.3
 
 WebOb==1.8.6
 
-WebTest==2.0.33
+WebTest==2.0.34
