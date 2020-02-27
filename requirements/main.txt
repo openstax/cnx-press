@@ -56,7 +56,7 @@ PyYAML==5.3
 
 repoze.lru==0.7
 
-requests==2.22.0
+requests==2.23.0
 
 rhaptos.cnxmlutils==1.7.3
 
