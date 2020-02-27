@@ -6,7 +6,7 @@ billiard==3.6.2.0
 
 bravado-core==5.16.1
 
-celery==4.3.0
+celery==4.4.0
 
 certifi==2019.9.11
 
