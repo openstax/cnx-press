@@ -1,6 +1,11 @@
 ==========
 Change Log
 ==========
+8.1.1
+-----
+
+- Upgrade pinnings of various third-party dependencies
+- Fix "fixture db_tables called directly" in tests (#463)
 
 8.1.0
 -----
