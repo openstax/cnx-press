@@ -1,48 +1,48 @@
 # The project's testing dependencies...
 -r ./main.txt
 
-beautifulsoup4==4.8.1
+beautifulsoup4==4.8.2
 
-certifi==2019.9.11
+certifi==2019.11.28
 
 chardet==3.0.4
 
-coverage==4.5.4
+coverage==5.0.3
 
-idna==2.8
+idna==2.9
 
-Jinja2==2.10.3
+Jinja2==2.11.1
 
 MarkupSafe==1.1.1
 
-more-itertools==7.2.0
+more-itertools==8.2.0
 
-pillow==6.2.1
+pillow==7.0.0
 
-pluggy==0.13.0
+pluggy==0.13.1
 
 pretend==1.0.9
 
-py==1.8.0
+py==1.8.1
 
-pytest==5.2.2
+pytest==5.3.5
 
 pytest-cov==2.8.1
 
-python-dateutil==2.8.0
+python-dateutil==2.8.1
 
-recordclass==0.12.0.1
+recordclass==0.13.2
 
-requests==2.22.0
+requests==2.23.0
 
 requests-mock==1.7.0
 
-six==1.12.0
+six==1.14.0
 
-urllib3==1.25.6
+urllib3==1.25.8
 
-waitress==1.3.1
+waitress==1.4.3
 
-WebOb==1.8.5
+WebOb==1.8.6
 
-WebTest==2.0.33
+WebTest==2.0.34

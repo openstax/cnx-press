@@ -2,11 +2,11 @@
 -r ./main.txt
 
 # Make sure to run `make docs` when this is updated to verify the build.
-Sphinx==2.2.1
+Sphinx==2.4.3
 
 # FIXME Pointing at a personal branch with specific changes.
 #       These changes have been submitted upstream (unaguil/sphinx-swaggerdoc).
 ##sphinx-swaggerdoc[yaml]
 -e git+https://github.com/pumazi/sphinx-swaggerdoc.git@for-use#egg=sphinx-swaggerdoc
-PyYAML==5.1.2
+PyYAML==5.3
 # /FIXME
