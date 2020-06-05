@@ -12,10 +12,10 @@ __all__ = (
 )
 
 
-def _maybe(l):
+def _maybe(a_list):
     """Grab the first value if it exists."""
     try:
-        return l[0]
+        return a_list[0]
     except IndexError:
         return None
 

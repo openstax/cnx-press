@@ -1,7 +1,7 @@
 # The project's testing dependencies...
 -r ./main.txt
 
-beautifulsoup4==4.9.0
+beautifulsoup4==4.9.1
 
 certifi==2020.4.5.1
 
@@ -15,7 +15,7 @@ Jinja2==2.11.2
 
 MarkupSafe==1.1.1
 
-more-itertools==8.2.0
+more-itertools==8.3.0
 
 pillow==7.1.2
 
@@ -25,9 +25,9 @@ pretend==1.0.9
 
 py==1.8.1
 
-pytest==5.4.1
+pytest==5.4.3
 
-pytest-cov==2.8.1
+pytest-cov==2.9.0
 
 python-dateutil==2.8.1
 
@@ -35,13 +35,13 @@ recordclass==0.13.2
 
 requests==2.23.0
 
-requests-mock==1.7.0
+requests-mock==1.8.0
 
-six==1.14.0
+six==1.15.0
 
 urllib3==1.25.9
 
-waitress==1.4.3
+waitress==1.4.4
 
 WebOb==1.8.6
 
