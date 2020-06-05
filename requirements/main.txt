@@ -20,6 +20,8 @@ cnx-litezip==1.6.0
 
 cnxml==3.0.1
 
+future==0.18.2
+
 hupper==1.10.2
 
 idna==2.9
