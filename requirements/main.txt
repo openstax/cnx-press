@@ -62,7 +62,7 @@ requests==2.24.0
 
 rhaptos.cnxmlutils==2.0.0
 
-sentry-sdk==0.14.4
+sentry-sdk==0.15.1
 
 simplejson==3.17.0
 
