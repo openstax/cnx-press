@@ -1,6 +1,21 @@
 ==========
 Change Log
 ==========
+8.1.5
+-----
+
+- Scheduled weekly dependency update for week 26 (#483)
+
+8.1.4
+-----
+
+- Pyup scheduled update 2020 06 04 (#482)
+
+8.1.3
+-----
+
+- Upgrade cnxmlutils to 2.0.0 (#481)
+
 8.1.2
 -----
 
