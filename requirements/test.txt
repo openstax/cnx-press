@@ -9,7 +9,7 @@ chardet==3.0.4
 
 coverage==5.1
 
-idna==2.9
+idna==2.10
 
 Jinja2==2.11.2
 

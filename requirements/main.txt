@@ -24,7 +24,7 @@ future==0.18.2
 
 hupper==1.10.2
 
-idna==2.9
+idna==2.10
 
 jsonref==0.2
 
