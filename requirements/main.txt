@@ -60,7 +60,7 @@ repoze.lru==0.7
 
 requests==2.24.0
 
-rhaptos.cnxmlutils==2.0.0
+rhaptos.cnxmlutils==2.1.0
 
 sentry-sdk==0.16.2
 
