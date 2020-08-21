@@ -1,12 +1,12 @@
 # The project's dependencies...
 
-amqp==2.6.0
+amqp==2.6.1
 
 billiard==3.6.3.0
 
 bravado-core==5.17.0
 
-celery==4.4.6
+celery==4.4.7
 
 certifi==2020.6.20
 
@@ -30,7 +30,7 @@ jsonref==0.2
 
 jsonschema==3.2.0
 
-kombu==4.6.11
+kombu==4.6.11 # NOTE: Do not upgrade to kombu 5 while using celery 4.4
 
 lxml==4.4.3
 
@@ -62,13 +62,13 @@ requests==2.24.0
 
 rhaptos.cnxmlutils==2.1.0
 
-sentry-sdk==0.16.2
+sentry-sdk==0.16.5
 
 simplejson==3.17.2
 
 six==1.15.0
 
-SQLAlchemy==1.3.18
+SQLAlchemy==1.3.19
 
 structlog==20.1.0
 
