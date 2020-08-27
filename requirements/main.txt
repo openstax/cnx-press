@@ -30,7 +30,7 @@ jsonref==0.2
 
 jsonschema==3.2.0
 
-kombu==4.6.11 # NOTE: Do not upgrade to kombu 5 while using celery 4.4
+kombu==5.0.1 # NOTE: Do not upgrade to kombu 5 while using celery 4.4
 
 lxml==4.4.3
 
