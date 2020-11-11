@@ -1,6 +1,16 @@
 ==========
 Change Log
 ==========
+8.1.9
+-----
+
+- Scheduled weekly dependency update for week 44 (#488)
+
+8.1.8
+-----
+
+- Update sentry-sdk to 0.17.3 (#487)
+
 8.1.7
 -----
 
