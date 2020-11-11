@@ -1,7 +1,6 @@
 # The project's dependencies...
 
-amqp==5.0.1
-
+amqp==2.6.1 # pyup: update no, amqp dropped support for python 2.7
 billiard==3.6.3.0
 
 bravado-core==5.17.0
