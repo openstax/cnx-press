@@ -16,7 +16,7 @@ cnx-db==3.5.3
 
 cnx-litezip==1.6.0
 
-cnxml==3.0.1
+cnxml==3.1.0
 
 future==0.18.2
 
@@ -60,7 +60,7 @@ requests==2.25.0
 
 rhaptos.cnxmlutils==2.1.0
 
-sentry-sdk==0.19.3
+sentry-sdk==0.19.4
 
 simplejson==3.17.2
 
