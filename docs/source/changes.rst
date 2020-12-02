@@ -5,6 +5,7 @@ Change Log
 ------
 
 - Scheduled weekly dependency update for week 45
+- Fix egg name for sphinxcontrib-swaggerdoc
 
 8.1.9
 -----
