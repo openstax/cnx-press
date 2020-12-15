@@ -1,6 +1,12 @@
 ==========
 Change Log
 ==========
+8.1.12
+------
+
+- Scheduled weekly dependency update for week 48 (#492)
+
+
 8.1.11
 ------
 
