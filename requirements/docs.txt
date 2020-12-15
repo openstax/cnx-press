@@ -3,10 +3,8 @@
 
 # Make sure to run `make docs` when this is updated to verify the build.
 Sphinx==3.3.1
-
-# FIXME Pointing at a personal branch with specific changes.
-#       These changes have been submitted upstream (unaguil/sphinx-swaggerdoc).
-##sphinx-swaggerdoc[yaml]
--e git+https://github.com/pumazi/sphinx-swaggerdoc.git@for-use#egg=sphinxcontrib-swaggerdoc
 PyYAML==5.3.1
+
+# FIXME Pointing at a forked branch with specific changes.
+-e git+https://github.com/openstax/sphinx-swaggerdoc.git@for-use#egg=sphinxcontrib-swaggerdoc
 # /FIXME
