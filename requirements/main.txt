@@ -16,7 +16,7 @@ cnx-db==3.5.3
 
 cnx-litezip==1.6.0
 
-cnxml==3.1.0
+cnxml==3.1.1
 
 future==0.18.2
 
