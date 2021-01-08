@@ -17,7 +17,7 @@ python -m coverage html
 
 # Report test coverage to codecov.io
 # See also: https://docs.codecov.io/docs/testing-with-docker
-if [ "$TRAVIS" = "true" ];
+if [ "$GITHUB_ACTIONS" = "true" ];
 then
     # Report coverage to codecov
     bash <(curl -s https://codecov.io/bash)
