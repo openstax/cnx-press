@@ -3,7 +3,7 @@
 
 # Make sure to run `make docs` when this is updated to verify the build.
 Sphinx==3.3.1
-PyYAML==5.3.1
+PyYAML==5.4
 
 # FIXME Pointing at a forked branch with specific changes.
 -e git+https://github.com/openstax/sphinx-swaggerdoc.git@for-use#egg=sphinxcontrib-swaggerdoc
