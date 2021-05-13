@@ -2,7 +2,7 @@
 -r ./main.txt
 
 # Make sure to run `make docs` when this is updated to verify the build.
-Sphinx==3.3.1
+Sphinx==4.0.1
 PyYAML==5.4
 
 # FIXME Pointing at a forked branch with specific changes.
