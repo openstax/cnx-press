@@ -1,6 +1,13 @@
 ==========
 Change Log
 ==========
+
+8.1.13
+------
+
+- Updated py from 1.9.0 to 1.10.0
+- Updated urllib3 from 1.26.3 to 1.26.4
+
 8.1.12
 ------
 
