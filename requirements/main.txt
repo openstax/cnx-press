@@ -52,7 +52,7 @@ python-magic==0.4.18
 
 pytz==2020.4
 
-PyYAML==5.4
+PyYAML==5.4.1
 
 repoze.lru==0.7
 
