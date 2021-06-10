@@ -2,7 +2,7 @@
 Change Log
 ==========
 
-8.1.13
+8.1.14
 ------
 
 - Bump urllib3 from 1.26.4 to 1.26.5 in /requirements
